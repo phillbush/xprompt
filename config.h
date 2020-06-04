@@ -8,12 +8,12 @@ static const char *xpromptctrl = "vcmpn::ae::bf::ukhdw";
 static const char *font = "monospace:size=9";    /* for regular items */
 
 /* colors */
-static const char *background_color = "#FFFFFF";
-static const char *foreground_color = "#2E3436";
+static const char *background_color = "#000000";
+static const char *foreground_color = "#FFFFFF";
 static const char *selbackground_color = "#3584E4";
 static const char *selforeground_color = "#FFFFFF";
-static const char *separator_color = "#E6E6E6";
-static const char *border_color = "#CDC7C2";
+static const char *separator_color = "#555753";
+static const char *border_color = "#555753";
 
 /* Default geometry */
 static const char *geometryspec = "0x20+0+0";

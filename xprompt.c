@@ -1046,6 +1046,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	static struct Item *complist;   /* list of possible completions */
 	static int escaped = 1;         /* whether press escape will exit xprompt */
 	static int filecomp = 0;
+	enum Ctrl operation;
 	char buf[32];
 	char *s;
 	int len;
@@ -1063,7 +1064,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	}
 
-	switch (getoperation(ksym, ev->state)) {
+	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
 		break;
 	case CTRLCANCEL:
@@ -1088,28 +1089,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		}
 		break;
 	case CTRLNEXT:
-		if (escaped) {
-			complist = getcomplist(prompt, rootitem);
-			prompt->curritem = 0;
-			filecomp = 0;
-		}
-		if (complist == NULL && fflag) {
-			complist = getfilelist(prompt);
-			filecomp = 1;
-		}
-		if (complist == NULL) {
-			filecomp = 0;
-			break;
-		}
-		escaped = 0;
-		if (prompt->nitems == 0) {
-			prompt->curritem = fillitemarray(prompt, complist, 0);
-		} else if (prompt->curritem + 1 < prompt->nitems) {
-			prompt->curritem++;
-		} else if (prompt->itemarray[prompt->curritem]->next) {
-			prompt->curritem = fillitemarray(prompt, complist, +1);
-		}
-		break;
+		/* FALLTHROUGH */
 	case CTRLPREV:
 		if (escaped) {
 			complist = getcomplist(prompt, rootitem);
@@ -1127,10 +1107,16 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		escaped = 0;
 		if (prompt->nitems == 0) {
 			prompt->curritem = fillitemarray(prompt, complist, 0);
-		} else if (prompt->curritem > 0) {
-			prompt->curritem--;
-		} else if (prompt->itemarray[prompt->curritem]->prev) {
-			prompt->curritem = fillitemarray(prompt, complist, -1);
+		} else if (operation == CTRLNEXT) {
+			if (prompt->curritem + 1 < prompt->nitems)
+				prompt->curritem++;
+			else if (prompt->itemarray[prompt->curritem]->next)
+				prompt->curritem = fillitemarray(prompt, complist, +1);
+		} else if (operation == CTRLPREV) {
+			if (prompt->curritem > 0)
+				prompt->curritem--;
+			else if (prompt->itemarray[prompt->curritem]->prev)
+				prompt->curritem = fillitemarray(prompt, complist, -1);
 		}
 		break;
 	case CTRLPGUP:
