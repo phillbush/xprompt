@@ -128,7 +128,7 @@ static size_t fillitemarray(struct Prompt *prompt, struct Item *complist, int di
 static enum Ctrl getoperation(KeySym ksym, unsigned state);
 static enum Keypress_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
-static void savehist(struct History *hist, FILE *fp);
+static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 static void freeitem(struct Item *item);
 static void freeprompt(struct Prompt *prompt);
 static void cleanup(void);
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 
 	/* save history, if needed */
 	if (dosavehist && hflag)
-		savehist(&hist, histfp);
+		savehist(&prompt, &hist, histfp);
 
 	/* freeing stuff */
 	freeitem(rootitem);
@@ -1287,8 +1287,23 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 
 /* save history in history file */
 static void
-savehist(struct History *hist, FILE *fp)
+savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 {
+	int diff;   /* whether the last history entry differs from prompt->text */
+	int fd;
+
+	fd = fileno(fp);
+	ftruncate(fd, 0);
+
+	diff = strcmp(hist->entries[hist->size-1], prompt->text);
+
+	hist->index = (diff && hist->size == histsize) ? 1 : 0;
+
+	while (hist->index < hist->size)
+		fprintf(fp, "%s\n", hist->entries[hist->index++]);
+
+	if (diff)
+		fprintf(fp, "%s\n", prompt->text);
 }
 
 /* free a item tree */
