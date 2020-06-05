@@ -66,11 +66,12 @@ Renders xprompt embeded into the window
 Each item read from stdin has the following format:
 .IP
 .EX
-ITEM := [TABS] WORD NEWLINE
+ITEM := [TABS] WORD [TABS DESCRIPTION] NEWLINE
 .EE
 .PP
 That means that each item is composed by
-zero or more tabs, followed by a text, followed by newline.
+zero or more tabs, followed by a text, followed by more tabs, followed
+by a description, followed by newline.  Brackets group optional elements.
 .IP
 The initial tabs indicate the item hierarchy.
 An item without initial tabs is listed for completion at the beginning of the input field.
@@ -79,6 +80,10 @@ And so on.
 .IP
 The word is a string listed for completion in the dropdown list that
 appears when pressing Tab.
+.IP
+The second group of tabs separate the word from its description.
+.IP
+The description is a string describing what the word means.
 .IP
 The newline terminates the item specification.
 .PP
@@ -251,10 +256,10 @@ where \(lq\et\(rq means a tab character.
 .IP
 .EX
 git
-\et	add
-\et	rm
-\et	mv
-\et	commit
+\et	add\et    Add file contents to the index.
+\et	rm\et     Remove files from the working tree and from the index.
+\et	mv\et     Move or rename a file, a directory, or a symlink.
+\et	commit\et Record changes to the repository.
 man
 \et	cat
 \et	cut

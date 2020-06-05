@@ -13,6 +13,9 @@
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
 
+#define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
+#define MINTEXTWIDTH 200    /* minimum width of the completion word */
+
 /* macros */
 #define LEN(x) (sizeof (x) / sizeof (x[0]))
 #define MAX(x,y) ((x)>(y)?(x):(y))
@@ -62,6 +65,7 @@ struct DC {
 /* completion items */
 struct Item {
 	char *text;
+	char *description;
 	unsigned level;
 	struct Item *prev, *next;
 	struct Item *parent;
@@ -85,6 +89,7 @@ struct Prompt {
 
 	int gravity;
 	int x, y;
+	unsigned descx;       /* x position of the description field */
 	unsigned w, h;
 	unsigned border;
 	unsigned separator;
@@ -110,8 +115,8 @@ static void setuppromptinput(struct Prompt *prompt);
 static void setuppromptarray(struct Prompt *prompt);
 static void setuppromptgeom(struct Prompt *prompt, Window parentwin);
 static void setuppromptwin(struct Prompt *prompt, Window parentwin);
-static struct Item *allocitem(unsigned level, const char *text);
-static struct Item *builditems(unsigned level, const char *text);
+static struct Item *allocitem(unsigned level, const char *text, const char *description);
+static struct Item *builditems(unsigned level, const char *text, const char *description);
 static struct Item *parsestdin(FILE *fp);
 static void parsehistfile(FILE *fp, struct History *hist);
 static void grabkeyboard(void);
@@ -464,6 +469,9 @@ setuppromptgeom(struct Prompt *prompt, Window parentwin)
 		prompt->y += wa.height - prompt->h - prompt->border * 2;
 		break;
 	}
+
+	prompt->descx = prompt->w / TEXTPART;
+	prompt->descx = MAX(prompt->descx, MINTEXTWIDTH);
 }
 
 /* set up prompt window */
@@ -534,7 +542,7 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 
 /* allocate a completion item */
 static struct Item *
-allocitem(unsigned level, const char *text)
+allocitem(unsigned level, const char *text, const char *description)
 {
 	struct Item *item;
 
@@ -542,6 +550,12 @@ allocitem(unsigned level, const char *text)
 		err(EXIT_FAILURE, "malloc");
 	if ((item->text = strdup(text)) == NULL)
 		err(EXIT_FAILURE, "strdup");
+	if (description != NULL) {
+		if ((item->description = strdup(description)) == NULL)
+			err(EXIT_FAILURE, "strdup");
+	} else {
+		item->description = NULL;
+	}
 	item->level = level;
 	item->prev = item->next = NULL;
 	item->parent = NULL;
@@ -552,7 +566,7 @@ allocitem(unsigned level, const char *text)
 
 /* build the item tree */
 static struct Item *
-builditems(unsigned level, const char *text)
+builditems(unsigned level, const char *text, const char *description)
 {
 	static struct Item *rootitem = NULL;
 	static struct Item *previtem = NULL;
@@ -560,7 +574,7 @@ builditems(unsigned level, const char *text)
 	struct Item *item;
 	unsigned i;
 
-	curritem = allocitem(level, text);
+	curritem = allocitem(level, text, description);
 
 	if (previtem == NULL) {               /* there is no item yet */
 		curritem->parent = NULL;
@@ -597,7 +611,7 @@ parsestdin(FILE *fp)
 {
 	struct Item *rootitem;
 	char *s, buf[BUFSIZ];
-	char *text;
+	char *text, *description;
 	unsigned level = 0;
 
 	rootitem = NULL;
@@ -608,9 +622,10 @@ parsestdin(FILE *fp)
 
 		/* get the item text */
 		s = buf + level;
-		text = strtok(s, "\n");
+		text = strtok(s, "\t\n");
+		description = strtok(NULL, "\t\n");
 
-		rootitem = builditems(level, text);
+		rootitem = builditems(level, text, description);
 	}
 
 	return rootitem;
@@ -747,29 +762,42 @@ drawprompt(struct Prompt *prompt)
 		nitems = 0;
 	}
 
+	/* draw dropdown list, if needed */
 	if (nitems) {
 		size_t i;
 
+		/* background of items */
 		y = prompt->h;
 		h = prompt->h * prompt->nitems + prompt->separator;
 		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
 		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
 
+		/* separator line */
 		y = prompt->h + prompt->separator/2;
 		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
 		XSetForeground(dpy, dc.gc, dc.separator.pixel);
 		XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 
+		/* item text */
 		y = prompt->h + prompt->separator;
 		for (i = 0; i < prompt->nitems; i++) {
+			XftColor *color = &dc.normal[ColorFG];
+
 			if (i == prompt->curritem) {
 				XSetForeground(dpy, dc.gc, dc.selected[ColorBG].pixel);
 				XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
+				color = &dc.selected[ColorFG];
 			}
-			XftDrawStringUtf8(prompt->draw, &dc.selected[ColorFG], dc.font,
+			XftDrawStringUtf8(prompt->draw, color, dc.font,
                               x, y + prompt->h/2 + dc.font->ascent/2 - 1,
                               prompt->itemarray[i]->text,
                               strlen(prompt->itemarray[i]->text));
+            if (prompt->itemarray[i]->description != NULL) {
+				XftDrawStringUtf8(prompt->draw, color, dc.font,
+                                  prompt->descx, y + prompt->h/2 + dc.font->ascent/2 - 1,
+                                  prompt->itemarray[i]->description,
+                                  strlen(prompt->itemarray[i]->description));
+            }
 			y += prompt->h;
 		}
 	}
@@ -920,7 +948,7 @@ getfilelist(struct Prompt *prompt)
 
 	previtem = NULL;
 	for (i = 0; i < g.gl_pathc; i++) {
-		item = allocitem(0, g.gl_pathv[i]);
+		item = allocitem(0, g.gl_pathv[i], NULL);
 		if (previtem) {
 			item->prev = previtem;
 			previtem->next = item;

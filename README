@@ -45,16 +45,17 @@ Suppose a file containing the following content, where “\t” means a tab
 character.
 
 	git
-	\t   add
-	\t   rm
-	\t   mv
-	\t   commit
+	\t   add\t    Add file contents to the index.
+	\t   rm\t     Remove files from the working tree and from the index.
+	\t   mv\t     Move or rename a file, a directory, or a symlink.
+	\t   commit\t Record changes to the repository.
 	man
 	\t   cat
 	\t   cut
 	\t   ed
 	\t   vi
 	open
+
 
 By passing this file as stdin to xprompt, xprompt will have the
 following behavior when pressing Tab.
