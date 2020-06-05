@@ -15,6 +15,7 @@
 
 #define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
 #define MINTEXTWIDTH 200    /* minimum width of the completion word */
+#define NLETTERS     'z' - 'a' + 1
 
 /* macros */
 #define LEN(x) (sizeof (x) / sizeof (x[0]))
@@ -53,57 +54,57 @@ enum Ctrl {
 
 /* draw context structure */
 struct DC {
-	XftColor normal[ColorLast];
-	XftColor selected[ColorLast];
-	XftColor border;
-	XftColor separator;
+	XftColor normal[ColorLast];     /* bg and fg of normal text */
+	XftColor selected[ColorLast];   /* bg and fg of the selected item */
+	XftColor border;                /* color of the border */
+	XftColor separator;             /* color of the separator */
 
-	GC gc;
-	XftFont *font;
+	GC gc;                          /* graphics context */
+	XftFont *font;                  /* font */
 };
 
 /* completion items */
 struct Item {
-	char *text;
-	char *description;
-	unsigned level;
-	struct Item *prev, *next;
-	struct Item *parent;
-	struct Item *child;
+	char *text;                 /* content of the completion item */
+	char *description;          /* description of the completion item */
+	unsigned level;             /* word level the item completes */
+	struct Item *prev, *next;   /* previous and next items */
+	struct Item *parent;        /* parent item */
+	struct Item *child;         /* point to the list of child items */
 };
 
 /* prompt */
 struct Prompt {
-	const char *promptstr;
-	unsigned promptlen;
+	const char *promptstr;  /* string appearing before the input field */
+	unsigned promptlen;     /* length of the prompt string */
 	unsigned promptw;       /* prompt width */
 
 	char *text;             /* input field */
-	size_t textsize;
-	size_t cursor;
+	size_t textsize;        /* maximum size of the text in the input field */
+	size_t cursor;          /* position of the cursor in the input field */
 
 	struct Item **itemarray; /* array containing nitems matching text */
-	size_t curritem;         /* current item selected */
-	size_t nitems;           /* number of items in itemarray */
-	size_t maxitems;         /* maximum number of items in itemarray */
+	size_t curritem;        /* current item selected */
+	size_t nitems;          /* number of items in itemarray */
+	size_t maxitems;        /* maximum number of items in itemarray */
 
-	int gravity;
-	int x, y;
-	unsigned descx;       /* x position of the description field */
-	unsigned w, h;
-	unsigned border;
-	unsigned separator;
+	int gravity;            /* where in the screen to map xprompt */
+	int x, y;               /* position of xprompt */
+	unsigned descx;         /* x position of the description field */
+	unsigned w, h;          /* width and height of xprompt */
+	unsigned border;        /* border width */
+	unsigned separator;     /* separator width */
 
-	Drawable pixmap;
-	XftDraw *draw;
-	Window win;
+	Drawable pixmap;        /* where to draw shapes on */
+	XftDraw *draw;          /* where to draw text on */
+	Window win;             /* xprompt window */
 };
 
 /* history */
 struct History {
-	char **entries;
-	size_t index;
-	size_t size;
+	char **entries;     /* array of history entries */
+	size_t index;       /* index to the selected entry in the array */
+	size_t size;        /* how many entries there are in the array */
 };
 
 /* function declarations */
@@ -118,7 +119,7 @@ static void setuppromptwin(struct Prompt *prompt, Window parentwin);
 static struct Item *allocitem(unsigned level, const char *text, const char *description);
 static struct Item *builditems(unsigned level, const char *text, const char *description);
 static struct Item *parsestdin(FILE *fp);
-static void parsehistfile(FILE *fp, struct History *hist);
+static void loadhist(FILE *fp, struct History *hist);
 static void grabkeyboard(void);
 static void grabfocus(Window win);
 static void drawprompt(struct Prompt *prompt);
@@ -135,6 +136,7 @@ static enum Keypress_ret keypress(struct Prompt *prompt, struct Item *rootitem, 
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
 static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 static void freeitem(struct Item *item);
+static void freehist(struct History *hist);
 static void freeprompt(struct Prompt *prompt);
 static void cleanup(void);
 static void usage(void);
@@ -154,10 +156,10 @@ static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
 
 /* ctrl operations */
-static enum Ctrl ctrl['z' - 'a' + 1];
+static enum Ctrl ctrl[CaseLast][NLETTERS];
 
 /* comparison function */
-static int (*fstrncmp)(const char *, const char *, size_t);
+static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 
 #include "config.h"
 
@@ -165,7 +167,7 @@ static int (*fstrncmp)(const char *, const char *, size_t);
 int
 main(int argc, char *argv[])
 {
-	struct History hist;
+	struct History hist = {.entries = NULL, .index = 0, .size = 0};
 	struct Prompt prompt;
 	struct Item *rootitem;
 	Window parentwin = 0;
@@ -173,9 +175,9 @@ main(int argc, char *argv[])
 	char *histfile = NULL;
 	char *str;
 	int ch;
-	int dosavehist;
 	size_t n;
 
+	/* get environment */
 	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
 		histfile = str;
 	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
@@ -186,7 +188,7 @@ main(int argc, char *argv[])
 	if ((str = getenv("WORDDELIMITERS")) != NULL)
 		worddelimiters = str;
 
-	fstrncmp = strncmp;
+	/* get options */
 	while ((ch = getopt(argc, argv, "fGgh:iw:")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -250,31 +252,34 @@ main(int argc, char *argv[])
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
 
-	/* setup history */
+	/* initiate history */
 	if (histfile != NULL && *histfile != '\0') {
 		if ((histfp = fopen(histfile, "a+")) == NULL)
 			warn("%s", histfile);
-		else
-			parsehistfile(histfp, &hist);
+		else {
+			loadhist(histfp, &hist);
+			if (!hflag)
+				fclose(histfp);
+		}
 	}
 
 	/* grab input */
 	if (!wflag)
 		grabkeyboard();
 
-	/* run event loop */
-	dosavehist = run(&prompt, rootitem, &hist);
-
-	/* save history, if needed */
-	if (dosavehist && hflag)
+	/* run event loop; and, if run return nonzero, save the history */
+	if (run(&prompt, rootitem, &hist))
 		savehist(&prompt, &hist, histfp);
 
 	/* freeing stuff */
+	if (hflag)
+		fclose(histfp);
 	freeitem(rootitem);
+	freehist(&hist);
 	freeprompt(&prompt);
 	cleanup();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
 
 /* read xrdb for configuration options */
@@ -356,16 +361,21 @@ setupdc(void)
 static void
 setupctrl(void)
 {
-	size_t i;
-	char c;
+	size_t i, j;
 
-	for (i = 0; i < ('z' - 'a' + 1); i++) {
-		ctrl[i] = CTRLNOTHING;
+	for (i = 0; i < CaseLast; i++) {
+		for (j = 0; j < (NLETTERS); j++) {
+			ctrl[i][j] = CTRLNOTHING;
+		}
 	}
 
 	for (i = 0; i < CTRLNOTHING && xpromptctrl[i] != '\0'; i++) {
-		if (isalpha(c = tolower(xpromptctrl[i])))
-			ctrl[c - 'a'] = i;
+		if (!isalpha(xpromptctrl[i]))
+			continue;
+		if (isupper(xpromptctrl[i]))
+			ctrl[UpperCase][xpromptctrl[i] - 'A'] = i;
+		if (islower(xpromptctrl[i]))
+			ctrl[LowerCase][xpromptctrl[i] - 'a'] = i;
 	}
 }
 
@@ -633,7 +643,7 @@ parsestdin(FILE *fp)
 
 /* parse the history file */
 static void
-parsehistfile(FILE *fp, struct History *hist)
+loadhist(FILE *fp, struct History *hist)
 {
 	char buf[BUFSIZ];
 	char *s;
@@ -657,7 +667,7 @@ parsehistfile(FILE *fp, struct History *hist)
 	if (hist->size)
 		hist->index = hist->size;
 
-	hflag = 1;
+	hflag = (ferror(fp)) ? 0 : 1;
 }
 
 /* try to grab keyboard, we may have to wait for another process to ungrab */
@@ -1042,36 +1052,13 @@ getoperation(KeySym ksym, unsigned state)
 		return CTRLRIGHT;
 	}
 
+	/* handle Ctrl + Letter combinations */
 	if (state & ControlMask) {
-		switch (ksym) {
-		case XK_a: case XK_A:   return ctrl['a' - 'a'];
-		case XK_b: case XK_B:   return ctrl['b' - 'a'];
-		case XK_c: case XK_C:   return ctrl['c' - 'a'];
-		case XK_d: case XK_D:   return ctrl['d' - 'a'];
-		case XK_e: case XK_E:   return ctrl['e' - 'a'];
-		case XK_f: case XK_F:   return ctrl['f' - 'a'];
-		case XK_g: case XK_G:   return ctrl['g' - 'a'];
-		case XK_h: case XK_H:   return ctrl['h' - 'a'];
-		case XK_i: case XK_I:   return ctrl['i' - 'a'];
-		case XK_j: case XK_J:   return ctrl['j' - 'a'];
-		case XK_k: case XK_K:   return ctrl['k' - 'a'];
-		case XK_l: case XK_L:   return ctrl['l' - 'a'];
-		case XK_m: case XK_M:   return ctrl['m' - 'a'];
-		case XK_n: case XK_N:   return ctrl['n' - 'a'];
-		case XK_o: case XK_O:   return ctrl['o' - 'a'];
-		case XK_p: case XK_P:   return ctrl['p' - 'a'];
-		case XK_q: case XK_Q:   return ctrl['q' - 'a'];
-		case XK_r: case XK_R:   return ctrl['r' - 'a'];
-		case XK_s: case XK_S:   return ctrl['s' - 'a'];
-		case XK_t: case XK_T:   return ctrl['t' - 'a'];
-		case XK_u: case XK_U:   return ctrl['u' - 'a'];
-		case XK_v: case XK_V:   return ctrl['v' - 'a'];
-		case XK_w: case XK_W:   return ctrl['w' - 'a'];
-		case XK_x: case XK_X:   return ctrl['x' - 'a'];
-		case XK_y: case XK_Y:   return ctrl['y' - 'a'];
-		case XK_z: case XK_Z:   return ctrl['z' - 'a'];
-		default:                return CTRLNOTHING;
-		}
+		if (ksym >= XK_a && ksym <= XK_z)
+			return ctrl[LowerCase][ksym - XK_a];
+		if (ksym >= XK_A && ksym <= XK_Z)
+			return ctrl[UpperCase][ksym - XK_A];
+		return CTRLNOTHING;
 	}
 
 	return INSERT;
@@ -1083,7 +1070,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 {
 	static struct Item *complist;   /* list of possible completions */
 	static int escaped = 1;         /* whether press escape will exit xprompt */
-	static int filecomp = 0;
+	static int filecomp = 0;        /* whether xprompt is in file completion */
 	enum Ctrl operation;
 	char buf[32];
 	char *s;
@@ -1105,7 +1092,8 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 
 	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
-		break;
+		/* TODO */
+		return Noop;
 	case CTRLCANCEL:
 		if (escaped || prompt->text[0] == '\0')
 			return Esc;
@@ -1160,6 +1148,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	case CTRLPGUP:
 	case CTRLPGDOWN:
+		/* TODO */
 		return Noop;
 	case CTRLBOL:
 		prompt->cursor = 0;
@@ -1245,12 +1234,12 @@ insert:
 	return Draw;
 
 match:
-	if (filecomp) {
+	if (filecomp) {     /* if in a file completion, cancel it */
 		freeitem(complist);
 		filecomp = 0;
 		prompt->nitems = 0;
 		escaped = 1;
-	} else {
+	} else {            /* otherwise, rematch */
 		complist = getcomplist(prompt, rootitem);
 		if (complist == NULL)
 			return Draw;
@@ -1283,9 +1272,9 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 		case KeyPress:
 			switch (keypress(prompt, rootitem, hist, &ev.xkey)) {
 			case Esc:
-				return 0;
+				return 0;   /* return 0 to not save history */
 			case Enter:
-				return 1;
+				return 1;   /* return 1 to save history */
 			case Draw:
 				drawprompt(prompt);
 			    break;
@@ -1308,6 +1297,9 @@ savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 {
 	int diff;   /* whether the last history entry differs from prompt->text */
 	int fd;
+
+	if (hflag == 0)
+		return;
 
 	fd = fileno(fp);
 	ftruncate(fd, 0);
@@ -1343,6 +1335,19 @@ freeitem(struct Item *root)
 		free(tmp->text);
 		free(tmp);
 	}
+}
+
+/* free history entries */
+static void
+freehist(struct History *hist)
+{
+	size_t i;
+
+	for (i = 0; i < hist->size; i++)
+		free(hist->entries[i]);
+
+	if (hist->entries)
+		free(hist->entries);
 }
 
 /* free and clean up a prompt */

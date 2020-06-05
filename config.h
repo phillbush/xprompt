@@ -1,5 +1,5 @@
 /* word delimiters */
-static const char *worddelimiters = " /";
+static const char *worddelimiters = " ";
 
 /* CTRL key bindings */
 static const char *xpromptctrl = "vcmpn::ae::bf::ukhdw";
