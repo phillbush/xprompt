@@ -29,8 +29,8 @@ enum Ctrl {
 	CTRLENTER,      /* Choose item */
 	CTRLPREV,       /* Select previous item */
 	CTRLNEXT,       /* Select next item */
-	CTRLPGUP,       /* Select item one screen above */
 	CTRLPGDOWN,     /* Select item one screen below */
+	CTRLPGUP,       /* Select item one screen above */
 	CTRLBOL,        /* Move cursor to beginning of line */
 	CTRLEOL,        /* Move cursor to end of line */
 	CTRLUP,         /* Select previous item in the history */
@@ -169,19 +169,29 @@ main(int argc, char *argv[])
 	char *str;
 	int ch;
 	int dosavehist;
+	size_t n;
 
 	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
 		histfile = str;
+	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
+		if ((n = strtol(str, NULL, 10)) > 0)
+			histsize = n;
 	if ((str = getenv("XPROMPTCTRL")) != NULL)
 		xpromptctrl = str;
 	if ((str = getenv("WORDDELIMITERS")) != NULL)
 		worddelimiters = str;
 
 	fstrncmp = strncmp;
-	while ((ch = getopt(argc, argv, "fh:iw:")) != -1) {
+	while ((ch = getopt(argc, argv, "fGgh:iw:")) != -1) {
 		switch (ch) {
 		case 'f':
 			fflag = 1;
+			break;
+		case 'G':
+			gravityspec = optarg;
+			break;
+		case 'g':
+			geometryspec = optarg;
 			break;
 		case 'h':
 			histfile = optarg;
@@ -303,6 +313,8 @@ getresources(void)
 		font = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.geometry", "*", &type, &xval) == True)
 		geometryspec = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.gravity", "*", &type, &xval) == True)
+		gravityspec = strdup(xval.addr);
 
 	XrmDestroyDatabase(xdb);
 }
@@ -627,12 +639,10 @@ parsehistfile(FILE *fp, struct History *hist)
 		hist->entries[hist->size++] = s;
 	}
 
-	if (hist->size == 0) {
-		hflag = 0;
-	} else {
+	if (hist->size)
 		hist->index = hist->size;
-		hflag = 1;
-	}
+
+	hflag = 1;
 }
 
 /* try to grab keyboard, we may have to wait for another process to ungrab */
@@ -1050,6 +1060,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	char buf[32];
 	char *s;
 	int len;
+	int dir;
 	KeySym ksym;
 	Status status;
 
@@ -1088,9 +1099,9 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			return Enter;
 		}
 		break;
-	case CTRLNEXT:
-		/* FALLTHROUGH */
 	case CTRLPREV:
+		/* FALLTHROUGH */
+	case CTRLNEXT:
 		if (escaped) {
 			complist = getcomplist(prompt, rootitem);
 			prompt->curritem = 0;
@@ -1129,6 +1140,20 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (prompt->text[prompt->cursor] != '\0')
 			prompt->cursor = strlen(prompt->text);
 		break;
+	case CTRLUP:
+		/* FALLTHROUGH */
+	case CTRLDOWN:
+		dir = (operation == CTRLUP) ? -1 : +1;
+		if (!hflag || !hist->size)
+			return Noop;
+		s = navhist(hist, dir);
+		if (s) {
+			insert(prompt, NULL, 0 - prompt->cursor);
+			insert(prompt, s, strlen(s));
+		}
+		prompt->nitems = 0;
+		escaped = 1;
+		break;
 	case CTRLLEFT:
 		if (prompt->cursor > 0)
 			prompt->cursor = nextrune(prompt, -1);
@@ -1140,28 +1165,6 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			prompt->cursor = nextrune(prompt, +1);
 		else
 			return Noop;
-		break;
-	case CTRLUP:
-		if (!hflag)
-			return Noop;
-		s = navhist(hist, -1);
-		if (s) {
-			insert(prompt, NULL, 0 - prompt->cursor);
-			insert(prompt, s, strlen(s));
-		}
-		prompt->nitems = 0;
-		escaped = 1;
-		break;
-	case CTRLDOWN:
-		if (!hflag)
-			return Noop;
-		s = navhist(hist, +1);
-		if (s) {
-			insert(prompt, NULL, 0 - prompt->cursor);
-			insert(prompt, s, strlen(s));
-		}
-		prompt->nitems = 0;
-		escaped = 1;
 		break;
 	case CTRLWLEFT:
 		movewordedge(prompt, -1);
@@ -1281,6 +1284,11 @@ savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 	fd = fileno(fp);
 	ftruncate(fd, 0);
 
+	if (!hist->size) {
+		fprintf(fp, "%s\n", prompt->text);
+		return;
+	}
+
 	diff = strcmp(hist->entries[hist->size-1], prompt->text);
 
 	hist->index = (diff && hist->size == histsize) ? 1 : 0;
@@ -1339,6 +1347,7 @@ cleanup(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-fi] [-h file] [-w windowid] [prompt]\n");
+	(void)fprintf(stderr, "usage: xprompt [-fi] [-G gravity] [-g geometry]\n"
+	                      "               [-h file] [-w windowid] [prompt]\n");
 	exit(EXIT_FAILURE);
 }

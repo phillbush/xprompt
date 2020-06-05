@@ -1,0 +1,310 @@
+.TH XPROMPT 1
+.SH NAME
+xprompt \- read line utility for X
+.SH SYNOPSIS
+.B xprompt
+.RB [ \-fi ]
+.RB [ \-G
+.IR gravity ]
+.RB [ \-g
+.IR geometry ]
+.RB [ \-h
+.IR histfile ]
+.RB [ \-w
+.IR windowid ]
+.RI [ promptstr ]
+.SH DESCRIPTION
+.B xprompt
+is a prompt for X,
+it displays a prompt where the user can type a text subject to tab-completion.
+When the user presses Return, the typed text is printed to the stdout.
+When the user presses Tab, a dropdown menu appears showing the items
+from the stdin that matches the word to be completed.
+It can read a list of newline-separated items from stdin.
+.PP
+If the argument
+.I promptstr
+is given, the prompt string
+.I promptstr
+appears at the beginning of the input field.
+.PP
+xprompt resembles dmenu, but they differ in a subtle point:
+while dmenu completes the whole text, xprompt complete only a single word.
+.PP
+The options are as follows:
+.TP
+.B \-f
+Enables filename completion.
+When the
+.B \-f
+option is used, when no item from the standard input matches the current text,
+.B xprompt
+tries to complete a file name.
+.TP
+.BI "\-G " gravity
+Specify the gravity,
+that is, where in the screen or parent window to display xprompt.
+.I gravity
+can be "N" for NorthGravity (display on the top center of the screen);
+"SE" for SouthEastGravity (display on the bottom right corner of the screen);
+"C" for CenterGravity (display on the center of the screen);
+etc.
+.TP
+.BI "\-g " geometry
+Specifies the geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
+.TP
+.BI "\-h " file
+Specifies the file to be used for reading and storing the history of typed texts.
+.TP
+.B \-i
+Makes xprompt match items case insensitively.
+.TP
+.BI "\-w " windowid
+Renders xprompt embeded into the window
+.IR windowid .
+.PP
+Each item read from stdin has the following format:
+.IP
+.EX
+ITEM := [TABS] WORD NEWLINE
+.EE
+.PP
+That means that each item is composed by
+zero or more tabs, followed by a text, followed by newline.
+.IP
+The initial tabs indicate the item hierarchy.
+An item without initial tabs is listed for completion at the beginning of the input field.
+An item with one tab is listed for completion for the second word in the input field.
+And so on.
+.IP
+The word is a string listed for completion in the dropdown list that
+appears when pressing Tab.
+.IP
+The newline terminates the item specification.
+.PP
+.B xmenu
+saves the input text from previous runs in a history file specified by the
+.B -h
+option or by the
+.B XPROMPTHISTFILE
+environment variable.
+.SH USAGE
+.B xprompt
+is controlled by the keyboard.
+Pressing Tab initiates the completion,
+pressing Up or Down navigates through the history.
+.PP
+.B xprompt
+can also be controlled via
+.B Ctrl + Key
+keybindings with the
+.B XPROMPTCTRL
+environment variable.
+The default value for
+.B XPROMPTCTRL
+is
+.B \(lqvcmpn::ae::bf::ukhdw\(rq
+and can be modified via the
+.B config.h
+file.
+.PP
+Each key or keybinding is assigned a operation like
+.BR CTRLCANCEL ,
+.BR CTRLNEXT ,
+.BR CTRLRIGHT ,
+etc.
+The default values for each operation is listed bellow between parentheses.
+.TP
+.BR CTRLPASTE " (" Ctrl+V )
+TODO.
+.TP
+.BR CTRLCANCEL " (" Esc ", " Ctrl+C )
+Exit xprompt without printing anything.
+.TP
+.BR CTRLENTER " (" Enter ", " Ctrl+M )
+Confirm text.
+Prints the input text to stdout, and writes it to the history file,
+if the input text is different from the last entry in the history file.
+.TP
+.BR CTRLPREV " (" Shift+Tab ", " Ctrl+P )
+Selects the previous item in the completion dropdown list.
+.TP
+.BR CTRLNEXT " (" Tab ", " Ctrl+N )
+Selects the next item in the completion dropdown list.
+.TP
+.BR CTRLPGDOWN " (" PgDown )
+TODO.
+.TP
+.BR CTRLPGUP " (" PgUp )
+TODO.
+.TP
+.BR CTRLBOL " (" Home ", " Ctrl+A )
+Move the cursor to the beginning of line.
+.TP
+.BR CTRLEOL " (" End ", " Ctrl+E )
+Move the cursor to the end of line.
+.TP
+.BR CTRLUP " (" Up )
+Select the previous entered text in the history.
+.TP
+.BR CTRLDOWN " (" Down )
+Select the next entered text in the history.
+.TP
+.BR CTRLLEFT " (" Left ", " Ctrl+B )
+Move the cursor one character to the left.
+.TP
+.BR CTRLRIGHT " (" Right ", " Ctrl+F )
+Move the cursor one character to the right.
+.TP
+.BR CTRLWLEFT " (" Ctrl+Left )
+Move the cursor one word to the left.
+.TP
+.BR CTRLWRIGHT " (" Ctrl+Right )
+Move the cursor one word to the right.
+.TP
+.BR CTRLDELBOL " (" Ctrl+U )
+Delete from the cursor to the beginning of line.
+.TP
+.BR CTRLDELEOL " (" Ctrl+K )
+Delete from the cursor to the end of line.
+.TP
+.BR CTRLDELLEFT " (" Backspace ", " Ctrl+H )
+Delete one character to the left.
+.TP
+.BR CTRLDELRIGHT " (" Delete ", " Ctrl+D )
+Delete one character to the right.
+.TP
+.BR CTRLDELWORD " (" Ctrl+W )
+Delete one word to the left.
+.SH ENVIRONMENT
+The following environment variables affect the execution of
+.BR xprompt .
+.TP
+.B XPROMPTHISTFILE
+Specifies the file to be used for reading and storing the history of typed texts.
+.TP
+.B XPROMPTHISTSIZE
+Specifies the number of entries to be kept in the history file.
+.TP
+.B XPROMPTCTRL
+This environment variable is set to a list of alphabetic characters,
+each character specify a ctrl sequence for a input operation in the
+order listed in the section USAGE.
+For example, by default, XPROMPTCTRL is "vcmpn::ae::bf::ukhdw",
+it means that pressing Ctrl+V enters CTRLPASTE;
+Ctrl+C enters CTRLCANCEL and Ctrl+M enters CTRLENTER.
+A colon specifies that no Ctrl + Key sequence implements such operation.
+.TP
+.B WORDDELIMITERS
+A string of characters that delimits words.
+By default it is "/ " (a slash and a space).
+.SH RESOURCES
+.B
+xprompt
+understands the following X resources.
+.TP
+.B xprompt.font
+The font to drawn the text.
+.TP
+.B xprompt.background
+The background color of the input text field,
+and of the non-selected items in the dropdown completion list.
+.TP
+.B xprompt.foreground
+The foreground color of the input text field,
+and of the non-selected items in the dropdown completion list.
+.TP
+.B xprompt.selbackground
+The background color of the selected items in the dropdown completion list.
+.TP
+.B xprompt.selforeground
+The background color of the selected items in the dropdown completion list.
+.TP
+.B xprompt.border
+The color of the border around xprompt.
+.TP
+.B xprompt.separator
+The color of the separator between the input field and the dropdown list.
+.TP
+.B xprompt.borderWidth
+The size in pixels of the border around xprompt.
+.TP
+.B xprompt.separatorWidth
+The size in pixels of the item separator.
+.TP
+.B xprompt.items
+The number of items to be listed in the dropdown completion list.
+.TP
+.B xprompt.geometry
+The geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
+.TP
+.B xprompt.gravity
+Where in the screen or parent window to display xprompt.
+It can be "N" for NorthGravity (display on the top center of the screen);
+"SE" for SouthEastGravity (display on the bottom right corner of the screen);
+"C" for CenterGravity (display on the center of the screen);
+etc.
+.SH EXAMPLES
+Suppose a file
+containing the following content,
+where \(lq\et\(rq means a tab character.
+.IP
+.EX
+git
+\et	add
+\et	rm
+\et	mv
+\et	commit
+man
+\et	cat
+\et	cut
+\et	ed
+\et	vi
+open
+.EE
+.PP
+By passing this file as stdin to
+.BR xprompt ,
+.B xprompt
+will have the following behavior when pressing Tab.
+.IP
+If the input field is empty,
+.B xprompt
+will display a dropdown list with the following three entries after pressing Tab:
+.IR git ,
+.IR man ", and"
+.IR open .
+.IP
+If the input field contains the word
+.I git
+at the beginning of the line,
+.B xprompt
+will display a dropdown list with the following four entries after pressing Tab:
+.IR add ,
+.IR rm ,
+.IR mv ", and"
+.IR commit .
+.IP
+If the input field contains the word
+.I man
+at the beginning of the line,
+.B xprompt
+will display a dropdown list with the following four entries after pressing Tab:
+.IR cat ,
+.IR cut ,
+.IR ed ", and"
+.IR vi .
+.IP
+If the input field contains the word
+.I open
+at the beginning of the line, and
+.B xprompt
+was invoked with the
+.B -f
+option, then
+.B xprompt
+will display a dropdown list with possible filenames after pressing Tab,
+since no completion was specified at stdin.
+.SH SEE ALSO
+.IR dmenu (1),
+.IR xmenu (1)
