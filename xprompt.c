@@ -704,6 +704,7 @@ grabfocus(Window win)
 	errx(1, "cannot grab focus");
 }
 
+/* draw the prompt */
 static void
 drawprompt(struct Prompt *prompt)
 {
