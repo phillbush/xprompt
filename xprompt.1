@@ -52,6 +52,11 @@ etc.
 .TP
 .BI "\-g " geometry
 Specifies the geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
+Replace <WIDTH> by the desired width, <HEIGHT> by the desired height, and so on.
+A value of 0 sets a field to the default value.
+So, for example,
+.B -g 0x20+0+0
+set the height to 20 pixels while maintaining other values to the default.
 .TP
 .BI "\-h " file
 Specifies the file to be used for reading and storing the history of typed texts.
@@ -242,6 +247,11 @@ The number of items to be listed in the dropdown completion list.
 .TP
 .B xprompt.geometry
 The geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
+Replace <WIDTH> by the desired width, <HEIGHT> by the desired height, and so on.
+A value of 0 sets a field to the default value.
+So, for example,
+.B 0x20+0+0
+set the height to 20 pixels while maintaining other values to the default.
 .TP
 .B xprompt.gravity
 Where in the screen or parent window to display xprompt.
