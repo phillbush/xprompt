@@ -12,6 +12,7 @@ list of newline-separated items from stdin.
 The files are:
 • ./README:     This file.
 • ./Makefile:   The makefile.
+• ./demo.gif:   A gif demonstrating how XPrompt works.
 • ./config.h:   The hardcoded default configuration for XPrompt.
 • ./config.mk:  The setup for the makefile.
 • ./xprompt.1:  The manual file (man page) for XPrompt.
