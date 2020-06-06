@@ -21,6 +21,7 @@
 #define LEN(x) (sizeof (x) / sizeof (x[0]))
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
+#define ISSOUTH(x) ((x) == SouthGravity || (x) == SouthWestGravity || (x) == SouthEastGravity)
 
 enum {ColorFG, ColorBG, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
@@ -108,6 +109,7 @@ struct History {
 };
 
 /* function declarations */
+static unsigned textwidth(const char *str, size_t len);
 static void getresources(void);
 static void getcolor(const char *s, XftColor *color);
 static void setupdc(void);
@@ -122,6 +124,8 @@ static struct Item *parsestdin(FILE *fp);
 static void loadhist(FILE *fp, struct History *hist);
 static void grabkeyboard(void);
 static void grabfocus(Window win);
+static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
+static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
 static size_t nextrune(struct Prompt *prompt, int inc);
 static void movewordedge(struct Prompt *prompt, int dir);
@@ -280,6 +284,17 @@ main(int argc, char *argv[])
 	cleanup();
 
 	return EXIT_SUCCESS;
+}
+
+/* get width of a text drawn using dc */
+static unsigned
+textwidth(const char *str, size_t len)
+{
+	XGlyphInfo ext;
+
+	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)str, len, &ext);
+
+	return ext.xOff;
 }
 
 /* read xrdb for configuration options */
@@ -490,7 +505,6 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
-	XGlyphInfo ext;
 	XIM xim;
 	unsigned h;
 
@@ -525,9 +539,7 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
 
 	/* calculate prompt string width */
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->promptstr,
-	                   prompt->promptlen, &ext);
-	prompt->promptw = ext.xOff + dc.font->height * 2;
+	prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
 
 	/* map window */
 	XMapRaised(dpy, prompt->win);
@@ -704,15 +716,84 @@ grabfocus(Window win)
 	errx(1, "cannot grab focus");
 }
 
+/* resize xprompt window and return how many items it has on the dropdown list */
+static size_t
+resizeprompt(struct Prompt *prompt, size_t nitems_old)
+{
+	size_t nitems_new;
+	unsigned h;
+	int y;
+
+	if (prompt->nitems && nitems_old != prompt->nitems) {
+		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+		y = prompt->y - h + prompt->h;
+
+		nitems_new = prompt->nitems;
+	} else if (nitems_old && !prompt->nitems) {
+		h = prompt->h;
+		y = prompt->y;
+
+		nitems_new = 0;
+	} else {
+		nitems_new = nitems_old;
+	}
+
+	/*
+	 * if the old and new number of items are the same,
+	 * there's no need to resize the window
+	 */
+	if (nitems_old != nitems_new) {
+		/* if gravity is south, resize and move, otherwise just resize */
+		if (ISSOUTH(prompt->gravity))
+			XMoveResizeWindow(dpy, prompt->win, prompt->x, y, prompt->w, h);
+		else
+			XResizeWindow(dpy, prompt->win, prompt->w, h);
+	}
+
+	return nitems_new;
+}
+
+/* draw nth item in the item array */
+static void
+drawitem(struct Prompt *prompt, size_t n)
+{
+	XftColor *color;
+	int y;
+
+	color = (n == prompt->curritem) ? dc.selected : dc.normal;
+	y = (n + 1) * prompt->h + prompt->separator;
+
+	/* if nth item is the selected one, draw a rectangle behind it */
+	if (n == prompt->curritem) {
+		XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
+	}
+
+	/* draw item text */
+	XftDrawStringUtf8(prompt->draw, &color[ColorFG], dc.font,
+                      prompt->promptw, y + prompt->h/2 + dc.font->ascent/2 - 1,
+                      prompt->itemarray[n]->text,
+                      strlen(prompt->itemarray[n]->text));
+
+	/* if item has a description, draw it */
+	if (prompt->itemarray[n]->description != NULL) {
+		XftDrawStringUtf8(prompt->draw, &color[ColorFG], dc.font,
+                          prompt->descx, y + prompt->h/2 + dc.font->ascent/2 - 1,
+                          prompt->itemarray[n]->description,
+                          strlen(prompt->itemarray[n]->description));
+    }
+}
+
 /* draw the prompt */
 static void
 drawprompt(struct Prompt *prompt)
 {
-	static size_t nitems = 0;
-	static unsigned h;
-	XGlyphInfo exttext, extcurs;
-	unsigned curpos;
+	static size_t nitems = 0;       /* number of items in the dropdown list */
+	char *cursortext;               /* text from the cursor until end of line */
+	unsigned curpos;                /* where to draw the cursor */
+	unsigned h;
 	int x, y;
+	size_t i;
 
 	x = dc.font->height;
 	y = prompt->h/2 + dc.font->ascent/2 - 1;
@@ -723,7 +804,7 @@ drawprompt(struct Prompt *prompt)
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0,
 	               prompt->w, prompt->h);
 
-	/* draw prompt string */
+	/* draw the prompt string and update x to the end of it */
 	if (prompt->promptlen != 0) {
 		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
                       	  x, y, prompt->promptstr, prompt->promptlen);
@@ -736,83 +817,35 @@ drawprompt(struct Prompt *prompt)
 
 	/* draw cursor rectangle */
 	y = prompt->h/2 - dc.font->height/2;
+	cursortext = prompt->text + prompt->cursor;
+	curpos = textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text,
-	                   strlen(prompt->text), &exttext);
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text+prompt->cursor,
-	                   strlen(prompt->text+prompt->cursor), &extcurs);
-	curpos = exttext.xOff - extcurs.xOff;
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, x + curpos, y, 1, dc.font->height);
 
-	/* resize window if needed */
-	if (prompt->nitems && nitems != prompt->nitems) {
-		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+	/* resize window and get new value of number of items */
+	nitems = resizeprompt(prompt, nitems);
 
-		if (prompt->gravity == SouthGravity
-		    || prompt->gravity == SouthWestGravity
-		    || prompt->gravity == SouthEastGravity) {
-			XMoveResizeWindow(dpy, prompt->win, prompt->x,
-			                  prompt->y - h + prompt->h,
-			                  prompt->w, h);
-		} else {
-			XResizeWindow(dpy, prompt->win, prompt->w, h);
-		}
+	/* if there are no items to drawn, we are done */
+	if (!nitems)
+		goto done;
 
-		nitems = prompt->nitems;
-	} else if (nitems && !prompt->nitems) {
-		h = prompt->h;
+	/* background of items */
+	y = prompt->h;
+	h = prompt->h * prompt->nitems + prompt->separator;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
 
-		if (prompt->gravity == SouthGravity
-		    || prompt->gravity == SouthWestGravity
-		    || prompt->gravity == SouthEastGravity) {
-			XMoveResizeWindow(dpy, prompt->win, prompt->x, prompt->y,
-			                  prompt->w, prompt->h);
-		} else {
-			XResizeWindow(dpy, prompt->win, prompt->w, prompt->h);
-		}
-		nitems = 0;
-	}
+	/* draw separator line */
+	y = prompt->h + prompt->separator/2;
+	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+	XSetForeground(dpy, dc.gc, dc.separator.pixel);
+	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 
-	/* draw dropdown list, if needed */
-	if (nitems) {
-		size_t i;
+	/* draw items */
+	for (i = 0; i < prompt->nitems; i++)
+		drawitem(prompt, i);
 
-		/* background of items */
-		y = prompt->h;
-		h = prompt->h * prompt->nitems + prompt->separator;
-		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
-
-		/* separator line */
-		y = prompt->h + prompt->separator/2;
-		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
-		XSetForeground(dpy, dc.gc, dc.separator.pixel);
-		XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
-
-		/* item text */
-		y = prompt->h + prompt->separator;
-		for (i = 0; i < prompt->nitems; i++) {
-			XftColor *color = &dc.normal[ColorFG];
-
-			if (i == prompt->curritem) {
-				XSetForeground(dpy, dc.gc, dc.selected[ColorBG].pixel);
-				XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
-				color = &dc.selected[ColorFG];
-			}
-			XftDrawStringUtf8(prompt->draw, color, dc.font,
-                              x, y + prompt->h/2 + dc.font->ascent/2 - 1,
-                              prompt->itemarray[i]->text,
-                              strlen(prompt->itemarray[i]->text));
-            if (prompt->itemarray[i]->description != NULL) {
-				XftDrawStringUtf8(prompt->draw, color, dc.font,
-                                  prompt->descx, y + prompt->h/2 + dc.font->ascent/2 - 1,
-                                  prompt->itemarray[i]->description,
-                                  strlen(prompt->itemarray[i]->description));
-            }
-			y += prompt->h;
-		}
-	}
-
+done:
 	/* commit drawing */
 	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0,
 	          prompt->w, h, 0, 0);
