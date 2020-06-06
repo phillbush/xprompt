@@ -1142,6 +1142,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 				delword(prompt);
 			insert(prompt, prompt->itemarray[prompt->curritem]->text,
 			       strlen(prompt->itemarray[prompt->curritem]->text));
+			insert(prompt, " ", 1);
 			prompt->nitems = 0;
 			escaped = 1;
 		} else {
