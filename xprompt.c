@@ -2,6 +2,7 @@
 
 #include <err.h>
 #include <ctype.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,8 @@
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
+
+#define PROGNAME "xprompt"
 
 #define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
 #define MINTEXTWIDTH 200    /* minimum width of the completion word */
@@ -226,6 +229,8 @@ main(int argc, char *argv[])
 		usage();
 
 	/* open connection to server and set X variables */
+	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		warnx("warning: no locale support");
 	if ((dpy = XOpenDisplay(NULL)) == NULL)
 		errx(1, "cannot open display");
 	screen = DefaultScreen(dpy);
@@ -495,6 +500,10 @@ setuppromptgeom(struct Prompt *prompt, Window parentwin)
 		break;
 	}
 
+	/* calculate prompt string width */
+	prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
+
+	/* description x position */
 	prompt->descx = prompt->w / TEXTPART;
 	prompt->descx = MAX(prompt->descx, MINTEXTWIDTH);
 }
@@ -505,21 +514,21 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
+	XClassHint classh = {PROGNAME, PROGNAME};
 	XIM xim;
 	unsigned h;
 
-	/* set window attributes */
+	/* create prompt window */
 	swa.override_redirect = True;
 	swa.background_pixel = dc.normal[ColorBG].pixel;
 	swa.border_pixel = dc.border.pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
-
-	/* create window */
 	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
 	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
 	                            &swa);
+	XSetClassHint(dpy, prompt->win, &classh);
 
 	/* set window normal hints */
 	sizeh.flags = PMaxSize | PMinSize;
@@ -534,18 +543,13 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
 
 	/* open input methods */
-	xim = XOpenIM(dpy, NULL, NULL, NULL);
+	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
+		errx(EXIT_FAILURE, "XOpenIM: could not open input device");
 	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
 	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
 
-	/* calculate prompt string width */
-	prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
-
 	/* map window */
 	XMapRaised(dpy, prompt->win);
-
-	/* set input focus for the input method */
-	XSetInputFocus(dpy, prompt->win, RevertToParent, CurrentTime);
 
 	/* selecect focus event mask for the parent window */
 	if (wflag) {
@@ -1007,12 +1011,13 @@ getfilelist(struct Prompt *prompt)
 	return complist;
 }
 
-/* fill array of items to be printed in the window */
+/* fill array of items to be printed in the window, return index of item to be highlighted*/
 static size_t
 fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 {
 	struct Item *item;
 	size_t beg, len;
+	char *s;
 
 	if (!prompt->cursor) {
 		beg = 0;
@@ -1031,8 +1036,18 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		for (prompt->nitems = 0;
 		     prompt->nitems < prompt->maxitems && item != NULL;
 		     item = item->next) {
-			if ((*fstrncmp)(item->text, prompt->text + beg, len) == 0) {
-				prompt->itemarray[prompt->nitems++] = item;
+
+			/* check if item->text matches prompt->text */
+			s = item->text;
+			while (*s != '\0') {
+				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
+					prompt->itemarray[prompt->nitems++] = item;
+					break;
+				}
+				while (*s != '\0' && !isspace(*s))
+					s++;
+				while (isspace(*s))
+					s++;
 			}
 		}
 		return 0;
@@ -1043,8 +1058,18 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		for (n = prompt->maxitems;
 		     n > 0 && item != NULL;
 		     item = item->prev) {
-			if ((*fstrncmp)(item->text, prompt->text + beg, len) == 0) {
-				prompt->itemarray[--n] = item;
+
+			/* check if item->text matches prompt->text */
+			s = item->text;
+			while (*s != '\0') {
+				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
+					prompt->itemarray[--n] = item;
+					break;
+				}
+				while (*s != '\0' && !isspace(*s))
+					s++;
+				while (isspace(*s))
+					s++;
 			}
 		}
 
@@ -1291,6 +1316,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 {
 	XEvent ev;
 
+	grabfocus(prompt->win);
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
