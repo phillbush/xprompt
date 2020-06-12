@@ -1046,9 +1046,9 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 					prompt->itemarray[prompt->nitems++] = item;
 					break;
 				}
-				while (*s != '\0' && !isspace(*s))
+				while (*s != '\0' && strchr(worddelimiters, *s) == NULL)
 					s++;
-				while (isspace(*s))
+				while (*s != '\0' && strchr(worddelimiters, *s) != NULL)
 					s++;
 			}
 		}
@@ -1068,9 +1068,9 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 					prompt->itemarray[--n] = item;
 					break;
 				}
-				while (*s != '\0' && !isspace(*s))
+				while (*s != '\0' && strchr(worddelimiters, *s) == NULL)
 					s++;
-				while (isspace(*s))
+				while (*s != '\0' && strchr(worddelimiters, *s) != NULL)
 					s++;
 			}
 		}
