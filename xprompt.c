@@ -547,6 +547,8 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 		errx(EXIT_FAILURE, "XOpenIM: could not open input device");
 	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
 	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
+	if (xic == NULL)
+		errx(EXIT_FAILURE, "XCreateIC: could not obtain input method");
 
 	/* map window */
 	XMapRaised(dpy, prompt->win);
@@ -1167,7 +1169,8 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 				delword(prompt);
 			insert(prompt, prompt->itemarray[prompt->curritem]->text,
 			       strlen(prompt->itemarray[prompt->curritem]->text));
-			insert(prompt, " ", 1);
+			if (!filecomp) /* if not completing a filename, insert a space */
+				insert(prompt, " ", 1);
 			prompt->nitems = 0;
 			escaped = 1;
 		} else {
