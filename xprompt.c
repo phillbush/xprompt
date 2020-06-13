@@ -828,15 +828,15 @@ drawprompt(struct Prompt *prompt)
 		                  x, y, prompt->text, strlen(prompt->text));
 
 		cursortext = prompt->text + prompt->cursor;
-		curpos = textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
+		curpos = x + textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
     } else {
-		curpos = 0;
+		curpos = x;
     }
 
 	/* draw cursor rectangle */
 	y = prompt->h/2 - dc.font->height/2;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, x + curpos, y, 1, dc.font->height);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.font->height);
 
 	/* resize window and get new value of number of items */
 	nitems = resizeprompt(prompt, nitems);
