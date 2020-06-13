@@ -161,6 +161,7 @@ static struct DC dc;
 static int wflag = 0;   /* whether to enable embeded prompt */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
+static int pflag = 0;   /* whether to enable password mode */
 
 /* ctrl operations */
 static enum Ctrl ctrl[CaseLast][NLETTERS];
@@ -196,7 +197,7 @@ main(int argc, char *argv[])
 		worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "fGgh:iw:")) != -1) {
+	while ((ch = getopt(argc, argv, "fGgh:ipw:")) != -1) {
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -212,6 +213,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			fstrncmp = strncasecmp;
+			break;
+		case 'p':
+			pflag = 1;
 			break;
 		case 'w':
 			wflag = 1;
@@ -795,7 +799,6 @@ static void
 drawprompt(struct Prompt *prompt)
 {
 	static size_t nitems = 0;       /* number of items in the dropdown list */
-	char *cursortext;               /* text from the cursor until end of line */
 	unsigned curpos;                /* where to draw the cursor */
 	unsigned h;
 	int x, y;
@@ -817,14 +820,21 @@ drawprompt(struct Prompt *prompt)
 		x = prompt->promptw;
 	}
 
-	/* draw input field text */
-	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-                    x, y, prompt->text, strlen(prompt->text));
+	/* draw input field text and set position of the cursor */
+	if (!pflag) {
+		char *cursortext;           /* text from the cursor til the end */
+
+		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
+		                  x, y, prompt->text, strlen(prompt->text));
+
+		cursortext = prompt->text + prompt->cursor;
+		curpos = textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
+    } else {
+		curpos = 0;
+    }
 
 	/* draw cursor rectangle */
 	y = prompt->h/2 - dc.font->height/2;
-	cursortext = prompt->text + prompt->cursor;
-	curpos = textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, x + curpos, y, 1, dc.font->height);
 
@@ -1167,10 +1177,25 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (!escaped) {
 			if (prompt->cursor && !strchr(worddelimiters, prompt->text[prompt->cursor - 1]))
 				delword(prompt);
-			insert(prompt, prompt->itemarray[prompt->curritem]->text,
-			       strlen(prompt->itemarray[prompt->curritem]->text));
-			if (!filecomp) /* if not completing a filename, insert a space */
+			if (!filecomp) {
+				/*
+				 * If not completing a file, insert item as is and
+				 * append a space.
+				 */
+				insert(prompt, prompt->itemarray[prompt->curritem]->text,
+				       strlen(prompt->itemarray[prompt->curritem]->text));
 				insert(prompt, " ", 1);
+			} else {
+				/*
+				 * If completing a file, insert only the basename (the
+				 * part after the last slash).
+				 */
+				char *s, *p;
+				for (p = prompt->itemarray[prompt->curritem]->text; *p; p++)
+					if (strchr("/", *p))
+						s = p + 1;
+				insert(prompt, s, strlen(s));
+			}
 			prompt->nitems = 0;
 			escaped = 1;
 		} else {
