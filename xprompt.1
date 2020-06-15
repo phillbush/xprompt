@@ -16,7 +16,7 @@ xprompt \- read line utility for X
 .SH DESCRIPTION
 .B xprompt
 is a prompt for X,
-it displays a prompt where the user can type a text subject to tab-completion.
+it displays a text input field where the user can type in a text subject to tab-completion.
 When the user presses Return, the typed text is printed to the stdout.
 When the user presses Tab, a dropdown menu appears showing the items
 from the stdin that matches the word to be completed.
@@ -29,7 +29,7 @@ is given, the prompt string
 appears at the beginning of the input field.
 .PP
 xprompt resembles dmenu, but they differ in a subtle point:
-while dmenu completes the whole text, xprompt complete only a single word.
+while dmenu completes the whole text, xprompt performs contextual completion.
 .PP
 The options are as follows:
 .TP
