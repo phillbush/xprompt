@@ -26,6 +26,10 @@
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #define ISSOUTH(x) ((x) == SouthGravity || (x) == SouthWestGravity || (x) == SouthEastGravity)
+#define ISMOTION(x) ((x) == CTRLBOL || (x) == CTRLEOL || (x) == CTRLLEFT \
+                    || (x) == CTRLRIGHT || (x) == CTRLWLEFT || (x) == CTRLWRIGHT)
+#define ISSELECTION(x) ((x) == CTRLSELBOL || (x) == CTRLSELEOL || (x) == CTRLSELLEFT \
+                       || (x) == CTRLSELRIGHT || (x) == CTRLSELWLEFT || (x) == CTRLSELWRIGHT)
 
 enum {ColorFG, ColorBG, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
@@ -145,6 +149,7 @@ static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
 static void paste(struct Prompt *prompt);
+static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
 static char *navhist(struct History *hist, int direction);
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
@@ -1006,6 +1011,54 @@ paste(struct Prompt *prompt)
 	}
 }
 
+/* */
+static void
+copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
+{
+	XSelectionEvent xselev;
+	Atom xa_targets;
+
+	xselev.type = SelectionNotify;
+	xselev.requestor = ev->requestor;
+	xselev.selection = ev->selection;
+	xselev.target = ev->target;
+	xselev.time = ev->time;
+	xselev.property = None;
+
+	if (ev->property == None)
+		ev->property = ev->target;
+
+	xa_targets = XInternAtom(dpy, "TARGETS", 0);
+
+	if (ev->target == xa_targets) {     /* respond with the supported type */
+		XChangeProperty(dpy, ev->requestor, ev->property, XA_ATOM, 32,
+		                PropModeReplace, (unsigned char *)&utf8, 1);
+	} else if (ev->target == utf8 || ev->target == XA_STRING) {
+		unsigned minpos, maxpos;
+		char *seltext;
+
+		if (prompt->cursor == prompt->select)
+			goto done;  /* if nothing is selected, all done */
+
+		minpos = MIN(prompt->cursor, prompt->select);
+		maxpos = MAX(prompt->cursor, prompt->select);
+		seltext = strndup(prompt->text + minpos, maxpos - minpos + 1);
+		seltext[maxpos - minpos] = '\0';
+
+		XChangeProperty(dpy, ev->requestor, ev->property, ev->target, 8,
+		                PropModeReplace, (unsigned char *)seltext,
+		                strlen(seltext));
+		xselev.property = ev->property;
+
+		free(seltext);
+	}
+
+done:
+	/* all done, send SelectionNotify event to listener */
+	if (!XSendEvent(dpy, ev->requestor, True, 0L, (XEvent *)&xselev))
+		warnx("Error sending SelectionNotify event");
+}
+
 /* navigate through history */
 static char *
 navhist(struct History *hist, int direction)
@@ -1261,11 +1314,10 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 
 	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
-		delselection(prompt);
 		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCOPY:
-		/* TODO */
+		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCANCEL:
 		if (escaped || prompt->text[0] == '\0')
@@ -1421,9 +1473,9 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		return Noop;
 	case INSERT:
 insert:
-		delselection(prompt);
 		if (iscntrl(*buf))
 			return Noop;
+		delselection(prompt);
 		insert(prompt, buf, len);
 		if (!escaped)
 			goto match;
@@ -1433,14 +1485,10 @@ insert:
 	if (prompt->nitems == 0)
 		escaped = 1;
 
-	/* if moving the cursor without selecting */
-	if (operation == CTRLBOL ||
-	    operation == CTRLEOL ||
-	    operation == CTRLLEFT ||
-	    operation == CTRLRIGHT ||
-	    operation == CTRLWLEFT ||
-	    operation == CTRLWRIGHT)
+	if (ISMOTION(operation))            /* moving cursor while selecting */
 		prompt->select = prompt->cursor;
+	else if (ISSELECTION(operation))    /* moving cursor while selecting */
+		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
 
 	return Draw;
 
@@ -1585,8 +1633,12 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 		case SelectionNotify:
 			if (ev.xselection.property != utf8)
 				break;
+			delselection(prompt);
 			paste(prompt);
 			drawprompt(prompt);
+			break;
+		case SelectionRequest:
+			copy(prompt, &ev.xselectionrequest);
 			break;
 		}
 	}
@@ -1657,6 +1709,7 @@ freehist(struct History *hist)
 static void
 freeprompt(struct Prompt *prompt)
 {
+	free(prompt->text);
 	free(prompt->itemarray);
 
 	XFreePixmap(dpy, prompt->pixmap);
