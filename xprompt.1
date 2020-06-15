@@ -113,7 +113,7 @@ environment variable.
 The default value for
 .B XPROMPTCTRL
 is
-.B \(lqvcmpn::ae::bf::ukhdw\(rq
+.B \(lqvcmpn::::aebf::ukhdwAEBF::\(rq
 and can be modified via the
 .B config.h
 file.
@@ -142,17 +142,17 @@ Selects the previous item in the completion dropdown list.
 .BR CTRLNEXT " (" Tab ", " Ctrl+N )
 Selects the next item in the completion dropdown list.
 .TP
-.BR CTRLPGDOWN " (" PgDown )
-TODO.
-.TP
 .BR CTRLPGUP " (" PgUp )
 TODO.
 .TP
-.BR CTRLDOWN " (" Down )
-Select the next entered text in the history.
+.BR CTRLPGDOWN " (" PgDown )
+TODO.
 .TP
 .BR CTRLUP " (" Up )
 Select the previous entered text in the history.
+.TP
+.BR CTRLDOWN " (" Down )
+Select the next entered text in the history.
 .TP
 .BR CTRLBOL " (" Home ", " Ctrl+A )
 Move the cursor to the beginning of line.
@@ -207,6 +207,12 @@ Select text from cursor to one word to the right.
 .TP
 .BR CTRLCANCEL " (" Esc )
 Exit xprompt without printing anything.
+.PP
+.B xprompt
+can also be controlled by the mouse.
+Clicking on the input field with the left button moves the cursor.
+Clicking on the input field with the middle button pastes from the primary selection.
+Clicking on the input field with the left button and moving the mouse selects text.
 .SH ENVIRONMENT
 The following environment variables affect the execution of
 .BR xprompt .
@@ -221,14 +227,13 @@ Specifies the number of entries to be kept in the history file.
 This environment variable is set to a list of alphabetic characters,
 each character specify a ctrl sequence for a input operation in the
 order listed in the section USAGE.
-For example, by default, XPROMPTCTRL is "vcmpn::ae::bf::ukhdw",
-it means that pressing Ctrl+V enters CTRLPASTE;
-Ctrl+C enters CTRLCANCEL and Ctrl+M enters CTRLENTER.
+For example, by default, XPROMPTCTRL is \(lqvcmpn::::aebf::ukhdwAEBF::\(rq,
+it means that pressing Ctrl+V enters CTRLPASTE, Ctrl+C enters CTRLCOPY, Ctrl+M enters CTRLENTER, etc.
 A colon specifies that no Ctrl + Key sequence implements such operation.
 .TP
 .B WORDDELIMITERS
 A string of characters that delimits words.
-By default it is a space.
+By default it is a \(lq .,/:;\e<>'[]{}()&$?!\(rq.
 .SH RESOURCES
 .B
 xprompt

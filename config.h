@@ -2,7 +2,7 @@
 static const char *worddelimiters = " .,/:;\\<>'[]{}()&$?!";
 
 /* CTRL key bindings */
-static const char *xpromptctrl = "vcmpn::ae::bf::ukhdw";
+static const char *xpromptctrl = "vcmpn::::aebf::ukhdwAEBF::";
 
 /* font */
 static const char *font = "monospace:size=9";    /* for regular items */

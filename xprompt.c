@@ -38,10 +38,10 @@ enum Ctrl {
 	CTRLENTER,      /* Choose item */
 	CTRLPREV,       /* Select previous item */
 	CTRLNEXT,       /* Select next item */
-	CTRLPGDOWN,     /* Select item one screen below */
 	CTRLPGUP,       /* Select item one screen above */
-	CTRLDOWN,       /* Select next item in the history */
+	CTRLPGDOWN,     /* Select item one screen below */
 	CTRLUP,         /* Select previous item in the history */
+	CTRLDOWN,       /* Select next item in the history */
 	CTRLBOL,        /* Move cursor to beginning of line */
 	CTRLEOL,        /* Move cursor to end of line */
 	CTRLLEFT,       /* Move cursor one character to the left */
