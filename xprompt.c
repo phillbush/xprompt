@@ -40,12 +40,12 @@ enum Ctrl {
 	CTRLNEXT,       /* Select next item */
 	CTRLPGDOWN,     /* Select item one screen below */
 	CTRLPGUP,       /* Select item one screen above */
+	CTRLDOWN,       /* Select next item in the history */
+	CTRLUP,         /* Select previous item in the history */
 	CTRLBOL,        /* Move cursor to beginning of line */
 	CTRLEOL,        /* Move cursor to end of line */
-	CTRLUP,         /* Select previous item in the history */
-	CTRLDOWN,       /* Select next item in the history */
-	CTRLLEFT,       /* Move cursor one character the left */
-	CTRLRIGHT,      /* Move cursor one character the right */
+	CTRLLEFT,       /* Move cursor one character to the left */
+	CTRLRIGHT,      /* Move cursor one character to the right */
 	CTRLWLEFT,      /* Move cursor one word to the left */
 	CTRLWRIGHT,     /* Move cursor one word to the right */
 	CTRLDELBOL,     /* Delete from cursor to beginning of line */
@@ -55,8 +55,8 @@ enum Ctrl {
 	CTRLDELWORD,    /* Delete from cursor to beginning of word */
 	CTRLSELBOL,     /* Select from cursor to beginning of line */
 	CTRLSELEOL,     /* Select from cursor to end of line */
-	CTRLSELLEFT,    /* Select from cursor to one character the left */
-	CTRLSELRIGHT,   /* Select from cursor to one character the right */
+	CTRLSELLEFT,    /* Select from cursor to one character to the left */
+	CTRLSELRIGHT,   /* Select from cursor to one character to the right */
 	CTRLSELWLEFT,   /* Select from cursor to one word to the left */
 	CTRLSELWRIGHT,  /* Select from cursor to one word to the right */
 	CTRLCANCEL,     /* Cancel */

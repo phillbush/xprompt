@@ -126,10 +126,10 @@ etc.
 The default values for each operation is listed bellow between parentheses.
 .TP
 .BR CTRLPASTE " (" Ctrl+V )
-TODO.
+Paste from primary X selection.
 .TP
-.BR CTRLCANCEL " (" Esc ", " Ctrl+C )
-Exit xprompt without printing anything.
+.BR CTRLCOPY " (" Ctrl+C )
+TODO.
 .TP
 .BR CTRLENTER " (" Enter ", " Ctrl+M )
 Confirm text.
@@ -148,17 +148,17 @@ TODO.
 .BR CTRLPGUP " (" PgUp )
 TODO.
 .TP
+.BR CTRLDOWN " (" Down )
+Select the next entered text in the history.
+.TP
+.BR CTRLUP " (" Up )
+Select the previous entered text in the history.
+.TP
 .BR CTRLBOL " (" Home ", " Ctrl+A )
 Move the cursor to the beginning of line.
 .TP
 .BR CTRLEOL " (" End ", " Ctrl+E )
 Move the cursor to the end of line.
-.TP
-.BR CTRLUP " (" Up )
-Select the previous entered text in the history.
-.TP
-.BR CTRLDOWN " (" Down )
-Select the next entered text in the history.
 .TP
 .BR CTRLLEFT " (" Left ", " Ctrl+B )
 Move the cursor one character to the left.
@@ -186,6 +186,27 @@ Delete one character to the right.
 .TP
 .BR CTRLDELWORD " (" Ctrl+W )
 Delete one word to the left.
+.TP
+.BR CTRLSELBOL " (" Shift+Home )
+Select text from cursor to beginning of line.
+.TP
+.BR CTRLSELEOL " (" Shift+End )
+Select text from cursor to end of line.
+.TP
+.BR CTRLSELLEFT " (" Shift+Left )
+Select text from cursor to one character to the left.
+.TP
+.BR CTRLSELRIGHT " (" Shift+Right )
+Select text from cursor to one character to the right.
+.TP
+.BR CTRLSELWLEFT " (" Ctrl+Shift+Left )
+Select text from cursor to one word to the left.
+.TP
+.BR CTRLSELWRIGHT " (" Ctrl+Shift+Right )
+Select text from cursor to one word to the right.
+.TP
+.BR CTRLCANCEL " (" Esc )
+Exit xprompt without printing anything.
 .SH ENVIRONMENT
 The following environment variables affect the execution of
 .BR xprompt .
