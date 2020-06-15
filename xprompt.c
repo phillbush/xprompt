@@ -1037,7 +1037,7 @@ getcomplist(struct Prompt *prompt, struct Item *rootitem)
 	/* find list of possible completions */
 	end = 0;
 	curritem = rootitem;
-	while (end != prompt->cursor) {
+	while (end < prompt->cursor) {
 		nword++;
 		beg = prompt->text + end;
 		while (*beg != '\0' && strchr(worddelimiters, *beg))
