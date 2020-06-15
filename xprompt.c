@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <glob.h>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <X11/Xutil.h>
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
@@ -28,7 +29,7 @@
 
 enum {ColorFG, ColorBG, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
-enum Keypress_ret {Draw, Esc, Enter, Noop};
+enum Press_ret {Draw, Esc, Enter, Noop};
 
 /* Input operations */
 enum Ctrl {
@@ -134,12 +135,15 @@ static size_t nextrune(struct Prompt *prompt, int inc);
 static void movewordedge(struct Prompt *prompt, int dir);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
+static void paste(struct Prompt *prompt);
 static char *navhist(struct History *hist, int direction);
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
 static size_t fillitemarray(struct Prompt *prompt, struct Item *complist, int direction);
 static enum Ctrl getoperation(KeySym ksym, unsigned state);
-static enum Keypress_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
+static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
+static size_t getcurpos(struct Prompt *prompt, int x);
+static enum Press_ret buttonpress(struct Prompt *prompt, XButtonEvent *ev);
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
 static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 static void freeitem(struct Item *item);
@@ -156,6 +160,8 @@ static Window rootwin;
 static Colormap colormap;
 static XIC xic;
 static struct DC dc;
+static Atom utf8;
+static Atom clip;
 
 /* flags */
 static int wflag = 0;   /* whether to enable embeded prompt */
@@ -246,6 +252,8 @@ main(int argc, char *argv[])
 	getresources();
 	setupctrl();
 	setupdc();
+	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
+	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
 	/* initiate prompt */
 	if (!parentwin)
@@ -526,7 +534,8 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 	swa.override_redirect = True;
 	swa.background_pixel = dc.normal[ColorBG].pixel;
 	swa.border_pixel = dc.border.pixel;
-	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask;
+	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
+	               | ButtonPressMask;
 	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
@@ -922,6 +931,24 @@ delword(struct Prompt *prompt)
 		insert(prompt, NULL, nextrune(prompt, -1) - prompt->cursor);
 }
 
+/* we have been given the current selection, now insert it into input */
+static void
+paste(struct Prompt *prompt)
+{
+	char *p, *q;
+	int di;             /* dummy variable */
+	unsigned long dl;   /* dummy variable */
+	Atom da;            /* dummy variable */
+
+	if (XGetWindowProperty(dpy, prompt->win, utf8,
+	                       0, prompt->textsize / 4 + 1, False,
+	                       utf8, &da, &di, &dl, &dl, (unsigned char **)&p)
+	    == Success && p) {
+		insert(prompt, p, (q = strchr(p, '\n')) ? q - p : (ssize_t)strlen(p));
+		XFree(p);
+	}
+}
+
 /* navigate through history */
 static char *
 navhist(struct History *hist, int direction)
@@ -1136,7 +1163,7 @@ getoperation(KeySym ksym, unsigned state)
 }
 
 /* handle key press */
-static enum Keypress_ret
+static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
@@ -1163,7 +1190,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 
 	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
-		/* TODO */
+		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCANCEL:
 		if (escaped || prompt->text[0] == '\0')
@@ -1338,6 +1365,55 @@ match:
 	return Draw;
 }
 
+/* get the position, in characters, of the cursor given a x position */
+static size_t
+getcurpos(struct Prompt *prompt, int x)
+{
+	char *s = prompt->text;
+	int w = prompt->promptw;
+	size_t len = 0;
+
+	while (*s) {
+		XGlyphInfo ext;
+
+		if (x < w)
+			break;
+
+		len = strlen(prompt->text) - strlen(++s);
+		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, len, &ext);
+		w = prompt->promptw + ext.xOff;
+	}
+
+	/* the loop returns len 1 char to the right */
+	if (len && x + 3 < w)   /* 3 pixel tolerance */
+		len--;
+
+	return len;
+}
+
+/* handle button press */
+static enum Press_ret
+buttonpress(struct Prompt *prompt, XButtonEvent *ev)
+{
+	switch (ev->button) {
+	case Button2:                               /* middle click paste */
+		XConvertSelection(dpy, XA_PRIMARY, utf8, utf8, prompt->win, CurrentTime);
+		return Noop;
+	case Button1:
+		if (ev->y < 0 || ev->x < 0)
+			return Noop;
+		if ((unsigned) ev->y <= prompt->h) {    /* point cursor position */
+			prompt->cursor = getcurpos(prompt, ev->x);
+			return Draw;
+		}
+		return Noop;
+	default:
+		return Noop;
+	}
+
+	return Noop;
+}
+
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
 static int
 run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
@@ -1370,9 +1446,25 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			default:
 				break;
 			}
+			break;
+		case ButtonPress:
+			switch (buttonpress(prompt, &ev.xbutton)) {
+			case Draw:
+				drawprompt(prompt);
+			    break;
+			default:
+				break;
+			}
+			break;
 		case VisibilityNotify:
 			if (ev.xvisibility.state != VisibilityUnobscured)
 				XRaiseWindow(dpy, prompt->win);
+			break;
+		case SelectionNotify:
+			if (ev.xselection.property != utf8)
+				break;
+			paste(prompt);
+			drawprompt(prompt);
 			break;
 		}
 	}
