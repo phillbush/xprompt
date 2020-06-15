@@ -34,7 +34,7 @@ enum Press_ret {Draw, Esc, Enter, Noop};
 /* Input operations */
 enum Ctrl {
 	CTRLPASTE = 0,  /* Paste from clipboard */
-	CTRLCANCEL,     /* Cancel */
+	CTRLCOPY,       /* Copy into clipboard */
 	CTRLENTER,      /* Choose item */
 	CTRLPREV,       /* Select previous item */
 	CTRLNEXT,       /* Select next item */
@@ -53,6 +53,13 @@ enum Ctrl {
 	CTRLDELLEFT,    /* Delete character to left of cursor */
 	CTRLDELRIGHT,   /* Delete character to right of cursor */
 	CTRLDELWORD,    /* Delete from cursor to beginning of word */
+	CTRLSELBOL,     /* Select from cursor to beginning of line */
+	CTRLSELEOL,     /* Select from cursor to end of line */
+	CTRLSELLEFT,    /* Select from cursor to one character the left */
+	CTRLSELRIGHT,   /* Select from cursor to one character the right */
+	CTRLSELWLEFT,   /* Select from cursor to one word to the left */
+	CTRLSELWRIGHT,  /* Select from cursor to one word to the right */
+	CTRLCANCEL,     /* Cancel */
 	CTRLNOTHING,    /* Control does nothing */
 	INSERT          /* Insert character as is */
 };
@@ -87,6 +94,7 @@ struct Prompt {
 	char *text;             /* input field */
 	size_t textsize;        /* maximum size of the text in the input field */
 	size_t cursor;          /* position of the cursor in the input field */
+	size_t select;          /* position of the selection in the input field*/
 
 	struct Item **itemarray; /* array containing nitems matching text */
 	size_t curritem;        /* current item selected */
@@ -133,6 +141,7 @@ static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
 static size_t nextrune(struct Prompt *prompt, int inc);
 static void movewordedge(struct Prompt *prompt, int dir);
+static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
 static void paste(struct Prompt *prompt);
@@ -144,6 +153,7 @@ static enum Ctrl getoperation(KeySym ksym, unsigned state);
 static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
 static size_t getcurpos(struct Prompt *prompt, int x);
 static enum Press_ret buttonpress(struct Prompt *prompt, XButtonEvent *ev);
+static enum Press_ret buttonmotion(struct Prompt *prompt, XMotionEvent *ev);
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
 static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 static void freeitem(struct Item *item);
@@ -420,6 +430,7 @@ setuppromptinput(struct Prompt *prompt)
 	prompt->textsize = BUFSIZ;
 	prompt->text[0] = '\0';
 	prompt->cursor = 0;
+	prompt->select = 0;
 }
 
 /* allocate memory for the item list displayed when completion is active */
@@ -538,7 +549,7 @@ setuppromptwin(struct Prompt *prompt, Window parentwin)
 	swa.background_pixel = dc.normal[ColorBG].pixel;
 	swa.border_pixel = dc.border.pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
-	               | ButtonPressMask;
+	               | ButtonPressMask | Button1MotionMask;
 	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
@@ -834,10 +845,33 @@ drawprompt(struct Prompt *prompt)
 
 	/* draw input field text and set position of the cursor */
 	if (!pflag) {
+		XGlyphInfo ext;
+		unsigned minpos, maxpos;
+		int newx = x;
 		char *cursortext;           /* text from the cursor til the end */
 
+		ext.xOff = 0;
+
+		minpos = MIN(prompt->cursor, prompt->select);
+		maxpos = MAX(prompt->cursor, prompt->select);
+
+		/* draw text before selection */
+		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, minpos, &ext);
 		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-		                  x, y, prompt->text, strlen(prompt->text));
+		                  newx, y, prompt->text, minpos);
+		newx += ext.xOff;
+
+		/* draw selected text */
+		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text+minpos, maxpos-minpos, &ext);
+		XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, newx, 0, ext.xOff, prompt->h);
+		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorBG], dc.font,
+		                  newx, y, prompt->text+minpos, maxpos - minpos);
+		newx += ext.xOff;
+
+		/* draw text after selection */
+		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
+		                  newx, y, prompt->text+maxpos, strlen(prompt->text) - maxpos);
 
 		cursortext = prompt->text + prompt->cursor;
 		curpos = x + textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
@@ -909,6 +943,25 @@ movewordedge(struct Prompt *prompt, int dir)
 	}
 }
 
+/* delete selected text */
+static void
+delselection(struct Prompt *prompt)
+{
+	int minpos, maxpos;
+	size_t len;
+
+	if (prompt->select == prompt->cursor)
+		return;
+
+	minpos = MIN(prompt->cursor, prompt->select);
+	maxpos = MAX(prompt->cursor, prompt->select);
+	len = strlen(prompt->text + maxpos);
+
+	memmove(prompt->text + minpos, prompt->text + maxpos, len + 1);
+
+	prompt->cursor = prompt->select = minpos;
+}
+
 /* insert string on prompt->text and update prompt->cursor */
 static void
 insert(struct Prompt *prompt, const char *str, ssize_t n)
@@ -922,6 +975,7 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 	if (n > 0)
 		memcpy(&prompt->text[prompt->cursor], str, n);
 	prompt->cursor += n;
+	prompt->select = prompt->cursor;
 }
 
 /* delete word from the input field */
@@ -1137,17 +1191,31 @@ getoperation(KeySym ksym, unsigned state)
 	case XK_Tab:            return CTRLNEXT;
 	case XK_Prior:          return CTRLPGUP;
 	case XK_Next:           return CTRLPGDOWN;
-	case XK_Home:           return CTRLBOL;
-	case XK_End:            return CTRLEOL;
 	case XK_BackSpace:      return CTRLDELLEFT;
 	case XK_Delete:         return CTRLDELRIGHT;
 	case XK_Up:             return CTRLUP;
 	case XK_Down:           return CTRLDOWN;
+	case XK_Home:
+		if (state & ShiftMask)
+			return CTRLSELBOL;
+		return CTRLBOL;
+	case XK_End:
+		if (state & ShiftMask)
+			return CTRLSELEOL;
+		return CTRLEOL;
 	case XK_Left:
+		if (state & ShiftMask && state & ControlMask)
+			return CTRLSELWLEFT;
+		if (state & ShiftMask)
+			return CTRLSELLEFT;
 		if (state & ControlMask)
 			return CTRLWLEFT;
 		return CTRLLEFT;
 	case XK_Right:
+		if (state & ShiftMask && state & ControlMask)
+			return CTRLSELWRIGHT;
+		if (state & ShiftMask)
+			return CTRLSELRIGHT;
 		if (state & ControlMask)
 			return CTRLWRIGHT;
 		return CTRLRIGHT;
@@ -1193,7 +1261,11 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 
 	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
+		delselection(prompt);
 		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
+		return Noop;
+	case CTRLCOPY:
+		/* TODO */
 		return Noop;
 	case CTRLCANCEL:
 		if (escaped || prompt->text[0] == '\0')
@@ -1268,9 +1340,11 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLPGDOWN:
 		/* TODO */
 		return Noop;
+	case CTRLSELBOL:
 	case CTRLBOL:
 		prompt->cursor = 0;
 		break;
+	case CTRLSELEOL:
 	case CTRLEOL:
 		if (prompt->text[prompt->cursor] != '\0')
 			prompt->cursor = strlen(prompt->text);
@@ -1289,21 +1363,25 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		prompt->nitems = 0;
 		escaped = 1;
 		break;
+	case CTRLSELLEFT:
 	case CTRLLEFT:
 		if (prompt->cursor > 0)
 			prompt->cursor = nextrune(prompt, -1);
 		else
 			return Noop;
 		break;
+	case CTRLSELRIGHT:
 	case CTRLRIGHT:
 		if (prompt->text[prompt->cursor] != '\0')
 			prompt->cursor = nextrune(prompt, +1);
 		else
 			return Noop;
 		break;
+	case CTRLSELWLEFT:
 	case CTRLWLEFT:
 		movewordedge(prompt, -1);
 		break;
+	case CTRLSELWRIGHT:
 	case CTRLWRIGHT:
 		movewordedge(prompt, +1);
 		break;
@@ -1318,11 +1396,16 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			goto match;
 		break;
 	case CTRLDELRIGHT:
-		if (prompt->text[prompt->cursor] == '\0')
-			return Noop;
-		prompt->cursor = nextrune(prompt, +1);
-		/* FALLTHROUGH */
 	case CTRLDELLEFT:
+		if (prompt->cursor != prompt->select) {
+			delselection(prompt);
+			goto match;
+		}
+		if (operation == CTRLDELRIGHT) {
+			if (prompt->text[prompt->cursor] == '\0')
+				return Noop;
+			prompt->cursor = nextrune(prompt, +1);
+		}
 		if (prompt->cursor == 0)
 			return Noop;
 		insert(prompt, NULL, nextrune(prompt, -1) - prompt->cursor);
@@ -1338,6 +1421,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		return Noop;
 	case INSERT:
 insert:
+		delselection(prompt);
 		if (iscntrl(*buf))
 			return Noop;
 		insert(prompt, buf, len);
@@ -1348,6 +1432,15 @@ insert:
 
 	if (prompt->nitems == 0)
 		escaped = 1;
+
+	/* if moving the cursor without selecting */
+	if (operation == CTRLBOL ||
+	    operation == CTRLEOL ||
+	    operation == CTRLLEFT ||
+	    operation == CTRLRIGHT ||
+	    operation == CTRLWLEFT ||
+	    operation == CTRLWRIGHT)
+		prompt->select = prompt->cursor;
 
 	return Draw;
 
@@ -1400,13 +1493,14 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 {
 	switch (ev->button) {
 	case Button2:                               /* middle click paste */
+		delselection(prompt);
 		XConvertSelection(dpy, XA_PRIMARY, utf8, utf8, prompt->win, CurrentTime);
 		return Noop;
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
 			return Noop;
 		if ((unsigned) ev->y <= prompt->h) {    /* point cursor position */
-			prompt->cursor = getcurpos(prompt, ev->x);
+			prompt->select = prompt->cursor = getcurpos(prompt, ev->x);
 			return Draw;
 		}
 		return Noop;
@@ -1415,6 +1509,22 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	}
 
 	return Noop;
+}
+
+/* handle button motion */
+static enum Press_ret
+buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
+{
+	if (ev->y >= 0 && (unsigned) ev->y <= prompt->h) {
+		prompt->select = getcurpos(prompt, ev->x);
+	} else if (ev->y < 0) {    /* button motion to above the input field */
+		prompt->select = 0;
+	} else {            /* button motion to below the input field */
+		if (prompt->text[prompt->cursor] != '\0')
+			prompt->cursor = strlen(prompt->text);
+	}
+
+	return Draw;
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -1452,6 +1562,15 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case ButtonPress:
 			switch (buttonpress(prompt, &ev.xbutton)) {
+			case Draw:
+				drawprompt(prompt);
+			    break;
+			default:
+				break;
+			}
+			break;
+		case MotionNotify:
+			switch (buttonmotion(prompt, &ev.xmotion)) {
 			case Draw:
 				drawprompt(prompt);
 			    break;
