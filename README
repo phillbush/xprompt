@@ -1,15 +1,17 @@
                                 XPrompt
 
 XPrompt is a prompt for X.
-It is prompt where the user can type in a text subject to tab-completion.
+It is a text input field where the user can type in a text subject to
+tab-completion.
+
 When the user presses Return, the typed text is printed to the stdout.
 When the user presses Tab, a dropdown menu appears showing the items
 from the stdin that matches the word to be completed.  It can read a
 list of newline-separated items from stdin.
 
-§ Features
-
-New features that are not in dmenu:
+XPrompt is conceptually equal to Suckless' dmenu, but they have several
+differences.  Namely, the following are features of xprompt that are not
+in dmenu:
 • Text selection (both via mouse or via Shift+Arrow).
 • Configurable keybindings (via the XPROMPTCTRL environment variable).
 • History (via the XPROMPTHISTFILE and XPROMPTHISTSIZE environment variables).
