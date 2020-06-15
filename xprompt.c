@@ -513,7 +513,10 @@ setuppromptgeom(struct Prompt *prompt, Window parentwin)
 	}
 
 	/* calculate prompt string width */
-	prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
+	if (prompt->promptlen)
+		prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
+	else
+		prompt->promptw = dc.font->height;
 
 	/* description x position */
 	prompt->descx = prompt->w / TEXTPART;
