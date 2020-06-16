@@ -1011,7 +1011,7 @@ paste(struct Prompt *prompt)
 	}
 }
 
-/* */
+/* send SelectionNotify event to requestor window */
 static void
 copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
 {
