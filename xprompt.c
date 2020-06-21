@@ -56,8 +56,8 @@ static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
 
 /* text operations */
-static size_t nextrune(struct Prompt *prompt, int inc);
-static void movewordedge(struct Prompt *prompt, int dir);
+static size_t nextrune(struct Prompt *prompt, size_t position, int inc);
+static size_t movewordedge(struct Prompt *prompt, size_t position, int dir);
 static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
@@ -852,11 +852,11 @@ done:
 
 /* return location of next utf8 rune in the given direction (+1 or -1) */
 static size_t
-nextrune(struct Prompt *prompt, int inc)
+nextrune(struct Prompt *prompt, size_t position, int inc)
 {
 	ssize_t n;
 
-	for (n = prompt->cursor + inc;
+	for (n = position + inc;
 	     n + inc >= 0 && (prompt->text[n] & 0xc0) == 0x80;
 	     n += inc)
 		;
@@ -864,20 +864,22 @@ nextrune(struct Prompt *prompt, int inc)
 }
 
 /* move cursor to start (dir = -1) or end (dir = +1) of the word */
-static void
-movewordedge(struct Prompt *prompt, int dir)
+static size_t
+movewordedge(struct Prompt *prompt, size_t pos, int dir)
 {
 	if (dir < 0) {
-		while (prompt->cursor > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, -1)]))
-			prompt->cursor = nextrune(prompt, -1);
-		while (prompt->cursor > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, -1)]))
-			prompt->cursor = nextrune(prompt, -1);
+		while (pos > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
+			pos = nextrune(prompt, pos, -1);
+		while (pos > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
+			pos = nextrune(prompt, pos, -1);
 	} else {
-		while (prompt->text[prompt->cursor] && strchr(worddelimiters, prompt->text[prompt->cursor]))
-			prompt->cursor = nextrune(prompt, +1);
-		while (prompt->text[prompt->cursor] && !strchr(worddelimiters, prompt->text[prompt->cursor]))
-			prompt->cursor = nextrune(prompt, +1);
+		while (prompt->text[pos] && strchr(worddelimiters, prompt->text[pos]))
+			pos = nextrune(prompt, pos, +1);
+		while (prompt->text[pos] && !strchr(worddelimiters, prompt->text[pos]))
+			pos = nextrune(prompt, pos, +1);
 	}
+
+	return pos;
 }
 
 /* delete selected text */
@@ -919,10 +921,10 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 static void
 delword(struct Prompt *prompt)
 {
-	while (prompt->cursor > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, -1)]))
-		insert(prompt, NULL, nextrune(prompt, -1) - prompt->cursor);
-	while (prompt->cursor > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, -1)]))
-		insert(prompt, NULL, nextrune(prompt, -1) - prompt->cursor);
+	while (prompt->cursor > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
+	while (prompt->cursor > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
 }
 
 /* we have been given the current selection, now insert it into input */
@@ -1350,24 +1352,24 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLSELLEFT:
 	case CTRLLEFT:
 		if (prompt->cursor > 0)
-			prompt->cursor = nextrune(prompt, -1);
+			prompt->cursor = nextrune(prompt, prompt->cursor, -1);
 		else
 			return Noop;
 		break;
 	case CTRLSELRIGHT:
 	case CTRLRIGHT:
 		if (prompt->text[prompt->cursor] != '\0')
-			prompt->cursor = nextrune(prompt, +1);
+			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
 		else
 			return Noop;
 		break;
 	case CTRLSELWLEFT:
 	case CTRLWLEFT:
-		movewordedge(prompt, -1);
+		prompt->cursor = movewordedge(prompt, prompt->cursor, -1);
 		break;
 	case CTRLSELWRIGHT:
 	case CTRLWRIGHT:
-		movewordedge(prompt, +1);
+		prompt->cursor = movewordedge(prompt, prompt->cursor, +1);
 		break;
 	case CTRLDELBOL:
 		insert(prompt, NULL, 0 - prompt->cursor);
@@ -1388,11 +1390,11 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (operation == CTRLDELRIGHT) {
 			if (prompt->text[prompt->cursor] == '\0')
 				return Noop;
-			prompt->cursor = nextrune(prompt, +1);
+			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
 		}
 		if (prompt->cursor == 0)
 			return Noop;
-		insert(prompt, NULL, nextrune(prompt, -1) - prompt->cursor);
+		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
 		if (!escaped)
 			goto match;
 		break;
@@ -1471,6 +1473,10 @@ getcurpos(struct Prompt *prompt, int x)
 static enum Press_ret
 buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 {
+	static int word = 0;    /* whether a word was selected by double click */
+	static Time lasttime = 0;
+	size_t curpos;
+
 	switch (ev->button) {
 	case Button2:                               /* middle click paste */
 		delselection(prompt);
@@ -1480,7 +1486,21 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 		if (ev->y < 0 || ev->x < 0)
 			return Noop;
 		if ((unsigned) ev->y <= prompt->h) {    /* point cursor position */
-			prompt->select = prompt->cursor = getcurpos(prompt, ev->x);
+			curpos = getcurpos(prompt, ev->x);
+			if (word && ev->time - lasttime < DOUBLECLICK) {
+				prompt->cursor = 0;
+				if (prompt->text[prompt->cursor] != '\0')
+					prompt->select = strlen(prompt->text);
+				word = 0;
+			} else if (ev->time - lasttime < DOUBLECLICK) {
+				prompt->cursor = movewordedge(prompt, curpos, -1);
+				prompt->select = movewordedge(prompt, curpos, +1);
+				word = 1;
+			} else {
+				prompt->select = prompt->cursor = curpos;
+				word = 0;
+			}
+			lasttime = ev->time;
 			return Draw;
 		}
 		return Noop;
