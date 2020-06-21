@@ -14,158 +14,80 @@
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
+#include "xprompt.h"
 
 #define PROGNAME "xprompt"
 
-#define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
-#define MINTEXTWIDTH 200    /* minimum width of the completion word */
-#define NLETTERS     'z' - 'a' + 1
 
-/* macros */
-#define LEN(x) (sizeof (x) / sizeof (x[0]))
-#define MAX(x,y) ((x)>(y)?(x):(y))
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#define ISSOUTH(x) ((x) == SouthGravity || (x) == SouthWestGravity || (x) == SouthEastGravity)
-#define ISMOTION(x) ((x) == CTRLBOL || (x) == CTRLEOL || (x) == CTRLLEFT \
-                    || (x) == CTRLRIGHT || (x) == CTRLWLEFT || (x) == CTRLWRIGHT)
-#define ISSELECTION(x) ((x) == CTRLSELBOL || (x) == CTRLSELEOL || (x) == CTRLSELLEFT \
-                       || (x) == CTRLSELRIGHT || (x) == CTRLSELWLEFT || (x) == CTRLSELWRIGHT)
+/*
+ * function declarations
+ */
 
-enum {ColorFG, ColorBG, ColorLast};
-enum {LowerCase, UpperCase, CaseLast};
-enum Press_ret {Draw, Esc, Enter, Noop};
-
-/* Input operations */
-enum Ctrl {
-	CTRLPASTE = 0,  /* Paste from clipboard */
-	CTRLCOPY,       /* Copy into clipboard */
-	CTRLENTER,      /* Choose item */
-	CTRLPREV,       /* Select previous item */
-	CTRLNEXT,       /* Select next item */
-	CTRLPGUP,       /* Select item one screen above */
-	CTRLPGDOWN,     /* Select item one screen below */
-	CTRLUP,         /* Select previous item in the history */
-	CTRLDOWN,       /* Select next item in the history */
-	CTRLBOL,        /* Move cursor to beginning of line */
-	CTRLEOL,        /* Move cursor to end of line */
-	CTRLLEFT,       /* Move cursor one character to the left */
-	CTRLRIGHT,      /* Move cursor one character to the right */
-	CTRLWLEFT,      /* Move cursor one word to the left */
-	CTRLWRIGHT,     /* Move cursor one word to the right */
-	CTRLDELBOL,     /* Delete from cursor to beginning of line */
-	CTRLDELEOL,     /* Delete from cursor to end of line */
-	CTRLDELLEFT,    /* Delete character to left of cursor */
-	CTRLDELRIGHT,   /* Delete character to right of cursor */
-	CTRLDELWORD,    /* Delete from cursor to beginning of word */
-	CTRLSELBOL,     /* Select from cursor to beginning of line */
-	CTRLSELEOL,     /* Select from cursor to end of line */
-	CTRLSELLEFT,    /* Select from cursor to one character to the left */
-	CTRLSELRIGHT,   /* Select from cursor to one character to the right */
-	CTRLSELWLEFT,   /* Select from cursor to one word to the left */
-	CTRLSELWRIGHT,  /* Select from cursor to one word to the right */
-	CTRLCANCEL,     /* Cancel */
-	CTRLNOTHING,    /* Control does nothing */
-	INSERT          /* Insert character as is */
-};
-
-/* draw context structure */
-struct DC {
-	XftColor normal[ColorLast];     /* bg and fg of normal text */
-	XftColor selected[ColorLast];   /* bg and fg of the selected item */
-	XftColor border;                /* color of the border */
-	XftColor separator;             /* color of the separator */
-
-	GC gc;                          /* graphics context */
-	XftFont *font;                  /* font */
-};
-
-/* completion items */
-struct Item {
-	char *text;                 /* content of the completion item */
-	char *description;          /* description of the completion item */
-	unsigned level;             /* word level the item completes */
-	struct Item *prev, *next;   /* previous and next items */
-	struct Item *parent;        /* parent item */
-	struct Item *child;         /* point to the list of child items */
-};
-
-/* prompt */
-struct Prompt {
-	const char *promptstr;  /* string appearing before the input field */
-	unsigned promptlen;     /* length of the prompt string */
-	unsigned promptw;       /* prompt width */
-
-	char *text;             /* input field */
-	size_t textsize;        /* maximum size of the text in the input field */
-	size_t cursor;          /* position of the cursor in the input field */
-	size_t select;          /* position of the selection in the input field*/
-
-	struct Item **itemarray; /* array containing nitems matching text */
-	size_t curritem;        /* current item selected */
-	size_t nitems;          /* number of items in itemarray */
-	size_t maxitems;        /* maximum number of items in itemarray */
-
-	int gravity;            /* where in the screen to map xprompt */
-	int x, y;               /* position of xprompt */
-	unsigned descx;         /* x position of the description field */
-	unsigned w, h;          /* width and height of xprompt */
-	unsigned border;        /* border width */
-	unsigned separator;     /* separator width */
-
-	Drawable pixmap;        /* where to draw shapes on */
-	XftDraw *draw;          /* where to draw text on */
-	Window win;             /* xprompt window */
-};
-
-/* history */
-struct History {
-	char **entries;     /* array of history entries */
-	size_t index;       /* index to the selected entry in the array */
-	size_t size;        /* how many entries there are in the array */
-};
-
-/* function declarations */
+/* util functions */
 static unsigned textwidth(const char *str, size_t len);
-static void getresources(void);
 static void getcolor(const char *s, XftColor *color);
-static void setupdc(void);
-static void setupctrl(void);
-static void setuppromptinput(struct Prompt *prompt);
-static void setuppromptarray(struct Prompt *prompt);
-static void setuppromptgeom(struct Prompt *prompt, Window parentwin);
-static void setuppromptwin(struct Prompt *prompt, Window parentwin);
+
+/* initializers and cleaners */
+static void initresources(void);
+static void initdc(void);
+static void initctrl(void);
+static void initpromptinput(struct Prompt *prompt);
+static void initpromptarray(struct Prompt *prompt);
+static void initpromptgeom(struct Prompt *prompt, Window parentwin);
+static void initpromptwin(struct Prompt *prompt, Window parentwin);
+static void cleanitem(struct Item *item);
+static void cleanhist(struct History *hist);
+static void cleanprompt(struct Prompt *prompt);
+static void cleanX(void);
+
+/* parsers and structure builders */
 static struct Item *allocitem(unsigned level, const char *text, const char *description);
 static struct Item *builditems(unsigned level, const char *text, const char *description);
 static struct Item *parsestdin(FILE *fp);
 static void loadhist(FILE *fp, struct History *hist);
+
+/* grabbers */
 static void grabkeyboard(void);
 static void grabfocus(Window win);
+
+/* prompt drawers and controllers */
 static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
 static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
+
+/* text operations */
 static size_t nextrune(struct Prompt *prompt, int inc);
 static void movewordedge(struct Prompt *prompt, int dir);
 static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
-static void paste(struct Prompt *prompt);
-static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
+
+/* history and completion functions */
 static char *navhist(struct History *hist, int direction);
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
 static size_t fillitemarray(struct Prompt *prompt, struct Item *complist, int direction);
+static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
+
+/* utils for the event handlers */
 static enum Ctrl getoperation(KeySym ksym, unsigned state);
-static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
 static size_t getcurpos(struct Prompt *prompt, int x);
+
+/* event loop function and event handlers */
+static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
+static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
 static enum Press_ret buttonpress(struct Prompt *prompt, XButtonEvent *ev);
 static enum Press_ret buttonmotion(struct Prompt *prompt, XMotionEvent *ev);
-static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
-static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
-static void freeitem(struct Item *item);
-static void freehist(struct History *hist);
-static void freeprompt(struct Prompt *prompt);
-static void cleanup(void);
+static void paste(struct Prompt *prompt);
+static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
+
+/* show usage */
 static void usage(void);
+
+
+/*
+ * Global variables
+ */
 
 /* X stuff */
 static Display *dpy;
@@ -190,9 +112,19 @@ static enum Ctrl ctrl[CaseLast][NLETTERS];
 /* comparison function */
 static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 
+
+/*
+ * Include defaults
+ */
+
 #include "config.h"
 
-/* xprompt */
+
+/*
+ * Function definitions
+ */
+
+/* xprompt: a dmenu rip-off with contextual completion */
 int
 main(int argc, char *argv[])
 {
@@ -264,9 +196,9 @@ main(int argc, char *argv[])
 	colormap = DefaultColormap(dpy, screen);
 
 	/* setup */
-	getresources();
-	setupctrl();
-	setupdc();
+	initresources();
+	initctrl();
+	initdc();
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
@@ -280,10 +212,10 @@ main(int argc, char *argv[])
 		prompt.promptstr = *argv;
 		prompt.promptlen = strlen(*argv);
 	}
-	setuppromptinput(&prompt);
-	setuppromptarray(&prompt);
-	setuppromptgeom(&prompt, parentwin);
-	setuppromptwin(&prompt, parentwin);
+	initpromptinput(&prompt);
+	initpromptarray(&prompt);
+	initpromptgeom(&prompt, parentwin);
+	initpromptwin(&prompt, parentwin);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
@@ -310,10 +242,10 @@ main(int argc, char *argv[])
 	/* freeing stuff */
 	if (hflag)
 		fclose(histfp);
-	freeitem(rootitem);
-	freehist(&hist);
-	freeprompt(&prompt);
-	cleanup();
+	cleanitem(rootitem);
+	cleanhist(&hist);
+	cleanprompt(&prompt);
+	cleanX();
 
 	return EXIT_SUCCESS;
 }
@@ -331,7 +263,7 @@ textwidth(const char *str, size_t len)
 
 /* read xrdb for configuration options */
 static void
-getresources(void)
+initresources(void)
 {
 	char *xrm;
 	long n;
@@ -386,7 +318,7 @@ getcolor(const char *s, XftColor *color)
 
 /* init draw context */
 static void
-setupdc(void)
+initdc(void)
 {
 	/* get color pixels */
 	getcolor(background_color,    &dc.normal[ColorBG]);
@@ -406,7 +338,7 @@ setupdc(void)
 
 /* set control keybindings */
 static void
-setupctrl(void)
+initctrl(void)
 {
 	size_t i, j;
 
@@ -428,7 +360,7 @@ setupctrl(void)
 
 /* allocate memory for the text input field */
 static void
-setuppromptinput(struct Prompt *prompt)
+initpromptinput(struct Prompt *prompt)
 {
 	if ((prompt->text = malloc(BUFSIZ)) == NULL)
 		err(EXIT_FAILURE, "malloc");
@@ -440,7 +372,7 @@ setuppromptinput(struct Prompt *prompt)
 
 /* allocate memory for the item list displayed when completion is active */
 static void
-setuppromptarray(struct Prompt *prompt)
+initpromptarray(struct Prompt *prompt)
 {
 	prompt->curritem = 0;
 	prompt->nitems = 0;
@@ -451,7 +383,7 @@ setuppromptarray(struct Prompt *prompt)
 
 /* calculate prompt geometry */
 static void
-setuppromptgeom(struct Prompt *prompt, Window parentwin)
+initpromptgeom(struct Prompt *prompt, Window parentwin)
 {
 	XWindowAttributes wa;   /* window attributes of the parent window */
 
@@ -541,7 +473,7 @@ setuppromptgeom(struct Prompt *prompt, Window parentwin)
 
 /* set up prompt window */
 static void
-setuppromptwin(struct Prompt *prompt, Window parentwin)
+initpromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
@@ -1325,7 +1257,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		prompt->nitems = 0;
 		escaped = 1;
 		if (filecomp)
-			freeitem(complist);
+			cleanitem(complist);
 		break;
 	case CTRLENTER:
 		if (!escaped) {
@@ -1494,7 +1426,7 @@ insert:
 
 match:
 	if (filecomp) {     /* if in a file completion, cancel it */
-		freeitem(complist);
+		cleanitem(complist);
 		filecomp = 0;
 		prompt->nitems = 0;
 		escaped = 1;
@@ -1677,14 +1609,14 @@ savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 
 /* free a item tree */
 static void
-freeitem(struct Item *root)
+cleanitem(struct Item *root)
 {
 	struct Item *item, *tmp;
 
 	item = root;
 	while (item != NULL) {
 		if (item->child != NULL)
-			freeitem(item->child);
+			cleanitem(item->child);
 		tmp = item;
 		item = item->next;
 		free(tmp->text);
@@ -1694,7 +1626,7 @@ freeitem(struct Item *root)
 
 /* free history entries */
 static void
-freehist(struct History *hist)
+cleanhist(struct History *hist)
 {
 	size_t i;
 
@@ -1707,7 +1639,7 @@ freehist(struct History *hist)
 
 /* free and clean up a prompt */
 static void
-freeprompt(struct Prompt *prompt)
+cleanprompt(struct Prompt *prompt)
 {
 	free(prompt->text);
 	free(prompt->itemarray);
@@ -1719,7 +1651,7 @@ freeprompt(struct Prompt *prompt)
 
 /* clean up X stuff */
 static void
-cleanup(void)
+cleanX(void)
 {
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorFG]);
