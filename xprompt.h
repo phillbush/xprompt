@@ -7,6 +7,7 @@
 #define LEN(x) (sizeof (x) / sizeof (x[0]))
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
+#define BETWEEN(x, a, b)    ((a) <= (x) && (x) <= (b))
 #define ISSOUTH(x) ((x) == SouthGravity || (x) == SouthWestGravity || (x) == SouthEastGravity)
 #define ISMOTION(x) ((x) == CTRLBOL || (x) == CTRLEOL || (x) == CTRLLEFT \
                     || (x) == CTRLRIGHT || (x) == CTRLWLEFT || (x) == CTRLWRIGHT)
@@ -71,6 +72,12 @@ struct Item {
 	struct Item *child;         /* point to the list of child items */
 };
 
+/* monitor geometry structure */
+struct Monitor {
+	int num;                /* monitor number */
+	int x, y, w, h;         /* monitor geometry */
+};
+
 /* prompt */
 struct Prompt {
 	const char *promptstr;  /* string appearing before the input field */
@@ -93,6 +100,8 @@ struct Prompt {
 	unsigned w, h;          /* width and height of xprompt */
 	unsigned border;        /* border width */
 	unsigned separator;     /* separator width */
+
+	unsigned monitor;       /* monitor to draw the prompt in */
 
 	Drawable pixmap;        /* where to draw shapes on */
 	XftDraw *draw;          /* where to draw text on */

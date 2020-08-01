@@ -1,7 +1,9 @@
 /* See README file for copyright and license details. */
 
 #include <err.h>
+#include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +16,7 @@
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
+#include <X11/extensions/Xinerama.h>
 #include "xprompt.h"
 
 #define PROGNAME "xprompt"
@@ -25,9 +28,10 @@
 
 /* util functions */
 static unsigned textwidth(const char *str, size_t len);
-static void getcolor(const char *s, XftColor *color);
 
-/* initializers and cleaners */
+/* initializers, and their helper routine */
+static void ealloccolor(const char *s, XftColor *color);
+static void initmonitor(void);
 static void initresources(void);
 static void initdc(void);
 static void initctrl(void);
@@ -35,10 +39,6 @@ static void initpromptinput(struct Prompt *prompt);
 static void initpromptarray(struct Prompt *prompt);
 static void initpromptgeom(struct Prompt *prompt, Window parentwin);
 static void initpromptwin(struct Prompt *prompt, Window parentwin);
-static void cleanitem(struct Item *item);
-static void cleanhist(struct History *hist);
-static void cleanprompt(struct Prompt *prompt);
-static void cleanX(void);
 
 /* parsers and structure builders */
 static struct Item *allocitem(unsigned level, const char *text, const char *description);
@@ -81,6 +81,12 @@ static enum Press_ret buttonmotion(struct Prompt *prompt, XMotionEvent *ev);
 static void paste(struct Prompt *prompt);
 static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
 
+/* cleaners */
+static void cleanitem(struct Item *item);
+static void cleanhist(struct History *hist);
+static void cleanprompt(struct Prompt *prompt);
+static void cleanX(void);
+
 /* show usage */
 static void usage(void);
 
@@ -97,6 +103,7 @@ static Window rootwin;
 static Colormap colormap;
 static XIC xic;
 static struct DC dc;
+static struct Monitor mon;
 static Atom utf8;
 static Atom clip;
 
@@ -105,6 +112,7 @@ static int wflag = 0;   /* whether to enable embeded prompt */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
 static int pflag = 0;   /* whether to enable password mode */
+static int mflag = 0;   /* whether the user specified a monitor */
 
 /* ctrl operations */
 static enum Ctrl ctrl[CaseLast][NLETTERS];
@@ -136,7 +144,7 @@ main(int argc, char *argv[])
 	char *histfile = NULL;
 	char *str;
 	int ch;
-	size_t n;
+	long n;
 
 	/* get environment */
 	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
@@ -150,7 +158,7 @@ main(int argc, char *argv[])
 		worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "fGgh:ipw:")) != -1) {
+	while ((ch = getopt(argc, argv, "fGgh:im:pw:")) != -1) {
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -166,6 +174,13 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			fstrncmp = strncasecmp;
+			break;
+		case 'm':
+			mflag = 1;
+			n = strtol(optarg, &str, 10);
+			if (errno == ERANGE || n > UINT_MAX || n < 0 || str == optarg || *str != '\0')
+				errx(1, "improper monitor %s", optarg);
+			mon.num = n;
 			break;
 		case 'p':
 			pflag = 1;
@@ -196,6 +211,7 @@ main(int argc, char *argv[])
 	colormap = DefaultColormap(dpy, screen);
 
 	/* setup */
+	initmonitor();
 	initresources();
 	initctrl();
 	initdc();
@@ -261,6 +277,46 @@ textwidth(const char *str, size_t len)
 	return ext.xOff;
 }
 
+/* query monitor information and cursor position */
+static void
+initmonitor(void)
+{
+	XineramaScreenInfo *info = NULL;
+	Window dw;          /* dummy variable */
+	int di;             /* dummy variable */
+	unsigned du;        /* dummy variable */
+	int nmons;
+	int i;
+
+	if ((info = XineramaQueryScreens(dpy, &nmons)) != NULL) {
+		int selmon = 0;
+
+		if (!mflag || mon.num < 0 || mon.num >= nmons) {
+			int cursx, cursy;   /* cursor position */
+
+			XQueryPointer(dpy, rootwin, &dw, &dw, &cursx, &cursy, &di, &di, &du);
+			for (i = 0; i < nmons; i++) {
+				if (BETWEEN(cursx, info[i].x_org, info[i].x_org + info[i].width) &&
+				    BETWEEN(cursy, info[i].y_org, info[i].y_org + info[i].height)) {
+					selmon = i;
+					break;
+				}
+			}
+		} else {
+			selmon = mon.num;
+		}
+
+		mon.x = info[selmon].x_org;
+		mon.y = info[selmon].y_org;
+		mon.w = info[selmon].width;
+		mon.h = info[selmon].height;
+	} else {
+		mon.x = mon.y = 0;
+		mon.w = DisplayWidth(dpy, screen);
+		mon.h = DisplayHeight(dpy, screen);
+	}
+}
+
 /* read xrdb for configuration options */
 static void
 initresources(void)
@@ -310,7 +366,7 @@ initresources(void)
 
 /* get color from color string */
 static void
-getcolor(const char *s, XftColor *color)
+ealloccolor(const char *s, XftColor *color)
 {
 	if(!XftColorAllocName(dpy, visual, colormap, s, color))
 		errx(1, "cannot allocate color: %s", s);
@@ -321,12 +377,12 @@ static void
 initdc(void)
 {
 	/* get color pixels */
-	getcolor(background_color,    &dc.normal[ColorBG]);
-	getcolor(foreground_color,    &dc.normal[ColorFG]);
-	getcolor(selbackground_color, &dc.selected[ColorBG]);
-	getcolor(selforeground_color, &dc.selected[ColorFG]);
-	getcolor(separator_color,     &dc.separator);
-	getcolor(border_color,        &dc.border);
+	ealloccolor(background_color,    &dc.normal[ColorBG]);
+	ealloccolor(foreground_color,    &dc.normal[ColorFG]);
+	ealloccolor(selbackground_color, &dc.selected[ColorBG]);
+	ealloccolor(selforeground_color, &dc.selected[ColorFG]);
+	ealloccolor(separator_color,     &dc.separator);
+	ealloccolor(border_color,        &dc.border);
 
 	/* try to get font */
 	if ((dc.font = XftFontOpenName(dpy, screen, font)) == NULL)
@@ -385,11 +441,22 @@ initpromptarray(struct Prompt *prompt)
 static void
 initpromptgeom(struct Prompt *prompt, Window parentwin)
 {
-	XWindowAttributes wa;   /* window attributes of the parent window */
+	int x, y, w, h;
 
 	/* try to get attributes of parent window */
-	if (!XGetWindowAttributes(dpy, parentwin, &wa))
-		errx(1, "could not get window attributes of 0x%lx", parentwin);
+	if (wflag) {
+		XWindowAttributes wa;   /* window attributes of the parent window */
+		if (!XGetWindowAttributes(dpy, parentwin, &wa))
+			errx(1, "could not get window attributes of 0x%lx", parentwin);
+		x = y = 0;
+		w = wa.width;
+		h = wa.height;
+	} else {
+		x = mon.x;
+		y = mon.y;
+		w = mon.w;
+		h = mon.h;
+	}
 	
 	/* get width of border and separator */
 	prompt->border = border_pixels;
@@ -422,41 +489,43 @@ initpromptgeom(struct Prompt *prompt, Window parentwin)
 
 	/* update prompt size, based on parent window's size */
 	if (prompt->w == 0)
-		prompt->w = wa.width - prompt->border * 2;
-	prompt->w = MIN(prompt->w, (unsigned) wa.width);
-	prompt->h = MIN(prompt->h, (unsigned) wa.height);
+		prompt->w = w - prompt->border * 2;
+	prompt->w = MIN(prompt->w, (unsigned) w);
+	prompt->h = MIN(prompt->h, (unsigned) h);
 
 	/* update prompt position, based on prompt's gravity */
+	prompt->x = x;
+	prompt->y = y;
 	switch (prompt->gravity) {
 	case NorthWestGravity:
 		break;
 	case NorthGravity:
-		prompt->x += (wa.width - prompt->w)/2 - prompt->border;
+		prompt->x += (w - prompt->w)/2 - prompt->border;
 		break;
 	case NorthEastGravity:
-		prompt->x += wa.width - prompt->w - prompt->border * 2;
+		prompt->x += w - prompt->w - prompt->border * 2;
 		break;
 	case WestGravity:
-		prompt->y += (wa.height - prompt->h)/2 - prompt->border;
+		prompt->y += (h - prompt->h)/2 - prompt->border;
 		break;
 	case CenterGravity:
-		prompt->x += (wa.width - prompt->w)/2 - prompt->border;
-		prompt->y += (wa.height - prompt->h)/2 - prompt->border;
+		prompt->x += (w - prompt->w)/2 - prompt->border;
+		prompt->y += (h - prompt->h)/2 - prompt->border;
 		break;
 	case EastGravity:
-		prompt->x += wa.width - prompt->w - prompt->border * 2;
-		prompt->y += (wa.height - prompt->h)/2 - prompt->border;
+		prompt->x += w - prompt->w - prompt->border * 2;
+		prompt->y += (h - prompt->h)/2 - prompt->border;
 		break;
 	case SouthWestGravity:
-		prompt->y += wa.height - prompt->h - prompt->border * 2;
+		prompt->y += h - prompt->h - prompt->border * 2;
 		break;
 	case SouthGravity:
-		prompt->x += (wa.width - prompt->w)/2 - prompt->border;
-		prompt->y += wa.height - prompt->h - prompt->border * 2;
+		prompt->x += (w - prompt->w)/2 - prompt->border;
+		prompt->y += h - prompt->h - prompt->border * 2;
 		break;
 	case SouthEastGravity:
-		prompt->x += wa.width - prompt->w - prompt->border * 2;
-		prompt->y += wa.height - prompt->h - prompt->border * 2;
+		prompt->x += w - prompt->w - prompt->border * 2;
+		prompt->y += h - prompt->h - prompt->border * 2;
 		break;
 	}
 
