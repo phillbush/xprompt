@@ -31,6 +31,7 @@ static unsigned textwidth(const char *str, size_t len);
 
 /* initializers, and their helper routine */
 static void ealloccolor(const char *s, XftColor *color);
+static void getreferencepos(int *x_ret, int *y_ret);
 static void initmonitor(void);
 static void initresources(void);
 static void initdc(void);
@@ -129,7 +130,7 @@ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 
 
 /*
- * Function definitions
+ * Function implementations
  */
 
 /* xprompt: a dmenu rip-off with contextual completion */
