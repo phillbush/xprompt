@@ -277,27 +277,57 @@ textwidth(const char *str, size_t len)
 	return ext.xOff;
 }
 
+/* get position of focused windows or of the cursor */
+static void
+getreferencepos(int *x_ret, int *y_ret)
+{
+	Window win, focuswin = None, parentwin = None;
+	Window dw, *dws;    /* dummy variable */
+	int di;             /* dummy variable */
+	unsigned du;        /* dummy variable */
+	XWindowAttributes wa;
+
+	XGetInputFocus(dpy, &win, &di);
+	if (win != rootwin && win != None) {
+		while (parentwin != rootwin) {
+			if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws)
+				XFree(dws);
+			focuswin = win;
+			win = parentwin;
+		}
+		if (focuswin != None && XGetWindowAttributes(dpy, focuswin, &wa)) {
+			*x_ret = wa.x + wa.width / 2;
+			*y_ret = wa.y + wa.height / 2;
+			return;
+		}
+	}
+	if (XQueryPointer(dpy, rootwin, &dw, &dw, x_ret, y_ret, &di, &di, &du))
+		return;
+
+	x_ret = 0;
+	y_ret = 0;
+}
+
 /* query monitor information and cursor position */
 static void
 initmonitor(void)
 {
 	XineramaScreenInfo *info = NULL;
-	Window dw;          /* dummy variable */
-	int di;             /* dummy variable */
-	unsigned du;        /* dummy variable */
 	int nmons;
 	int i;
 
 	if ((info = XineramaQueryScreens(dpy, &nmons)) != NULL) {
 		int selmon = 0;
 
+		/* the user didn't specified a monitor, so let's use the monitor
+		 * of the focused window or the monitor with the cursor */
 		if (!mflag || mon.num < 0 || mon.num >= nmons) {
-			int cursx, cursy;   /* cursor position */
+			int x, y;
 
-			XQueryPointer(dpy, rootwin, &dw, &dw, &cursx, &cursy, &di, &di, &du);
+			getreferencepos(&x, &y);
 			for (i = 0; i < nmons; i++) {
-				if (BETWEEN(cursx, info[i].x_org, info[i].x_org + info[i].width) &&
-				    BETWEEN(cursy, info[i].y_org, info[i].y_org + info[i].height)) {
+				if (BETWEEN(x, info[i].x_org, info[i].x_org + info[i].width) &&
+				    BETWEEN(y, info[i].y_org, info[i].y_org + info[i].height)) {
 					selmon = i;
 					break;
 				}
