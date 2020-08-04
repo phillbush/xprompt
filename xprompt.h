@@ -13,10 +13,12 @@
                     || (x) == CTRLRIGHT || (x) == CTRLWLEFT || (x) == CTRLWRIGHT)
 #define ISSELECTION(x) ((x) == CTRLSELBOL || (x) == CTRLSELEOL || (x) == CTRLSELLEFT \
                        || (x) == CTRLSELRIGHT || (x) == CTRLSELWLEFT || (x) == CTRLSELWRIGHT)
+#define ISEDITING(x) ((x) == CTRLDELBOL || (x) == CTRLDELEOL || (x) == CTRLDELLEFT \
+                     || (x) == CTRLDELRIGHT || (x) == CTRLDELWORD || (x) == INSERT)
 
 enum {ColorFG, ColorBG, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
-enum Press_ret {DrawAll, DrawInput, DrawItem, Esc, Enter, Noop};
+enum Press_ret {DrawPrompt, DrawInput, DrawItem, Esc, Enter, Noop};
 
 /* Input operations */
 enum Ctrl {

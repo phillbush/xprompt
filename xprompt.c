@@ -55,7 +55,7 @@ static void grabfocus(Window win);
 
 /* prompt drawers and controllers */
 static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
-static void drawinput(struct Prompt *prompt, int x);
+static void drawinput(struct Prompt *prompt);
 static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
 
@@ -832,18 +832,19 @@ resizeprompt(struct Prompt *prompt, size_t nitems_old)
 
 /* draw the text on input field, return position of the cursor */
 static void
-drawinput(struct Prompt *prompt, int x)
+drawinput(struct Prompt *prompt)
 {
 	XGlyphInfo ext;
 	unsigned minpos, maxpos;
 	int newx;
 	unsigned curpos;            /* where to draw the cursor */
 	char *cursortext;           /* text from the cursor til the end */
-	int y;
+	int x, y;
 
-	newx = x;
 	ext.xOff = 0;
+	x = (prompt->promptlen == 0) ? dc.font->height : prompt->promptw;
 	y = prompt->h/2 + dc.font->ascent/2 - 1;
+	newx = x;
 
 	minpos = MIN(prompt->cursor, prompt->select);
 	maxpos = MAX(prompt->cursor, prompt->select);
@@ -933,7 +934,7 @@ drawprompt(struct Prompt *prompt)
 
 	/* draw input field text and set position of the cursor */
 	if (!pflag)
-		drawinput(prompt, x);
+		drawinput(prompt);
 
 	/* resize window and get new value of number of items */
 	nitems = resizeprompt(prompt, nitems);
@@ -1490,19 +1491,15 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	case CTRLDELBOL:
 		insert(prompt, NULL, 0 - prompt->cursor);
-		if (completion)
-			goto match;
 		break;
 	case CTRLDELEOL:
 		prompt->text[prompt->cursor] = '\0';
-		if (completion)
-			goto match;
 		break;
 	case CTRLDELRIGHT:
 	case CTRLDELLEFT:
 		if (prompt->cursor != prompt->select) {
 			delselection(prompt);
-			goto match;
+			break;
 		}
 		if (operation == CTRLDELRIGHT) {
 			if (prompt->text[prompt->cursor] == '\0')
@@ -1512,49 +1509,50 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (prompt->cursor == 0)
 			return Noop;
 		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
-		if (completion)
-			goto match;
 		break;
 	case CTRLDELWORD:
 		delword(prompt);
-		if (completion)
-			goto match;
 		break;
 	case CTRLNOTHING:
 		return Noop;
 	case INSERT:
 insert:
+		operation = INSERT;
 		if (iscntrl(*buf))
 			return Noop;
 		delselection(prompt);
 		insert(prompt, buf, len);
-		if (completion)
-			goto match;
 		break;
 	}
 
-	if (ISMOTION(operation))            /* moving cursor while selecting */
+	if (ISMOTION(operation)) {          /* moving cursor while selecting */
 		prompt->select = prompt->cursor;
-	else if (ISSELECTION(operation))    /* moving cursor while selecting */
-		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
-
-	return DrawAll;
-
-match:
-	if (filecomp) {     /* if in a file completion, cancel it */
-		cleanitem(complist);
-		filecomp = 0;
-		prompt->nitems = 0;
-		completion = 0;
-	} else {            /* otherwise, rematch */
-		complist = getcomplist(prompt, rootitem);
-		if (complist == NULL)
-			return DrawAll;
-		prompt->curritem = fillitemarray(prompt, complist, 0);
-		if (prompt->nitems == 0)
-			completion = 0;
+		return DrawInput;
 	}
-	return DrawAll;
+	if (ISSELECTION(operation)) {       /* moving cursor while selecting */
+		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
+		return DrawInput;
+	}
+	if (ISEDITING(operation)) {
+		if (completion && filecomp) {   /* if in a file completion, cancel it */
+			cleanitem(complist);
+			filecomp = 0;
+			prompt->nitems = 0;
+			completion = 0;
+			return DrawPrompt;
+		} else if (completion) {        /* if in regular completion, rematch */
+			complist = getcomplist(prompt, rootitem);
+			if (complist == NULL)
+				return DrawPrompt;
+			prompt->curritem = fillitemarray(prompt, complist, 0);
+			if (prompt->nitems == 0)
+				completion = 0;
+			return DrawPrompt;
+		} else {                        /* if not in completion just redraw input field */
+			return DrawInput;
+		}
+	}
+	return DrawPrompt;
 }
 
 /* get the position, in characters, of the cursor given a x position */
@@ -1615,7 +1613,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 				word = 0;
 			}
 			lasttime = ev->time;
-			return DrawAll;
+			return DrawPrompt;
 		}
 		return Noop;
 	default:
@@ -1638,7 +1636,7 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 			prompt->cursor = strlen(prompt->text);
 	}
 
-	return DrawAll;
+	return DrawPrompt;
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -1667,7 +1665,9 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				return 0;   /* return 0 to not save history */
 			case Enter:
 				return 1;   /* return 1 to save history */
-			case DrawAll: case DrawInput: case DrawItem:
+			case DrawInput:
+				drawinput(prompt);
+			case DrawPrompt: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:
@@ -1676,7 +1676,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case ButtonPress:
 			switch (buttonpress(prompt, &ev.xbutton)) {
-			case DrawAll: case DrawInput: case DrawItem:
+			case DrawPrompt: case DrawInput: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:
@@ -1685,7 +1685,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case MotionNotify:
 			switch (buttonmotion(prompt, &ev.xmotion)) {
-			case DrawAll: case DrawInput: case DrawItem:
+			case DrawPrompt: case DrawInput: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:
