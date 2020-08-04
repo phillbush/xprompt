@@ -11,8 +11,13 @@ static struct Config config = {
 	/* colors */
 	.background_color = "#000000",
 	.foreground_color = "#FFFFFF",
+	.description_color = "#555753",
+	.hoverbackground_color = "#121212",
+	.hoverforeground_color = "#FFFFFF",
+	.hoverdescription_color = "#555753",
 	.selbackground_color = "#3584E4",
 	.selforeground_color = "#FFFFFF",
+	.seldescription_color = "#C5C8C6",
 	.separator_color = "#555753",
 	.border_color = "#555753",
 

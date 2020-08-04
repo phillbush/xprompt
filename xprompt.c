@@ -79,12 +79,14 @@ static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 /* utils for the event handlers */
 static enum Ctrl getoperation(KeySym ksym, unsigned state);
 static size_t getcurpos(struct Prompt *prompt, int x);
+static int getitem(struct Prompt *prompt, int y);
 
 /* event loop function and event handlers */
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
 static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
 static enum Press_ret buttonpress(struct Prompt *prompt, XButtonEvent *ev);
 static enum Press_ret buttonmotion(struct Prompt *prompt, XMotionEvent *ev);
+static enum Press_ret pointermotion(struct Prompt *prompt, XMotionEvent *ev);
 static void paste(struct Prompt *prompt);
 static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
 
@@ -419,10 +421,20 @@ initresources(void)
 		config.background_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.foreground", "*", &type, &xval) == True)
 		config.foreground_color = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.description", "*", &type, &xval) == True)
+		config.description_color = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.hoverbackground", "*", &type, &xval) == True)
+		config.hoverbackground_color = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.hoverforeground", "*", &type, &xval) == True)
+		config.hoverforeground_color = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.hoverdescription", "*", &type, &xval) == True)
+		config.hoverdescription_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.selbackground", "*", &type, &xval) == True)
 		config.selbackground_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.selforeground", "*", &type, &xval) == True)
 		config.selforeground_color = strdup(xval.addr);
+	if (XrmGetResource(xdb, "xprompt.seldescription", "*", &type, &xval) == True)
+		config.seldescription_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.separator", "*", &type, &xval) == True)
 		config.separator_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.border", "*", &type, &xval) == True)
@@ -442,12 +454,17 @@ static void
 initdc(void)
 {
 	/* get color pixels */
-	ealloccolor(config.background_color,    &dc.normal[ColorBG]);
-	ealloccolor(config.foreground_color,    &dc.normal[ColorFG]);
-	ealloccolor(config.selbackground_color, &dc.selected[ColorBG]);
-	ealloccolor(config.selforeground_color, &dc.selected[ColorFG]);
-	ealloccolor(config.separator_color,     &dc.separator);
-	ealloccolor(config.border_color,        &dc.border);
+	ealloccolor(config.hoverbackground_color,   &dc.hover[ColorBG]);
+	ealloccolor(config.hoverforeground_color,   &dc.hover[ColorFG]);
+	ealloccolor(config.hoverdescription_color,  &dc.hover[ColorCM]);
+	ealloccolor(config.background_color,        &dc.normal[ColorBG]);
+	ealloccolor(config.foreground_color,        &dc.normal[ColorFG]);
+	ealloccolor(config.description_color,       &dc.normal[ColorCM]);
+	ealloccolor(config.selbackground_color,     &dc.selected[ColorBG]);
+	ealloccolor(config.selforeground_color,     &dc.selected[ColorFG]);
+	ealloccolor(config.seldescription_color,    &dc.selected[ColorCM]);
+	ealloccolor(config.separator_color,         &dc.separator);
+	ealloccolor(config.border_color,            &dc.border);
 
 	/* try to get font */
 	parsefonts(config.font);
@@ -751,7 +768,8 @@ setpromptinput(struct Prompt *prompt)
 static void
 setpromptarray(struct Prompt *prompt)
 {
-	prompt->curritem = 0;
+	prompt->selitem = 0;
+	prompt->hoveritem = 0;
 	prompt->nitems = 0;
 	prompt->maxitems = config.number_items;
 	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
@@ -876,7 +894,7 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	swa.background_pixel = dc.normal[ColorBG].pixel;
 	swa.border_pixel = dc.border.pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
-	               | ButtonPressMask | Button1MotionMask;
+	               | ButtonPressMask | PointerMotionMask;
 	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
@@ -1051,9 +1069,12 @@ static void
 drawitem(struct Prompt *prompt, size_t n, int copy)
 {
 	XftColor *color;
+	unsigned textwidth;
 	int y;
 
-	color = (n == prompt->curritem) ? dc.selected : dc.normal;
+	color = (n == prompt->selitem) ? dc.selected
+	      : (n == prompt->hoveritem) ? dc.hover
+	      : dc.normal;
 	y = (n + 1) * prompt->h + prompt->separator;
 
 	/* draw background */
@@ -1061,13 +1082,14 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
 
 	/* draw item text */
-	drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
-	         prompt->itemarray[n]->text, 0);
+	textwidth = drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
+	            prompt->itemarray[n]->text, 0);
 
 	/* if item has a description, draw it */
+	textwidth += dc.pad * 2 + prompt->promptw;
 	if (prompt->itemarray[n]->description != NULL)
-		drawtext(prompt->draw, &color[ColorFG], prompt->descx, y, prompt->h,
-		         prompt->itemarray[n]->description, 0);
+		drawtext(prompt->draw, &color[ColorCM], MAX(textwidth, prompt->descx),
+		         y, prompt->h, prompt->itemarray[n]->description, 0);
 
 	/* commit drawing */
 	if (copy)
@@ -1547,19 +1569,17 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 				delword(prompt);
 			if (!filecomp) {
 				/*
-				 * If not completing a file, insert item as is and
-				 * append a space.
+				 * If not completing a file, insert item as is
 				 */
-				insert(prompt, prompt->itemarray[prompt->curritem]->text,
-				       strlen(prompt->itemarray[prompt->curritem]->text));
-				insert(prompt, " ", 1);
+				insert(prompt, prompt->itemarray[prompt->selitem]->text,
+				       strlen(prompt->itemarray[prompt->selitem]->text));
 			} else {
 				/*
 				 * If completing a file, insert only the basename (the
 				 * part after the last slash).
 				 */
 				char *s, *p;
-				for (p = prompt->itemarray[prompt->curritem]->text; *p; p++)
+				for (p = prompt->itemarray[prompt->selitem]->text; *p; p++)
 					if (strchr("/", *p))
 						s = p + 1;
 				insert(prompt, s, strlen(s));
@@ -1579,7 +1599,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLNEXT:
 		if (!completion) {
 			complist = getcomplist(prompt, rootitem);
-			prompt->curritem = 0;
+			prompt->selitem = 0;
 			filecomp = 0;
 		}
 		if (complist == NULL && fflag) {
@@ -1592,17 +1612,17 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		}
 		completion = 1;
 		if (prompt->nitems == 0) {
-			prompt->curritem = fillitemarray(prompt, complist, 0);
+			prompt->selitem = fillitemarray(prompt, complist, 0);
 		} else if (operation == CTRLNEXT) {
-			if (prompt->curritem + 1 < prompt->nitems)
-				prompt->curritem++;
-			else if (prompt->itemarray[prompt->curritem]->next)
-				prompt->curritem = fillitemarray(prompt, complist, +1);
+			if (prompt->selitem + 1 < prompt->nitems)
+				prompt->selitem++;
+			else if (prompt->itemarray[prompt->selitem]->next)
+				prompt->selitem = fillitemarray(prompt, complist, +1);
 		} else if (operation == CTRLPREV) {
-			if (prompt->curritem > 0)
-				prompt->curritem--;
-			else if (prompt->itemarray[prompt->curritem]->prev)
-				prompt->curritem = fillitemarray(prompt, complist, -1);
+			if (prompt->selitem > 0)
+				prompt->selitem--;
+			else if (prompt->itemarray[prompt->selitem]->prev)
+				prompt->selitem = fillitemarray(prompt, complist, -1);
 		}
 		break;
 	case CTRLPGUP:
@@ -1709,7 +1729,7 @@ insert:
 			complist = getcomplist(prompt, rootitem);
 			if (complist == NULL)
 				return DrawPrompt;
-			prompt->curritem = fillitemarray(prompt, complist, 0);
+			prompt->selitem = fillitemarray(prompt, complist, 0);
 			if (prompt->nitems == 0)
 				completion = 0;
 			return DrawPrompt;
@@ -1749,6 +1769,15 @@ getcurpos(struct Prompt *prompt, int x)
 	return len;
 }
 
+/* get item on a given y position */
+static int
+getitem(struct Prompt *prompt, int y)
+{
+	y -= prompt->h + prompt->separator;
+
+	return y / prompt->h;
+}
+
 /* handle button press */
 static enum Press_ret
 buttonpress(struct Prompt *prompt, XButtonEvent *ev)
@@ -1765,7 +1794,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
 			return Noop;
-		if ((unsigned) ev->y <= prompt->h) {    /* point cursor position */
+		if ((unsigned)ev->y <= prompt->h) {
 			curpos = getcurpos(prompt, ev->x);
 			if (word && ev->time - lasttime < DOUBLECLICK) {
 				prompt->cursor = 0;
@@ -1781,6 +1810,15 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 				word = 0;
 			}
 			lasttime = ev->time;
+			return DrawInput;
+		} else if ((unsigned)ev->y > prompt->h + prompt->separator) {
+			prompt->selitem = getitem(prompt, ev->y);
+			if (sflag) {
+				insert(prompt, prompt->itemarray[prompt->selitem]->text,
+				       strlen(prompt->itemarray[prompt->selitem]->text));
+				puts(prompt->text);
+				return Enter;
+			}
 			return DrawPrompt;
 		}
 		return Noop;
@@ -1791,18 +1829,44 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	return Noop;
 }
 
-/* handle button motion */
+/* handle button motion X event */
 static enum Press_ret
 buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 {
-	if (ev->y >= 0 && (unsigned) ev->y <= prompt->h) {
+	size_t prevselect, prevcursor;
+
+	prevselect = prompt->select;
+	prevcursor = prompt->cursor;
+
+	if (ev->y >= 0 && (unsigned) ev->y <= prompt->h)
 		prompt->select = getcurpos(prompt, ev->x);
-	} else if (ev->y < 0) {    /* button motion to above the input field */
+	else if (ev->y < 0)
 		prompt->select = 0;
-	} else {            /* button motion to below the input field */
-		if (prompt->text[prompt->cursor] != '\0')
-			prompt->cursor = strlen(prompt->text);
-	}
+	else if (prompt->text[prompt->cursor] != '\0')
+		prompt->cursor = strlen(prompt->text);
+	else
+		return Noop;
+
+	/* if the selection didn't change there's no need to redraw input */
+	if (prompt->select == prevselect && prompt->cursor == prevcursor)
+		return Noop;
+
+	return DrawInput;
+}
+
+/* handle pointer motion X event */
+static enum Press_ret
+pointermotion(struct Prompt *prompt, XMotionEvent *ev)
+{
+	int miny, maxy;
+
+	miny = prompt->h + prompt->separator;
+	maxy = miny + prompt->h * prompt->nitems;
+
+	if (ev->y < miny || ev->y >= maxy)
+		return Noop;
+
+	prompt->hoveritem = getitem(prompt, ev->y);
 
 	return DrawPrompt;
 }
@@ -1812,15 +1876,18 @@ static int
 run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 {
 	XEvent ev;
+	enum Press_ret retval = Noop;
 
 	grabfocus(prompt->win);
+
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
+
 		switch (ev.type) {
 		case Expose:
 			if (ev.xexpose.count == 0)
-				drawprompt(prompt);
+				retval = DrawPrompt;
 			break;
 		case FocusIn:
 			/* regrab focus from parent window */
@@ -1828,38 +1895,17 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				grabfocus(prompt->win);
 			break;
 		case KeyPress:
-			switch (keypress(prompt, rootitem, hist, &ev.xkey)) {
-			case Esc:
-				return 0;   /* return 0 to not save history */
-			case Enter:
-				return 1;   /* return 1 to save history */
-			case DrawInput:
-				drawinput(prompt, 1);
-				break;
-			case DrawPrompt: case DrawItem:
-				drawprompt(prompt);
-			    break;
-			default:
-				break;
-			}
+			retval = keypress(prompt, rootitem, hist, &ev.xkey);
 			break;
 		case ButtonPress:
-			switch (buttonpress(prompt, &ev.xbutton)) {
-			case DrawPrompt: case DrawInput: case DrawItem:
-				drawprompt(prompt);
-			    break;
-			default:
-				break;
-			}
+			retval = buttonpress(prompt, &ev.xbutton);
 			break;
 		case MotionNotify:
-			switch (buttonmotion(prompt, &ev.xmotion)) {
-			case DrawPrompt: case DrawInput: case DrawItem:
-				drawprompt(prompt);
-			    break;
-			default:
-				break;
-			}
+			if ((unsigned)ev.xmotion.y <= prompt->h
+			    && ev.xmotion.state == Button1Mask)
+				retval = buttonmotion(prompt, &ev.xmotion);
+			else
+				retval = pointermotion(prompt, &ev.xmotion);
 			break;
 		case VisibilityNotify:
 			if (ev.xvisibility.state != VisibilityUnobscured)
@@ -1870,12 +1916,29 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				break;
 			delselection(prompt);
 			paste(prompt);
-			drawprompt(prompt);
+			retval = DrawInput;
 			break;
 		case SelectionRequest:
 			copy(prompt, &ev.xselectionrequest);
 			break;
 		}
+
+		switch (retval) {
+		case Esc:
+			return 0;   /* return 0 to not save history */
+		case Enter:
+			return 1;   /* return 1 to save history */
+		case DrawInput:
+			drawinput(prompt, 1);
+			break;
+		case DrawPrompt:
+			drawprompt(prompt);
+			break;
+		default:
+			break;
+		}
+
+		retval = Noop;
 	}
 
 	return 0;   /* UNREACHABLE */

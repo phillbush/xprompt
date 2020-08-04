@@ -81,10 +81,10 @@ Enable password mode.
 In this mode, the typed text is not echoed in the input field.
 .TP
 .B \-s
-Makes a single Enter or Esc keypress exit xprompt,
+Makes a single Enter or Esc keypress or mouse click on a item exit xprompt,
 regardless of a completion be in action.
 Without this option, when a completion is in action,
-a Enter or Esc keypress first exits the completion,
+a Enter or Esc keypress or a mouse click first exits the completion,
 and a second keypress exits xprompt.
 .TP
 .BI "\-w " windowid
@@ -237,6 +237,7 @@ When completion is not in operation, exit xprompt without printing anything.
 .PP
 .B xprompt
 can also be controlled by the mouse.
+Clicking on a item selects it.
 Clicking on the input field with the left button moves the cursor.
 Clicking on the input field with the middle button pastes from the primary selection.
 Clicking on the input field with the left button and moving the mouse selects text.
@@ -277,11 +278,26 @@ and of the non-selected items in the dropdown completion list.
 The foreground color of the input text field,
 and of the non-selected items in the dropdown completion list.
 .TP
+.B xprompt.description
+The foreground color of the description of non-selected items in the dropdown completion list.
+.TP
+.B xprompt.hoverbackground
+The background color of the hovered items in the dropdown completion list.
+.TP
+.B xprompt.hoverforeground
+The background color of the hovered items in the dropdown completion list.
+.TP
+.B xprompt.hoverdescription
+The foreground color of the description of hovered items in the dropdown completion list.
+.TP
 .B xprompt.selbackground
 The background color of the selected items in the dropdown completion list.
 .TP
 .B xprompt.selforeground
 The background color of the selected items in the dropdown completion list.
+.TP
+.B xprompt.seldescription
+The foreground color of the description of selected items in the dropdown completion list.
 .TP
 .B xprompt.border
 The color of the border around xprompt.

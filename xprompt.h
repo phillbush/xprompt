@@ -16,9 +16,9 @@
 #define ISEDITING(x) ((x) == CTRLDELBOL || (x) == CTRLDELEOL || (x) == CTRLDELLEFT \
                      || (x) == CTRLDELRIGHT || (x) == CTRLDELWORD || (x) == INSERT)
 
-enum {ColorFG, ColorBG, ColorLast};
+enum {ColorFG, ColorBG, ColorCM, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
-enum Press_ret {DrawPrompt, DrawInput, DrawItem, Esc, Enter, Noop};
+enum Press_ret {DrawPrompt, DrawInput, Esc, Enter, Noop};
 
 /* Input operations */
 enum Ctrl {
@@ -61,8 +61,13 @@ struct Config {
 
 	const char *background_color;
 	const char *foreground_color;
+	const char *description_color;
+	const char *hoverbackground_color;
+	const char *hoverforeground_color;
+	const char *hoverdescription_color;
 	const char *selbackground_color;
 	const char *selforeground_color;
+	const char *seldescription_color;
 	const char *separator_color;
 	const char *border_color;
 
@@ -79,6 +84,7 @@ struct Config {
 
 /* draw context structure */
 struct DC {
+	XftColor hover[ColorLast];      /* bg and fg of hovered item */
 	XftColor normal[ColorLast];     /* bg and fg of normal text */
 	XftColor selected[ColorLast];   /* bg and fg of the selected item */
 	XftColor border;                /* color of the border */
@@ -120,7 +126,8 @@ struct Prompt {
 	size_t select;          /* position of the selection in the input field*/
 
 	struct Item **itemarray; /* array containing nitems matching text */
-	size_t curritem;        /* current item selected */
+	size_t hoveritem;       /* item hovered */
+	size_t selitem;         /* item selected */
 	size_t nitems;          /* number of items in itemarray */
 	size_t maxitems;        /* maximum number of items in itemarray */
 
