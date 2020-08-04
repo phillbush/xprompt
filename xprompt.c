@@ -26,22 +26,14 @@
  * function declarations
  */
 
-/* util functions */
-static unsigned textwidth(const char *str, size_t len);
-
 /* initializers, and their helper routine */
 static void ealloccolor(const char *s, XftColor *color);
 static void getreferencepos(int *x_ret, int *y_ret);
+static void parsefonts(const char *s);
 static void initmonitor(void);
 static void initresources(void);
 static void initdc(void);
 static void initctrl(void);
-
-/* prompt structure setters */
-static void setpromptinput(struct Prompt *prompt);
-static void setpromptarray(struct Prompt *prompt);
-static void setpromptgeom(struct Prompt *prompt, Window parentwin);
-static void setpromptwin(struct Prompt *prompt, Window parentwin);
 
 /* parsers and structure builders */
 static struct Item *allocitem(unsigned level, const char *text, const char *description);
@@ -49,14 +41,25 @@ static struct Item *builditems(unsigned level, const char *text, const char *des
 static struct Item *parsestdin(FILE *fp);
 static void loadhist(FILE *fp, struct History *hist);
 
+/* text drawer, and its helper routine */
+static FcChar32 getnextutf8char(const char *s, const char **end_ret);
+static XftFont *getfontucode(FcChar32 ucode);
+static int drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len);
+
+/* prompt structure setters */
+static void setpromptinput(struct Prompt *prompt);
+static void setpromptarray(struct Prompt *prompt);
+static void setpromptgeom(struct Prompt *prompt, Window parentwin);
+static void setpromptwin(struct Prompt *prompt, Window parentwin);
+
 /* grabbers */
 static void grabkeyboard(void);
 static void grabfocus(Window win);
 
 /* prompt drawers and controllers */
 static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
-static void drawinput(struct Prompt *prompt);
-static void drawitem(struct Prompt *prompt, size_t n);
+static void drawinput(struct Prompt *prompt, int copy);
+static void drawitem(struct Prompt *prompt, size_t n, int copy);
 static void drawprompt(struct Prompt *prompt);
 
 /* text operations */
@@ -218,7 +221,7 @@ main(int argc, char *argv[])
 	rootwin = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
 
-	/* setup */
+	/* init */
 	initmonitor();
 	initresources();
 	initctrl();
@@ -229,13 +232,10 @@ main(int argc, char *argv[])
 	/* setup prompt */
 	if (!parentwin)
 		parentwin = rootwin;
-	if (argc == 0) {
-		prompt.promptstr = "\0";
-		prompt.promptlen = 0;
-	} else {
+	if (argc == 0)
+		prompt.promptstr = NULL;
+	else
 		prompt.promptstr = *argv;
-		prompt.promptlen = strlen(*argv);
-	}
 	setpromptinput(&prompt);
 	setpromptarray(&prompt);
 	setpromptgeom(&prompt, parentwin);
@@ -274,15 +274,12 @@ main(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-/* get width of a text drawn using dc */
-static unsigned
-textwidth(const char *str, size_t len)
+/* get color from color string */
+static void
+ealloccolor(const char *s, XftColor *color)
 {
-	XGlyphInfo ext;
-
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)str, len, &ext);
-
-	return ext.xOff;
+	if(!XftColorAllocName(dpy, visual, colormap, s, color))
+		errx(1, "cannot allocate color: %s", s);
 }
 
 /* get position of focused windows or of the cursor */
@@ -314,6 +311,44 @@ getreferencepos(int *x_ret, int *y_ret)
 
 	x_ret = 0;
 	y_ret = 0;
+}
+
+/* parse color string */
+static void
+parsefonts(const char *s)
+{
+	const char *p;
+	char buf[1024];
+	size_t nfont = 0;
+
+	dc.nfonts = 1;
+	for (p = s; *p; p++)
+		if (*p == ',')
+			dc.nfonts++;
+
+	if ((dc.fonts = calloc(dc.nfonts, sizeof *dc.fonts)) == NULL)
+		err(1, "calloc");
+
+	p = s;
+	while (*p != '\0') {
+		size_t i;
+
+		i = 0;
+		while (isspace(*p))
+			p++;
+		while (i < sizeof buf && *p != '\0' && *p != ',')
+			buf[i++] = *p++;
+		if (i >= sizeof buf)
+			errx(1, "font name too long");
+		if (*p == ',')
+			p++;
+		buf[i] = '\0';
+		if (nfont == 0)
+			if ((dc.pattern = FcNameParse((FcChar8 *)buf)) == NULL)
+				errx(1, "the first font in the cache must be loaded from a font string");
+		if ((dc.fonts[nfont++] = XftFontOpenName(dpy, screen, buf)) == NULL)
+			errx(1, "cannot load font");
+	}
 }
 
 /* query monitor information and cursor position */
@@ -402,14 +437,6 @@ initresources(void)
 	XrmDestroyDatabase(xdb);
 }
 
-/* get color from color string */
-static void
-ealloccolor(const char *s, XftColor *color)
-{
-	if(!XftColorAllocName(dpy, visual, colormap, s, color))
-		errx(1, "cannot allocate color: %s", s);
-}
-
 /* init draw context */
 static void
 initdc(void)
@@ -423,11 +450,13 @@ initdc(void)
 	ealloccolor(config.border_color,        &dc.border);
 
 	/* try to get font */
-	if ((dc.font = XftFontOpenName(dpy, screen, config.font)) == NULL)
-		errx(1, "cannot load font");
+	parsefonts(config.font);
 
 	/* create common GC */
 	dc.gc = XCreateGC(dpy, rootwin, 0, NULL);
+
+	/* compute left text padding */
+	dc.pad = dc.fonts[0]->height;
 }
 
 /* set control keybindings */
@@ -449,193 +478,6 @@ initctrl(void)
 			ctrl[UpperCase][config.xpromptctrl[i] - 'A'] = i;
 		if (islower(config.xpromptctrl[i]))
 			ctrl[LowerCase][config.xpromptctrl[i] - 'a'] = i;
-	}
-}
-
-/* allocate memory for the text input field */
-static void
-setpromptinput(struct Prompt *prompt)
-{
-	if ((prompt->text = malloc(BUFSIZ)) == NULL)
-		err(EXIT_FAILURE, "malloc");
-	prompt->textsize = BUFSIZ;
-	prompt->text[0] = '\0';
-	prompt->cursor = 0;
-	prompt->select = 0;
-}
-
-/* allocate memory for the item list displayed when completion is active */
-static void
-setpromptarray(struct Prompt *prompt)
-{
-	prompt->curritem = 0;
-	prompt->nitems = 0;
-	prompt->maxitems = config.number_items;
-	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
-		err(EXIT_FAILURE, "malloc");
-}
-
-/* calculate prompt geometry */
-static void
-setpromptgeom(struct Prompt *prompt, Window parentwin)
-{
-	int x, y, w, h;     /* geometry of monitor or parent window */
-
-	/* try to get attributes of parent window */
-	if (wflag) {
-		XWindowAttributes wa;   /* window attributes of the parent window */
-		if (!XGetWindowAttributes(dpy, parentwin, &wa))
-			errx(1, "could not get window attributes of 0x%lx", parentwin);
-		x = y = 0;
-		w = wa.width;
-		h = wa.height;
-	} else {
-		x = mon.x;
-		y = mon.y;
-		w = mon.w;
-		h = mon.h;
-	}
-	
-	/* get width of border and separator */
-	prompt->border = config.border_pixels;
-	prompt->separator = config.separator_pixels;
-
-	/* get prompt gravity */
-	if (config.gravityspec == NULL || strcmp(config.gravityspec, "N") == 0)
-		prompt->gravity = NorthGravity;
-	else if (strcmp(config.gravityspec, "NW") == 0)
-		prompt->gravity = NorthWestGravity;
-	else if (strcmp(config.gravityspec, "NE") == 0)
-		prompt->gravity = NorthEastGravity;
-	else if (strcmp(config.gravityspec, "W") == 0)
-		prompt->gravity = WestGravity;
-	else if (strcmp(config.gravityspec, "C") == 0)
-		prompt->gravity = CenterGravity;
-	else if (strcmp(config.gravityspec, "E") == 0)
-		prompt->gravity = EastGravity;
-	else if (strcmp(config.gravityspec, "SW") == 0)
-		prompt->gravity = SouthWestGravity;
-	else if (strcmp(config.gravityspec, "S") == 0)
-		prompt->gravity = SouthGravity;
-	else if (strcmp(config.gravityspec, "SE") == 0)
-		prompt->gravity = SouthEastGravity;
-	else
-		errx(EXIT_FAILURE, "Unknown gravity %s", config.gravityspec);
-
-	/* get prompt geometry */
-	XParseGeometry(config.geometryspec, &prompt->x, &prompt->y, &prompt->w, &prompt->h);
-
-	/* update prompt size, based on parent window's size */
-	if (prompt->w == 0)
-		prompt->w = w - prompt->border * 2;
-	prompt->w = MIN(prompt->w, (unsigned) w);
-	prompt->h = MIN(prompt->h, (unsigned) h);
-
-	/* update prompt position, based on prompt's gravity */
-	prompt->x = x;
-	prompt->y = y;
-	switch (prompt->gravity) {
-	case NorthWestGravity:
-		break;
-	case NorthGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		break;
-	case NorthEastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		break;
-	case WestGravity:
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case CenterGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case EastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case SouthWestGravity:
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	case SouthGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	case SouthEastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	}
-
-	/* calculate prompt string width */
-	if (prompt->promptlen)
-		prompt->promptw = textwidth(prompt->promptstr, prompt->promptlen) + dc.font->height * 2;
-	else
-		prompt->promptw = dc.font->height;
-
-	/* description x position */
-	prompt->descx = prompt->w / TEXTPART;
-	prompt->descx = MAX(prompt->descx, MINTEXTWIDTH);
-}
-
-/* set up prompt window */
-static void
-setpromptwin(struct Prompt *prompt, Window parentwin)
-{
-	XSetWindowAttributes swa;
-	XSizeHints sizeh;
-	XClassHint classh = {PROGNAME, PROGNAME};
-	XIM xim;
-	unsigned h;
-
-	/* create prompt window */
-	swa.override_redirect = True;
-	swa.background_pixel = dc.normal[ColorBG].pixel;
-	swa.border_pixel = dc.border.pixel;
-	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
-	               | ButtonPressMask | Button1MotionMask;
-	prompt->win = XCreateWindow(dpy, parentwin,
-	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
-	                            CopyFromParent, CopyFromParent, CopyFromParent,
-	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
-	                            &swa);
-	XSetClassHint(dpy, prompt->win, &classh);
-
-	/* set window normal hints */
-	sizeh.flags = PMaxSize | PMinSize;
-	sizeh.min_width = sizeh.max_width = prompt->w;
-	sizeh.min_height = sizeh.max_height = prompt->h;
-	XSetWMNormalHints(dpy, prompt->win, &sizeh);
-
-	/* create drawables */
-	h = prompt->separator + prompt->h * (prompt->maxitems + 1);
-	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h,
-	                               DefaultDepth(dpy, screen));
-	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
-
-	/* open input methods */
-	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
-		errx(EXIT_FAILURE, "XOpenIM: could not open input device");
-	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
-	if (xic == NULL)
-		errx(EXIT_FAILURE, "XCreateIC: could not obtain input method");
-
-	/* map window */
-	XMapRaised(dpy, prompt->win);
-
-	/* selecect focus event mask for the parent window */
-	if (wflag) {
-		Window r, p;    /* unused variables */
-		Window *children;
-		unsigned i, nchildren;
-
-		XSelectInput(dpy, parentwin, FocusChangeMask);
-		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
-			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
-				XSelectInput(dpy, children[i], FocusChangeMask);
-			XFree(children);
-		}
 	}
 }
 
@@ -759,6 +601,327 @@ loadhist(FILE *fp, struct History *hist)
 	hflag = (ferror(fp)) ? 0 : 1;
 }
 
+/* get next utf8 char from s return its codepoint and set next_ret to pointer to end of character */
+static FcChar32
+getnextutf8char(const char *s, const char **next_ret)
+{
+	static const unsigned char utfbyte[] = {0x80, 0x00, 0xC0, 0xE0, 0xF0};
+	static const unsigned char utfmask[] = {0xC0, 0x80, 0xE0, 0xF0, 0xF8};
+	static const FcChar32 utfmin[] = {0, 0x00,  0x80,  0x800,  0x10000};
+	static const FcChar32 utfmax[] = {0, 0x7F, 0x7FF, 0xFFFF, 0x10FFFF};
+	/* 0xFFFD is the replacement character, used to represent unknown characters */
+	static const FcChar32 unknown = 0xFFFD;
+	FcChar32 ucode;         /* FcChar32 type holds 32 bits */
+	size_t usize = 0;       /* n' of bytes of the utf8 character */
+	size_t i;
+
+	*next_ret = s+1;
+
+	/* get code of first byte of utf8 character */
+	for (i = 0; i < sizeof utfmask; i++) {
+		if (((unsigned char)*s & utfmask[i]) == utfbyte[i]) {
+			usize = i;
+			ucode = (unsigned char)*s & ~utfmask[i];
+			break;
+		}
+	}
+
+	/* if first byte is a continuation byte or is not allowed, return unknown */
+	if (i == sizeof utfmask || usize == 0)
+		return unknown;
+
+	/* check the other usize-1 bytes */
+	s++;
+	for (i = 1; i < usize; i++) {
+		*next_ret = s+1;
+		/* if byte is nul or is not a continuation byte, return unknown */
+		if (*s == '\0' || ((unsigned char)*s & utfmask[0]) != utfbyte[0])
+			return unknown;
+		/* 6 is the number of relevant bits in the continuation byte */
+		ucode = (ucode << 6) | ((unsigned char)*s & ~utfmask[0]);
+		s++;
+	}
+
+	/* check if ucode is invalid or in utf-16 surrogate halves */
+	if (!BETWEEN(ucode, utfmin[usize], utfmax[usize])
+	    || BETWEEN (ucode, 0xD800, 0xDFFF))
+		return unknown;
+
+	return ucode;
+}
+
+/* get which font contains a given code point */
+static XftFont *
+getfontucode(FcChar32 ucode)
+{
+	FcCharSet *fccharset = NULL;
+	FcPattern *fcpattern = NULL;
+	FcPattern *match = NULL;
+	XftFont *retfont = NULL;
+	XftResult result;
+	size_t i;
+
+	for (i = 0; i < dc.nfonts; i++)
+		if (XftCharExists(dpy, dc.fonts[i], ucode) == FcTrue)
+			return dc.fonts[i];
+
+	/* create a charset containing our code point */
+	fccharset = FcCharSetCreate();
+	FcCharSetAddChar(fccharset, ucode);
+
+	/* create a pattern akin to the dc.pattern but containing our charset */
+	if (fccharset) {
+		fcpattern = FcPatternDuplicate(dc.pattern);
+		FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
+	}
+
+	/* find pattern matching fcpattern */
+	if (fcpattern) {
+		FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
+		FcDefaultSubstitute(fcpattern);
+		match = XftFontMatch(dpy, screen, fcpattern, &result);
+	}
+
+	/* if found a pattern, open its font */
+	if (match) {
+		retfont = XftFontOpenPattern(dpy, match);
+		if (retfont && XftCharExists(dpy, retfont, ucode) == FcTrue) {
+			if ((dc.fonts = realloc(dc.fonts, dc.nfonts+1)) == NULL)
+				err(1, "realloc");
+			dc.fonts[dc.nfonts] = retfont;
+			return dc.fonts[dc.nfonts++];
+		} else {
+			XftFontClose(dpy, retfont);
+		}
+	}
+
+	/* in case no fount was found, return the first one */
+	return dc.fonts[0];
+}
+
+/* draw text into XftDraw, return width of text glyphs */
+static int
+drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len)
+{
+	int textwidth = 0;
+	const char *end;
+
+	end = text + len;
+	while (*text && (!len || text < end)) {
+		XftFont *currfont;
+		XGlyphInfo ext;
+		FcChar32 ucode;
+		const char *next;
+		size_t len;
+
+		ucode = getnextutf8char(text, &next);
+		currfont = getfontucode(ucode);
+
+		len = next - text;
+		XftTextExtentsUtf8(dpy, currfont, (XftChar8 *)text, len, &ext);
+		textwidth += ext.xOff;
+
+		if (draw) {
+			int texty;
+
+			texty = y + (h - (currfont->ascent + currfont->descent))/2 + currfont->ascent;
+			XftDrawStringUtf8(draw, color, currfont, x, texty, (XftChar8 *)text, len);
+			x += ext.xOff;
+		}
+
+		text = next;
+	}
+
+	return textwidth;
+}
+
+/* allocate memory for the text input field */
+static void
+setpromptinput(struct Prompt *prompt)
+{
+	if ((prompt->text = malloc(BUFSIZ)) == NULL)
+		err(EXIT_FAILURE, "malloc");
+	prompt->textsize = BUFSIZ;
+	prompt->text[0] = '\0';
+	prompt->cursor = 0;
+	prompt->select = 0;
+}
+
+/* allocate memory for the item list displayed when completion is active */
+static void
+setpromptarray(struct Prompt *prompt)
+{
+	prompt->curritem = 0;
+	prompt->nitems = 0;
+	prompt->maxitems = config.number_items;
+	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
+		err(EXIT_FAILURE, "malloc");
+}
+
+/* calculate prompt geometry */
+static void
+setpromptgeom(struct Prompt *prompt, Window parentwin)
+{
+	int x, y, w, h;     /* geometry of monitor or parent window */
+
+	/* try to get attributes of parent window */
+	if (wflag) {
+		XWindowAttributes wa;   /* window attributes of the parent window */
+		if (!XGetWindowAttributes(dpy, parentwin, &wa))
+			errx(1, "could not get window attributes of 0x%lx", parentwin);
+		x = y = 0;
+		w = wa.width;
+		h = wa.height;
+	} else {
+		x = mon.x;
+		y = mon.y;
+		w = mon.w;
+		h = mon.h;
+	}
+	
+	/* get width of border and separator */
+	prompt->border = config.border_pixels;
+	prompt->separator = config.separator_pixels;
+
+	/* get prompt gravity */
+	if (config.gravityspec == NULL || strcmp(config.gravityspec, "N") == 0)
+		prompt->gravity = NorthGravity;
+	else if (strcmp(config.gravityspec, "NW") == 0)
+		prompt->gravity = NorthWestGravity;
+	else if (strcmp(config.gravityspec, "NE") == 0)
+		prompt->gravity = NorthEastGravity;
+	else if (strcmp(config.gravityspec, "W") == 0)
+		prompt->gravity = WestGravity;
+	else if (strcmp(config.gravityspec, "C") == 0)
+		prompt->gravity = CenterGravity;
+	else if (strcmp(config.gravityspec, "E") == 0)
+		prompt->gravity = EastGravity;
+	else if (strcmp(config.gravityspec, "SW") == 0)
+		prompt->gravity = SouthWestGravity;
+	else if (strcmp(config.gravityspec, "S") == 0)
+		prompt->gravity = SouthGravity;
+	else if (strcmp(config.gravityspec, "SE") == 0)
+		prompt->gravity = SouthEastGravity;
+	else
+		errx(EXIT_FAILURE, "Unknown gravity %s", config.gravityspec);
+
+	/* get prompt geometry */
+	XParseGeometry(config.geometryspec, &prompt->x, &prompt->y, &prompt->w, &prompt->h);
+
+	/* update prompt size, based on parent window's size */
+	if (prompt->w == 0)
+		prompt->w = w - prompt->border * 2;
+	prompt->w = MIN(prompt->w, (unsigned) w);
+	prompt->h = MIN(prompt->h, (unsigned) h);
+
+	/* update prompt position, based on prompt's gravity */
+	prompt->x = x;
+	prompt->y = y;
+	switch (prompt->gravity) {
+	case NorthWestGravity:
+		break;
+	case NorthGravity:
+		prompt->x += (w - prompt->w)/2 - prompt->border;
+		break;
+	case NorthEastGravity:
+		prompt->x += w - prompt->w - prompt->border * 2;
+		break;
+	case WestGravity:
+		prompt->y += (h - prompt->h)/2 - prompt->border;
+		break;
+	case CenterGravity:
+		prompt->x += (w - prompt->w)/2 - prompt->border;
+		prompt->y += (h - prompt->h)/2 - prompt->border;
+		break;
+	case EastGravity:
+		prompt->x += w - prompt->w - prompt->border * 2;
+		prompt->y += (h - prompt->h)/2 - prompt->border;
+		break;
+	case SouthWestGravity:
+		prompt->y += h - prompt->h - prompt->border * 2;
+		break;
+	case SouthGravity:
+		prompt->x += (w - prompt->w)/2 - prompt->border;
+		prompt->y += h - prompt->h - prompt->border * 2;
+		break;
+	case SouthEastGravity:
+		prompt->x += w - prompt->w - prompt->border * 2;
+		prompt->y += h - prompt->h - prompt->border * 2;
+		break;
+	}
+
+	/* calculate prompt string width */
+	if (prompt->promptstr)
+		prompt->promptw = drawtext(NULL, NULL, 0, 0, 0, prompt->promptstr, 0) + dc.pad * 2;
+	else
+		prompt->promptw = dc.pad;
+
+	/* description x position */
+	prompt->descx = prompt->w / TEXTPART;
+	prompt->descx = MAX(prompt->descx, MINTEXTWIDTH);
+}
+
+/* set up prompt window */
+static void
+setpromptwin(struct Prompt *prompt, Window parentwin)
+{
+	XSetWindowAttributes swa;
+	XSizeHints sizeh;
+	XClassHint classh = {PROGNAME, PROGNAME};
+	XIM xim;
+	unsigned h;
+
+	/* create prompt window */
+	swa.override_redirect = True;
+	swa.background_pixel = dc.normal[ColorBG].pixel;
+	swa.border_pixel = dc.border.pixel;
+	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
+	               | ButtonPressMask | Button1MotionMask;
+	prompt->win = XCreateWindow(dpy, parentwin,
+	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
+	                            CopyFromParent, CopyFromParent, CopyFromParent,
+	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
+	                            &swa);
+	XSetClassHint(dpy, prompt->win, &classh);
+
+	/* set window normal hints */
+	sizeh.flags = PMaxSize | PMinSize;
+	sizeh.min_width = sizeh.max_width = prompt->w;
+	sizeh.min_height = sizeh.max_height = prompt->h;
+	XSetWMNormalHints(dpy, prompt->win, &sizeh);
+
+	/* create drawables */
+	h = prompt->separator + prompt->h * (prompt->maxitems + 1);
+	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h,
+	                               DefaultDepth(dpy, screen));
+	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
+
+	/* open input methods */
+	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
+		errx(EXIT_FAILURE, "XOpenIM: could not open input device");
+	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
+	if (xic == NULL)
+		errx(EXIT_FAILURE, "XCreateIC: could not obtain input method");
+
+	/* map window */
+	XMapRaised(dpy, prompt->win);
+
+	/* selecect focus event mask for the parent window */
+	if (wflag) {
+		Window r, p;    /* unused variables */
+		Window *children;
+		unsigned i, nchildren;
+
+		XSelectInput(dpy, parentwin, FocusChangeMask);
+		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
+			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
+				XSelectInput(dpy, children[i], FocusChangeMask);
+			XFree(children);
+		}
+	}
+}
+
 /* try to grab keyboard, we may have to wait for another process to ungrab */
 static void
 grabkeyboard(void)
@@ -832,53 +995,60 @@ resizeprompt(struct Prompt *prompt, size_t nitems_old)
 
 /* draw the text on input field, return position of the cursor */
 static void
-drawinput(struct Prompt *prompt)
+drawinput(struct Prompt *prompt, int copy)
 {
-	XGlyphInfo ext;
 	unsigned minpos, maxpos;
-	int newx;
 	unsigned curpos;            /* where to draw the cursor */
-	char *cursortext;           /* text from the cursor til the end */
-	int x, y;
+	int x, y, xtext;
+	int widthpre, widthsel, widthpos;
 
-	ext.xOff = 0;
-	x = (prompt->promptlen == 0) ? dc.font->height : prompt->promptw;
-	y = prompt->h/2 + dc.font->ascent/2 - 1;
-	newx = x;
+	x = (prompt->promptstr) ? prompt->promptw : dc.pad;
 
 	minpos = MIN(prompt->cursor, prompt->select);
 	maxpos = MAX(prompt->cursor, prompt->select);
 
+	/* draw background */
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, x, 0,
+	               prompt->w - x, prompt->h);
+
 	/* draw text before selection */
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, minpos, &ext);
-	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-	                  newx, y, prompt->text, minpos);
-	newx += ext.xOff;
+	xtext = x;
+	widthpre = (minpos)
+	         ? drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
+	                    prompt->text, minpos)
+	         : 0;
 
 	/* draw selected text */
-	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text+minpos, maxpos-minpos, &ext);
+	xtext += widthpre;
+	widthsel = (maxpos - minpos)
+	         ? drawtext(NULL, NULL, 0, 0, 0, prompt->text+minpos, maxpos-minpos)
+	         : 0;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, newx, 0, ext.xOff, prompt->h);
-	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorBG], dc.font,
-	                  newx, y, prompt->text+minpos, maxpos - minpos);
-	newx += ext.xOff;
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, 0, widthsel, prompt->h);
+	drawtext(prompt->draw, &dc.normal[ColorBG], xtext, 0, prompt->h,
+	         prompt->text+minpos, maxpos-minpos);
 
 	/* draw text after selection */
-	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-	                  newx, y, prompt->text+maxpos, strlen(prompt->text) - maxpos);
-
-	cursortext = prompt->text + prompt->cursor;
+	xtext += widthsel;
+	widthpos = drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
+	                    prompt->text+maxpos, 0);
 
 	/* draw cursor rectangle */
-	curpos = x + textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
-	y = prompt->h/2 - dc.font->height/2;
+	curpos = x + widthpre;
+	y = prompt->h/2 - dc.pad/2;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.font->height);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.pad);
+
+	/* commit drawing */
+	if (copy)
+		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, 0,
+		          prompt->w - x, prompt->h, x, 0);
 }
 
 /* draw nth item in the item array */
 static void
-drawitem(struct Prompt *prompt, size_t n)
+drawitem(struct Prompt *prompt, size_t n, int copy)
 {
 	XftColor *color;
 	int y;
@@ -886,25 +1056,23 @@ drawitem(struct Prompt *prompt, size_t n)
 	color = (n == prompt->curritem) ? dc.selected : dc.normal;
 	y = (n + 1) * prompt->h + prompt->separator;
 
-	/* if nth item is the selected one, draw a rectangle behind it */
-	if (n == prompt->curritem) {
-		XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
-	}
+	/* draw background */
+	XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
 
 	/* draw item text */
-	XftDrawStringUtf8(prompt->draw, &color[ColorFG], dc.font,
-                      prompt->promptw, y + prompt->h/2 + dc.font->ascent/2 - 1,
-                      prompt->itemarray[n]->text,
-                      strlen(prompt->itemarray[n]->text));
+	drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
+	         prompt->itemarray[n]->text, 0);
 
 	/* if item has a description, draw it */
-	if (prompt->itemarray[n]->description != NULL) {
-		XftDrawStringUtf8(prompt->draw, &color[ColorFG], dc.font,
-                          prompt->descx, y + prompt->h/2 + dc.font->ascent/2 - 1,
-                          prompt->itemarray[n]->description,
-                          strlen(prompt->itemarray[n]->description));
-    }
+	if (prompt->itemarray[n]->description != NULL)
+		drawtext(prompt->draw, &color[ColorFG], prompt->descx, y, prompt->h,
+		         prompt->itemarray[n]->description, 0);
+
+	/* commit drawing */
+	if (copy)
+		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, prompt->promptw, y,
+		          prompt->w - prompt->promptw, prompt->h, prompt->promptw, y);
 }
 
 /* draw the prompt */
@@ -916,25 +1084,22 @@ drawprompt(struct Prompt *prompt)
 	int x, y;
 	size_t i;
 
-	x = dc.font->height;
-	y = prompt->h/2 + dc.font->ascent/2 - 1;
+	x = dc.pad;
 	h = prompt->h;
 
-	/* draw background */
-	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0,
-	               prompt->w, prompt->h);
-
 	/* draw the prompt string and update x to the end of it */
-	if (prompt->promptlen != 0) {
-		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-                      	  x, y, prompt->promptstr, prompt->promptlen);
+	if (prompt->promptstr) {
+		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
+
+		drawtext(prompt->draw, &dc.normal[ColorFG], x, 0, prompt->h,
+		         prompt->promptstr, 0);
 		x = prompt->promptw;
 	}
 
 	/* draw input field text and set position of the cursor */
 	if (!pflag)
-		drawinput(prompt);
+		drawinput(prompt, 0);
 
 	/* resize window and get new value of number of items */
 	nitems = resizeprompt(prompt, nitems);
@@ -957,7 +1122,7 @@ drawprompt(struct Prompt *prompt)
 
 	/* draw items */
 	for (i = 0; i < prompt->nitems; i++)
-		drawitem(prompt, i);
+		drawitem(prompt, i, 0);
 
 done:
 	/* commit drawing */
@@ -1559,19 +1724,22 @@ insert:
 static size_t
 getcurpos(struct Prompt *prompt, int x)
 {
-	char *s = prompt->text;
+	const char *s = prompt->text;
 	int w = prompt->promptw;
 	size_t len = 0;
 
 	while (*s) {
-		XGlyphInfo ext;
+		const char *next;
+		int textwidth;
 
 		if (x < w)
 			break;
 
+		(void)getnextutf8char(s, &next);
 		len = strlen(prompt->text) - strlen(++s);
-		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, len, &ext);
-		w = prompt->promptw + ext.xOff;
+		textwidth = drawtext(NULL, NULL, 0, 0, 0, prompt->text, len);
+		w = prompt->promptw + textwidth;
+		s = next;
 	}
 
 	/* the loop returns len 1 char to the right */
@@ -1666,7 +1834,8 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			case Enter:
 				return 1;   /* return 1 to save history */
 			case DrawInput:
-				drawinput(prompt);
+				drawinput(prompt, 1);
+				break;
 			case DrawPrompt: case DrawItem:
 				drawprompt(prompt);
 			    break;

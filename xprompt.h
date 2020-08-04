@@ -90,7 +90,7 @@ struct DC {
 	XftFont **fonts;
 	size_t nfonts;
 
-	XftFont *font;                  /* font */
+	int pad;                        /* padding around text */
 };
 
 /* completion items */
@@ -112,7 +112,6 @@ struct Monitor {
 /* prompt */
 struct Prompt {
 	const char *promptstr;  /* string appearing before the input field */
-	unsigned promptlen;     /* length of the prompt string */
 	unsigned promptw;       /* prompt width */
 
 	char *text;             /* input field */
