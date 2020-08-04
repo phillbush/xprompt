@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 		config.worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "fGgh:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "fG:g:h:im:psw:")) != -1) {
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -1971,7 +1971,7 @@ cleanX(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-fi] [-G gravity] [-g geometry]\n"
-	                      "               [-h file] [-w windowid] [prompt]\n");
+	(void)fprintf(stderr, "usage: xprompt [-fips] [-G gravity] [-g geometry] [-h file]\n"
+	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(EXIT_FAILURE);
 }
