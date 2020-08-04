@@ -156,11 +156,11 @@ main(int argc, char *argv[])
 		histfile = str;
 	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
 		if ((n = strtol(str, NULL, 10)) > 0)
-			histsize = n;
+			config.histsize = n;
 	if ((str = getenv("XPROMPTCTRL")) != NULL)
-		xpromptctrl = str;
+		config.xpromptctrl = str;
 	if ((str = getenv("WORDDELIMITERS")) != NULL)
-		worddelimiters = str;
+		config.worddelimiters = str;
 
 	/* get options */
 	while ((ch = getopt(argc, argv, "fGgh:im:psw:")) != -1) {
@@ -169,10 +169,10 @@ main(int argc, char *argv[])
 			fflag = 1;
 			break;
 		case 'G':
-			gravityspec = optarg;
+			config.gravityspec = optarg;
 			break;
 		case 'g':
-			geometryspec = optarg;
+			config.geometryspec = optarg;
 			break;
 		case 'h':
 			histfile = optarg;
@@ -373,31 +373,31 @@ initresources(void)
 
 	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
 		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			number_items = n;
+			config.number_items = n;
 	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
 		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			border_pixels = n;
+			config.border_pixels = n;
 	if (XrmGetResource(xdb, "xprompt.separatorWidth", "*", &type, &xval) == True)
 		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			separator_pixels = n;
+			config.separator_pixels = n;
 	if (XrmGetResource(xdb, "xprompt.background", "*", &type, &xval) == True)
-		background_color = strdup(xval.addr);
+		config.background_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.foreground", "*", &type, &xval) == True)
-		foreground_color = strdup(xval.addr);
+		config.foreground_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.selbackground", "*", &type, &xval) == True)
-		selbackground_color = strdup(xval.addr);
+		config.selbackground_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.selforeground", "*", &type, &xval) == True)
-		selforeground_color = strdup(xval.addr);
+		config.selforeground_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.separator", "*", &type, &xval) == True)
-		separator_color = strdup(xval.addr);
+		config.separator_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.border", "*", &type, &xval) == True)
-		border_color = strdup(xval.addr);
+		config.border_color = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.font", "*", &type, &xval) == True)
-		font = strdup(xval.addr);
+		config.font = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.geometry", "*", &type, &xval) == True)
-		geometryspec = strdup(xval.addr);
+		config.geometryspec = strdup(xval.addr);
 	if (XrmGetResource(xdb, "xprompt.gravity", "*", &type, &xval) == True)
-		gravityspec = strdup(xval.addr);
+		config.gravityspec = strdup(xval.addr);
 
 	XrmDestroyDatabase(xdb);
 }
@@ -415,15 +415,15 @@ static void
 initdc(void)
 {
 	/* get color pixels */
-	ealloccolor(background_color,    &dc.normal[ColorBG]);
-	ealloccolor(foreground_color,    &dc.normal[ColorFG]);
-	ealloccolor(selbackground_color, &dc.selected[ColorBG]);
-	ealloccolor(selforeground_color, &dc.selected[ColorFG]);
-	ealloccolor(separator_color,     &dc.separator);
-	ealloccolor(border_color,        &dc.border);
+	ealloccolor(config.background_color,    &dc.normal[ColorBG]);
+	ealloccolor(config.foreground_color,    &dc.normal[ColorFG]);
+	ealloccolor(config.selbackground_color, &dc.selected[ColorBG]);
+	ealloccolor(config.selforeground_color, &dc.selected[ColorFG]);
+	ealloccolor(config.separator_color,     &dc.separator);
+	ealloccolor(config.border_color,        &dc.border);
 
 	/* try to get font */
-	if ((dc.font = XftFontOpenName(dpy, screen, font)) == NULL)
+	if ((dc.font = XftFontOpenName(dpy, screen, config.font)) == NULL)
 		errx(1, "cannot load font");
 
 	/* create common GC */
@@ -442,13 +442,13 @@ initctrl(void)
 		}
 	}
 
-	for (i = 0; i < CTRLNOTHING && xpromptctrl[i] != '\0'; i++) {
-		if (!isalpha(xpromptctrl[i]))
+	for (i = 0; i < CTRLNOTHING && config.xpromptctrl[i] != '\0'; i++) {
+		if (!isalpha(config.xpromptctrl[i]))
 			continue;
-		if (isupper(xpromptctrl[i]))
-			ctrl[UpperCase][xpromptctrl[i] - 'A'] = i;
-		if (islower(xpromptctrl[i]))
-			ctrl[LowerCase][xpromptctrl[i] - 'a'] = i;
+		if (isupper(config.xpromptctrl[i]))
+			ctrl[UpperCase][config.xpromptctrl[i] - 'A'] = i;
+		if (islower(config.xpromptctrl[i]))
+			ctrl[LowerCase][config.xpromptctrl[i] - 'a'] = i;
 	}
 }
 
@@ -470,7 +470,7 @@ setpromptarray(struct Prompt *prompt)
 {
 	prompt->curritem = 0;
 	prompt->nitems = 0;
-	prompt->maxitems = number_items;
+	prompt->maxitems = config.number_items;
 	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
 		err(EXIT_FAILURE, "malloc");
 }
@@ -497,33 +497,33 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 	}
 	
 	/* get width of border and separator */
-	prompt->border = border_pixels;
-	prompt->separator = separator_pixels;
+	prompt->border = config.border_pixels;
+	prompt->separator = config.separator_pixels;
 
 	/* get prompt gravity */
-	if (gravityspec == NULL || strcmp(gravityspec, "N") == 0)
+	if (config.gravityspec == NULL || strcmp(config.gravityspec, "N") == 0)
 		prompt->gravity = NorthGravity;
-	else if (strcmp(gravityspec, "NW") == 0)
+	else if (strcmp(config.gravityspec, "NW") == 0)
 		prompt->gravity = NorthWestGravity;
-	else if (strcmp(gravityspec, "NE") == 0)
+	else if (strcmp(config.gravityspec, "NE") == 0)
 		prompt->gravity = NorthEastGravity;
-	else if (strcmp(gravityspec, "W") == 0)
+	else if (strcmp(config.gravityspec, "W") == 0)
 		prompt->gravity = WestGravity;
-	else if (strcmp(gravityspec, "C") == 0)
+	else if (strcmp(config.gravityspec, "C") == 0)
 		prompt->gravity = CenterGravity;
-	else if (strcmp(gravityspec, "E") == 0)
+	else if (strcmp(config.gravityspec, "E") == 0)
 		prompt->gravity = EastGravity;
-	else if (strcmp(gravityspec, "SW") == 0)
+	else if (strcmp(config.gravityspec, "SW") == 0)
 		prompt->gravity = SouthWestGravity;
-	else if (strcmp(gravityspec, "S") == 0)
+	else if (strcmp(config.gravityspec, "S") == 0)
 		prompt->gravity = SouthGravity;
-	else if (strcmp(gravityspec, "SE") == 0)
+	else if (strcmp(config.gravityspec, "SE") == 0)
 		prompt->gravity = SouthEastGravity;
 	else
-		errx(EXIT_FAILURE, "Unknown gravity %s", gravityspec);
+		errx(EXIT_FAILURE, "Unknown gravity %s", config.gravityspec);
 
 	/* get prompt geometry */
-	XParseGeometry(geometryspec, &prompt->x, &prompt->y, &prompt->w, &prompt->h);
+	XParseGeometry(config.geometryspec, &prompt->x, &prompt->y, &prompt->w, &prompt->h);
 
 	/* update prompt size, based on parent window's size */
 	if (prompt->w == 0)
@@ -738,13 +738,13 @@ loadhist(FILE *fp, struct History *hist)
 	char *s;
 	size_t len;
 
-	if ((hist->entries = calloc(histsize, sizeof *hist)) == NULL)
+	if ((hist->entries = calloc(config.histsize, sizeof *hist)) == NULL)
 		err(EXIT_FAILURE, "calloc");
 
 	hist->size = 0;
 
 	rewind(fp);
-	while (hist->size < histsize && fgets(buf, sizeof buf, fp) != NULL) {
+	while (hist->size < config.histsize && fgets(buf, sizeof buf, fp) != NULL) {
 		len = strlen(buf);
 		if (len && buf[--len] == '\n')
 			buf[len] = '\0';
@@ -983,14 +983,14 @@ static size_t
 movewordedge(struct Prompt *prompt, size_t pos, int dir)
 {
 	if (dir < 0) {
-		while (pos > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
+		while (pos > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
 			pos = nextrune(prompt, pos, -1);
-		while (pos > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
+		while (pos > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
 			pos = nextrune(prompt, pos, -1);
 	} else {
-		while (prompt->text[pos] && strchr(worddelimiters, prompt->text[pos]))
+		while (prompt->text[pos] && strchr(config.worddelimiters, prompt->text[pos]))
 			pos = nextrune(prompt, pos, +1);
-		while (prompt->text[pos] && !strchr(worddelimiters, prompt->text[pos]))
+		while (prompt->text[pos] && !strchr(config.worddelimiters, prompt->text[pos]))
 			pos = nextrune(prompt, pos, +1);
 	}
 
@@ -1036,9 +1036,9 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 static void
 delword(struct Prompt *prompt)
 {
-	while (prompt->cursor > 0 && strchr(worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+	while (prompt->cursor > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
 		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
-	while (prompt->cursor > 0 && !strchr(worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+	while (prompt->cursor > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
 		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
 }
 
@@ -1142,11 +1142,11 @@ getcomplist(struct Prompt *prompt, struct Item *rootitem)
 	while (end < prompt->cursor) {
 		nword++;
 		beg = prompt->text + end;
-		while (*beg != '\0' && strchr(worddelimiters, *beg))
+		while (*beg != '\0' && strchr(config.worddelimiters, *beg))
 			beg++;
 		end = beg - prompt->text;
 		while (end != prompt->cursor && prompt->text[end] != '\0'
-			&& !strchr(worddelimiters, prompt->text[end]))
+			&& !strchr(config.worddelimiters, prompt->text[end]))
 			end++;
 		len = end - (beg - prompt->text);
 		if (end != prompt->cursor) {
@@ -1222,9 +1222,9 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		len = 0;
 	} else {
 		beg = prompt->cursor;
-		while (beg > 0 && !strchr(worddelimiters, prompt->text[--beg]))
+		while (beg > 0 && !strchr(config.worddelimiters, prompt->text[--beg]))
 			;
-		if (strchr(worddelimiters, prompt->text[beg]))
+		if (strchr(config.worddelimiters, prompt->text[beg]))
 			beg++;
 		len = prompt->cursor - beg;
 	}
@@ -1242,9 +1242,9 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 					prompt->itemarray[prompt->nitems++] = item;
 					break;
 				}
-				while (*s != '\0' && strchr(worddelimiters, *s) == NULL)
+				while (*s != '\0' && strchr(config.worddelimiters, *s) == NULL)
 					s++;
-				while (*s != '\0' && strchr(worddelimiters, *s) != NULL)
+				while (*s != '\0' && strchr(config.worddelimiters, *s) != NULL)
 					s++;
 			}
 		}
@@ -1264,9 +1264,9 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 					prompt->itemarray[--n] = item;
 					break;
 				}
-				while (*s != '\0' && strchr(worddelimiters, *s) == NULL)
+				while (*s != '\0' && strchr(config.worddelimiters, *s) == NULL)
 					s++;
-				while (*s != '\0' && strchr(worddelimiters, *s) != NULL)
+				while (*s != '\0' && strchr(config.worddelimiters, *s) != NULL)
 					s++;
 			}
 		}
@@ -1378,7 +1378,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	case CTRLENTER:
 		if (completion) {
-			if (prompt->cursor && !strchr(worddelimiters, prompt->text[prompt->cursor - 1]))
+			if (prompt->cursor && !strchr(config.worddelimiters, prompt->text[prompt->cursor - 1]))
 				delword(prompt);
 			if (!filecomp) {
 				/*
@@ -1732,7 +1732,7 @@ savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 
 	diff = strcmp(hist->entries[hist->size-1], prompt->text);
 
-	hist->index = (diff && hist->size == histsize) ? 1 : 0;
+	hist->index = (diff && hist->size == config.histsize) ? 1 : 0;
 
 	while (hist->index < hist->size)
 		fprintf(fp, "%s\n", hist->entries[hist->index++]);

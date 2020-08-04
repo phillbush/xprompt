@@ -53,6 +53,30 @@ enum Ctrl {
 	INSERT          /* Insert character as is */
 };
 
+/* configuration structure */
+struct Config {
+	const char *worddelimiters;
+	const char *xpromptctrl;
+	const char *font;
+
+	const char *background_color;
+	const char *foreground_color;
+	const char *selbackground_color;
+	const char *selforeground_color;
+	const char *separator_color;
+	const char *border_color;
+
+	const char *geometryspec;
+	const char *gravityspec;
+
+	unsigned number_items;
+
+	int border_pixels;
+	int separator_pixels;
+
+	size_t histsize;
+};
+
 /* draw context structure */
 struct DC {
 	XftColor normal[ColorLast];     /* bg and fg of normal text */
@@ -61,6 +85,11 @@ struct DC {
 	XftColor separator;             /* color of the separator */
 
 	GC gc;                          /* graphics context */
+
+	FcPattern *pattern;
+	XftFont **fonts;
+	size_t nfonts;
+
 	XftFont *font;                  /* font */
 };
 
