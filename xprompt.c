@@ -36,10 +36,12 @@ static void initmonitor(void);
 static void initresources(void);
 static void initdc(void);
 static void initctrl(void);
-static void initpromptinput(struct Prompt *prompt);
-static void initpromptarray(struct Prompt *prompt);
-static void initpromptgeom(struct Prompt *prompt, Window parentwin);
-static void initpromptwin(struct Prompt *prompt, Window parentwin);
+
+/* prompt structure setters */
+static void setpromptinput(struct Prompt *prompt);
+static void setpromptarray(struct Prompt *prompt);
+static void setpromptgeom(struct Prompt *prompt, Window parentwin);
+static void setpromptwin(struct Prompt *prompt, Window parentwin);
 
 /* parsers and structure builders */
 static struct Item *allocitem(unsigned level, const char *text, const char *description);
@@ -219,7 +221,7 @@ main(int argc, char *argv[])
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
-	/* initiate prompt */
+	/* setup prompt */
 	if (!parentwin)
 		parentwin = rootwin;
 	if (argc == 0) {
@@ -229,10 +231,10 @@ main(int argc, char *argv[])
 		prompt.promptstr = *argv;
 		prompt.promptlen = strlen(*argv);
 	}
-	initpromptinput(&prompt);
-	initpromptarray(&prompt);
-	initpromptgeom(&prompt, parentwin);
-	initpromptwin(&prompt, parentwin);
+	setpromptinput(&prompt);
+	setpromptarray(&prompt);
+	setpromptgeom(&prompt, parentwin);
+	setpromptwin(&prompt, parentwin);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
@@ -447,7 +449,7 @@ initctrl(void)
 
 /* allocate memory for the text input field */
 static void
-initpromptinput(struct Prompt *prompt)
+setpromptinput(struct Prompt *prompt)
 {
 	if ((prompt->text = malloc(BUFSIZ)) == NULL)
 		err(EXIT_FAILURE, "malloc");
@@ -459,7 +461,7 @@ initpromptinput(struct Prompt *prompt)
 
 /* allocate memory for the item list displayed when completion is active */
 static void
-initpromptarray(struct Prompt *prompt)
+setpromptarray(struct Prompt *prompt)
 {
 	prompt->curritem = 0;
 	prompt->nitems = 0;
@@ -470,9 +472,9 @@ initpromptarray(struct Prompt *prompt)
 
 /* calculate prompt geometry */
 static void
-initpromptgeom(struct Prompt *prompt, Window parentwin)
+setpromptgeom(struct Prompt *prompt, Window parentwin)
 {
-	int x, y, w, h;
+	int x, y, w, h;     /* geometry of monitor or parent window */
 
 	/* try to get attributes of parent window */
 	if (wflag) {
@@ -573,7 +575,7 @@ initpromptgeom(struct Prompt *prompt, Window parentwin)
 
 /* set up prompt window */
 static void
-initpromptwin(struct Prompt *prompt, Window parentwin)
+setpromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
