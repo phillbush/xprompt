@@ -16,7 +16,7 @@
 
 enum {ColorFG, ColorBG, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
-enum Press_ret {Draw, Esc, Enter, Noop};
+enum Press_ret {DrawAll, DrawInput, DrawItem, Esc, Enter, Noop};
 
 /* Input operations */
 enum Ctrl {

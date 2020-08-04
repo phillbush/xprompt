@@ -55,6 +55,7 @@ static void grabfocus(Window win);
 
 /* prompt drawers and controllers */
 static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
+static void drawinput(struct Prompt *prompt, int x);
 static void drawitem(struct Prompt *prompt, size_t n);
 static void drawprompt(struct Prompt *prompt);
 
@@ -111,11 +112,12 @@ static Atom utf8;
 static Atom clip;
 
 /* flags */
-static int wflag = 0;   /* whether to enable embeded prompt */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
-static int pflag = 0;   /* whether to enable password mode */
 static int mflag = 0;   /* whether the user specified a monitor */
+static int pflag = 0;   /* whether to enable password mode */
+static int sflag = 0;   /* whether a single enter or esc closes xprompt*/
+static int wflag = 0;   /* whether to enable embeded prompt */
 
 /* ctrl operations */
 static enum Ctrl ctrl[CaseLast][NLETTERS];
@@ -161,7 +163,7 @@ main(int argc, char *argv[])
 		worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "fGgh:im:pw:")) != -1) {
+	while ((ch = getopt(argc, argv, "fGgh:im:psw:")) != -1) {
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -187,6 +189,9 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			pflag = 1;
+			break;
+		case 's':
+			sflag = 1;
 			break;
 		case 'w':
 			wflag = 1;
@@ -825,6 +830,51 @@ resizeprompt(struct Prompt *prompt, size_t nitems_old)
 	return nitems_new;
 }
 
+/* draw the text on input field, return position of the cursor */
+static void
+drawinput(struct Prompt *prompt, int x)
+{
+	XGlyphInfo ext;
+	unsigned minpos, maxpos;
+	int newx;
+	unsigned curpos;            /* where to draw the cursor */
+	char *cursortext;           /* text from the cursor til the end */
+	int y;
+
+	newx = x;
+	ext.xOff = 0;
+	y = prompt->h/2 + dc.font->ascent/2 - 1;
+
+	minpos = MIN(prompt->cursor, prompt->select);
+	maxpos = MAX(prompt->cursor, prompt->select);
+
+	/* draw text before selection */
+	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, minpos, &ext);
+	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
+	                  newx, y, prompt->text, minpos);
+	newx += ext.xOff;
+
+	/* draw selected text */
+	XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text+minpos, maxpos-minpos, &ext);
+	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, newx, 0, ext.xOff, prompt->h);
+	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorBG], dc.font,
+	                  newx, y, prompt->text+minpos, maxpos - minpos);
+	newx += ext.xOff;
+
+	/* draw text after selection */
+	XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
+	                  newx, y, prompt->text+maxpos, strlen(prompt->text) - maxpos);
+
+	cursortext = prompt->text + prompt->cursor;
+
+	/* draw cursor rectangle */
+	curpos = x + textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
+	y = prompt->h/2 - dc.font->height/2;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.font->height);
+}
+
 /* draw nth item in the item array */
 static void
 drawitem(struct Prompt *prompt, size_t n)
@@ -861,7 +911,6 @@ static void
 drawprompt(struct Prompt *prompt)
 {
 	static size_t nitems = 0;       /* number of items in the dropdown list */
-	unsigned curpos;                /* where to draw the cursor */
 	unsigned h;
 	int x, y;
 	size_t i;
@@ -883,45 +932,8 @@ drawprompt(struct Prompt *prompt)
 	}
 
 	/* draw input field text and set position of the cursor */
-	if (!pflag) {
-		XGlyphInfo ext;
-		unsigned minpos, maxpos;
-		int newx = x;
-		char *cursortext;           /* text from the cursor til the end */
-
-		ext.xOff = 0;
-
-		minpos = MIN(prompt->cursor, prompt->select);
-		maxpos = MAX(prompt->cursor, prompt->select);
-
-		/* draw text before selection */
-		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text, minpos, &ext);
-		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-		                  newx, y, prompt->text, minpos);
-		newx += ext.xOff;
-
-		/* draw selected text */
-		XftTextExtentsUtf8(dpy, dc.font, (XftChar8 *)prompt->text+minpos, maxpos-minpos, &ext);
-		XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, newx, 0, ext.xOff, prompt->h);
-		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorBG], dc.font,
-		                  newx, y, prompt->text+minpos, maxpos - minpos);
-		newx += ext.xOff;
-
-		/* draw text after selection */
-		XftDrawStringUtf8(prompt->draw, &dc.normal[ColorFG], dc.font,
-		                  newx, y, prompt->text+maxpos, strlen(prompt->text) - maxpos);
-
-		cursortext = prompt->text + prompt->cursor;
-		curpos = x + textwidth(prompt->text, strlen(prompt->text)) - textwidth(cursortext, strlen(cursortext));
-    } else {
-		curpos = x;
-    }
-
-	/* draw cursor rectangle */
-	y = prompt->h/2 - dc.font->height/2;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.font->height);
+	if (!pflag)
+		drawinput(prompt, x);
 
 	/* resize window and get new value of number of items */
 	nitems = resizeprompt(prompt, nitems);
@@ -1356,7 +1368,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCANCEL:
-		if (escaped || prompt->text[0] == '\0')
+		if (sflag || escaped || prompt->text[0] == '\0')
 			return Esc;
 		prompt->nitems = 0;
 		escaped = 1;
@@ -1387,11 +1399,14 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 				insert(prompt, s, strlen(s));
 			}
 			prompt->nitems = 0;
-			escaped = 1;
-		} else {
+			if (sflag)
+				escaped = 1;
+		}
+		if (escaped) {
 			puts(prompt->text);
 			return Enter;
 		}
+		escaped = 1;
 		break;
 	case CTRLPREV:
 		/* FALLTHROUGH */
@@ -1518,15 +1533,12 @@ insert:
 		break;
 	}
 
-	if (prompt->nitems == 0)
-		escaped = 1;
-
 	if (ISMOTION(operation))            /* moving cursor while selecting */
 		prompt->select = prompt->cursor;
 	else if (ISSELECTION(operation))    /* moving cursor while selecting */
 		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
 
-	return Draw;
+	return DrawAll;
 
 match:
 	if (filecomp) {     /* if in a file completion, cancel it */
@@ -1537,12 +1549,12 @@ match:
 	} else {            /* otherwise, rematch */
 		complist = getcomplist(prompt, rootitem);
 		if (complist == NULL)
-			return Draw;
+			return DrawAll;
 		prompt->curritem = fillitemarray(prompt, complist, 0);
 		if (prompt->nitems == 0)
 			escaped = 1;
 	}
-	return Draw;
+	return DrawAll;
 }
 
 /* get the position, in characters, of the cursor given a x position */
@@ -1603,7 +1615,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 				word = 0;
 			}
 			lasttime = ev->time;
-			return Draw;
+			return DrawAll;
 		}
 		return Noop;
 	default:
@@ -1626,7 +1638,7 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 			prompt->cursor = strlen(prompt->text);
 	}
 
-	return Draw;
+	return DrawAll;
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -1655,7 +1667,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				return 0;   /* return 0 to not save history */
 			case Enter:
 				return 1;   /* return 1 to save history */
-			case Draw:
+			case DrawAll: case DrawInput: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:
@@ -1664,7 +1676,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case ButtonPress:
 			switch (buttonpress(prompt, &ev.xbutton)) {
-			case Draw:
+			case DrawAll: case DrawInput: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:
@@ -1673,7 +1685,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case MotionNotify:
 			switch (buttonmotion(prompt, &ev.xmotion)) {
-			case Draw:
+			case DrawAll: case DrawInput: case DrawItem:
 				drawprompt(prompt);
 			    break;
 			default:

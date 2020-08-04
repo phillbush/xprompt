@@ -63,6 +63,27 @@ Specifies the file to be used for reading and storing the history of typed texts
 .TP
 .B \-i
 Makes xprompt match items case insensitively.
+.Tp
+.BI "\-m " monitor
+Makes xprompt be displayed on the monitor specified.
+Monitor numbers start from 0.
+Without this option,
+when xprompt is not embedded (i.e., without the
+.B \-w
+option),
+xprompt is displayed on the same monitor of the focused window,
+or (if there is no focused window) on the monitor where the mouse is on.
+.TP
+.B \-p
+Enable password mode.
+In this mode, the typed text is not echoed in the input field.
+.TP
+.B \-s
+Makes a single Enter or Esc keypress exit xprompt,
+regardless of a completion be in action.
+Without this option, when a completion is in action,
+a Enter or Esc keypress first exits the completion,
+and a second keypress exits xprompt.
 .TP
 .BI "\-w " windowid
 Renders xprompt embeded into the window
@@ -132,8 +153,11 @@ Paste from primary X selection.
 Copy selected text into primary X selection.
 .TP
 .BR CTRLENTER " (" Enter ", " Ctrl+M )
-Confirm text.
-Prints the input text to stdout, and writes it to the history file,
+When completion is in operation, confirms text.
+When completion is not in operation, or when the
+.B \-s
+option is supplied,
+prints the input text to stdout, and writes it to the history file,
 if the input text is different from the last entry in the history file.
 .TP
 .BR CTRLPREV " (" Shift+Tab ", " Ctrl+P )
@@ -206,7 +230,8 @@ Select text from cursor to one word to the left.
 Select text from cursor to one word to the right.
 .TP
 .BR CTRLCANCEL " (" Esc )
-Exit xprompt without printing anything.
+When completion is in operation, exit completion without confirming text.
+When completion is not in operation, exit xprompt without printing anything.
 .PP
 .B xprompt
 can also be controlled by the mouse.
