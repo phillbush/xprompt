@@ -1339,7 +1339,7 @@ static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
-	static int escaped = 1;         /* whether press escape will exit xprompt */
+	static int completion = 0;      /* whether currently in completion */
 	static int filecomp = 0;        /* whether xprompt is in file completion */
 	enum Ctrl operation;
 	char buf[32];
@@ -1368,15 +1368,15 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCANCEL:
-		if (sflag || escaped || prompt->text[0] == '\0')
+		if (sflag || !completion || prompt->text[0] == '\0')
 			return Esc;
 		prompt->nitems = 0;
-		escaped = 1;
+		completion = 0;
 		if (filecomp)
 			cleanitem(complist);
 		break;
 	case CTRLENTER:
-		if (!escaped) {
+		if (completion) {
 			if (prompt->cursor && !strchr(worddelimiters, prompt->text[prompt->cursor - 1]))
 				delword(prompt);
 			if (!filecomp) {
@@ -1400,18 +1400,18 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			}
 			prompt->nitems = 0;
 			if (sflag)
-				escaped = 1;
+				completion = 0;
 		}
-		if (escaped) {
+		if (!completion) {
 			puts(prompt->text);
 			return Enter;
 		}
-		escaped = 1;
+		completion = 0;
 		break;
 	case CTRLPREV:
 		/* FALLTHROUGH */
 	case CTRLNEXT:
-		if (escaped) {
+		if (!completion) {
 			complist = getcomplist(prompt, rootitem);
 			prompt->curritem = 0;
 			filecomp = 0;
@@ -1424,7 +1424,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			filecomp = 0;
 			break;
 		}
-		escaped = 0;
+		completion = 1;
 		if (prompt->nitems == 0) {
 			prompt->curritem = fillitemarray(prompt, complist, 0);
 		} else if (operation == CTRLNEXT) {
@@ -1464,7 +1464,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			insert(prompt, s, strlen(s));
 		}
 		prompt->nitems = 0;
-		escaped = 1;
+		completion = 0;
 		break;
 	case CTRLSELLEFT:
 	case CTRLLEFT:
@@ -1490,12 +1490,12 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	case CTRLDELBOL:
 		insert(prompt, NULL, 0 - prompt->cursor);
-		if (!escaped)
+		if (completion)
 			goto match;
 		break;
 	case CTRLDELEOL:
 		prompt->text[prompt->cursor] = '\0';
-		if (!escaped)
+		if (completion)
 			goto match;
 		break;
 	case CTRLDELRIGHT:
@@ -1512,12 +1512,12 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (prompt->cursor == 0)
 			return Noop;
 		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
-		if (!escaped)
+		if (completion)
 			goto match;
 		break;
 	case CTRLDELWORD:
 		delword(prompt);
-		if (!escaped)
+		if (completion)
 			goto match;
 		break;
 	case CTRLNOTHING:
@@ -1528,7 +1528,7 @@ insert:
 			return Noop;
 		delselection(prompt);
 		insert(prompt, buf, len);
-		if (!escaped)
+		if (completion)
 			goto match;
 		break;
 	}
@@ -1545,14 +1545,14 @@ match:
 		cleanitem(complist);
 		filecomp = 0;
 		prompt->nitems = 0;
-		escaped = 1;
+		completion = 0;
 	} else {            /* otherwise, rematch */
 		complist = getcomplist(prompt, rootitem);
 		if (complist == NULL)
 			return DrawAll;
 		prompt->curritem = fillitemarray(prompt, complist, 0);
 		if (prompt->nitems == 0)
-			escaped = 1;
+			completion = 0;
 	}
 	return DrawAll;
 }
