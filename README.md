@@ -8,6 +8,8 @@ XPrompt is a prompt for X.
 XPrompt features a text input field where the user can type in a text
 subject to tab-completion.
 
+See `xprompt.pdf` for more information on how xprompt works.
+
 When the user presses Return, the typed text is printed to the stdout.
 When the user presses Tab, a dropdown menu appears showing the items
 from the stdin that matches the word to be completed.  It can read a
@@ -34,13 +36,14 @@ in dmenu:
 
 The files are:
 
-* `./README:`    This file.
-* `./Makefile:`  The makefile.
-* `./demo.gif:`  A gif demonstrating how XPrompt works.
-* `./config.h:`  The hardcoded default configuration for XPrompt.
-* `./config.mk:` The setup for the makefile.
-* `./xprompt.1:` The manual file (man page) for XPrompt.
-* `./xprompt.c:` The source code of XPrompt.
+* `./README:`      This file.
+* `./Makefile:`    The makefile.
+* `./demo.gif:`    A gif demonstrating how XPrompt works.
+* `./config.h:`    The hardcoded default configuration for XPrompt.
+* `./config.mk:`   The setup for the makefile.
+* `./xprompt.1:`   The manual file (man page) for XPrompt.
+* `./xprompt.pdf:` The manual file (man page) for XPrompt.
+* `./xprompt.c:`   The source code of XPrompt.
 
 
 ## Installation
