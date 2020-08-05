@@ -20,16 +20,22 @@ differences.  Namely, the following are features of xprompt that are not
 in dmenu:
 
 * Text selection (both via mouse or via Shift+Arrow).
+* Mouse support.
 * Configurable keybindings (via the `XPROMPTCTRL` environment variable).
 * History (via the `XPROMPTHISTFILE` and `XPROMPTHISTSIZE` environment
   variables).
-* Tab-completion with a dropdown list of items.
 * Contextual completion (the text to complete depends on what you have
   typed in).
 * File name completion (with `-f` option).
 * Each completion item can be followed by a description.
 * Configurable size and position (via X resources).
 * Configurable colors and fonts (via X resources).
+* Items on the dropdown list can have descriptions attached to them
+  (just separate the item from its description with a tab).
+* The string that should be piped out into stdout can be hidden on the
+  dropdown list (with `-d` option).
+* The position of the xprompt on the screen or on the parent window can
+  be set with the `-g` and the `-G` options.
 
 
 ## Files
