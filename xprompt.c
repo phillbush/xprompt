@@ -117,6 +117,7 @@ static Atom utf8;
 static Atom clip;
 
 /* flags */
+static int dflag = 0;   /* whether to show only item descriptions */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
 static int mflag = 0;   /* whether the user specified a monitor */
@@ -168,8 +169,11 @@ main(int argc, char *argv[])
 		config.worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "fG:g:h:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "dfG:g:h:im:psw:")) != -1) {
 		switch (ch) {
+		case 'd':
+			dflag = 1;
+			break;
 		case 'f':
 			fflag = 1;
 			break;
@@ -1069,7 +1073,7 @@ static void
 drawitem(struct Prompt *prompt, size_t n, int copy)
 {
 	XftColor *color;
-	unsigned textwidth;
+	unsigned textwidth = 0;
 	int y;
 
 	color = (n == prompt->selitem) ? dc.selected
@@ -1081,15 +1085,21 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 	XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
 
-	/* draw item text */
-	textwidth = drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
-	            prompt->itemarray[n]->text, 0);
+	if (!(dflag && prompt->itemarray[n]->description)) {
+		/* draw item text */
+		textwidth = drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
+		            prompt->itemarray[n]->text, 0);
+		textwidth = textwidth + dc.pad * 2 + prompt->promptw;
+		textwidth = MAX(textwidth, prompt->descx);
 
-	/* if item has a description, draw it */
-	textwidth += dc.pad * 2 + prompt->promptw;
-	if (prompt->itemarray[n]->description != NULL)
-		drawtext(prompt->draw, &color[ColorCM], MAX(textwidth, prompt->descx),
-		         y, prompt->h, prompt->itemarray[n]->description, 0);
+		/* if item has a description, draw it */
+		if (prompt->itemarray[n]->description != NULL)
+			drawtext(prompt->draw, &color[ColorCM], textwidth, y, prompt->h,
+			         prompt->itemarray[n]->description, 0);
+	} else {    /* item has description and dflag is on */
+		drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
+		         prompt->itemarray[n]->description, 0);
+	}
 
 	/* commit drawing */
 	if (copy)
@@ -1318,7 +1328,7 @@ static struct Item *
 getcomplist(struct Prompt *prompt, struct Item *rootitem)
 {
 	struct Item *item, *curritem;
-	char *beg;
+	char *beg, *text;
 	size_t nword = 0;
 	size_t end, len;
 	int found = 0;
@@ -1338,7 +1348,8 @@ getcomplist(struct Prompt *prompt, struct Item *rootitem)
 		len = end - (beg - prompt->text);
 		if (end != prompt->cursor) {
 			for (item = curritem; item != NULL; item = item->next) {
-				if ((*fstrncmp)(item->text, beg, len) == 0) {
+				text = (dflag && item->description) ? item->description : item->text;
+				if ((*fstrncmp)(text, beg, len) == 0) {
 					curritem = item->child;
 					found = 1;
 				}
@@ -1423,7 +1434,7 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		     item = item->next) {
 
 			/* check if item->text matches prompt->text */
-			s = item->text;
+			s = (dflag && item->description) ? item->description : item->text;
 			while (*s != '\0') {
 				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
 					prompt->itemarray[prompt->nitems++] = item;
@@ -1445,7 +1456,7 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		     item = item->prev) {
 
 			/* check if item->text matches prompt->text */
-			s = item->text;
+			s = (dflag && item->description) ? item->description : item->text;
 			while (*s != '\0') {
 				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
 					prompt->itemarray[--n] = item;
@@ -2034,7 +2045,7 @@ cleanX(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-fips] [-G gravity] [-g geometry] [-h file]\n"
+	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(EXIT_FAILURE);
 }

@@ -3,7 +3,7 @@
 xprompt \- read line utility for X
 .SH SYNOPSIS
 .B xprompt
-.RB [ \-fips ]
+.RB [ \-dfips ]
 .RB [ \-G
 .IR gravity ]
 .RB [ \-g
@@ -34,6 +34,11 @@ xprompt resembles dmenu, but they differ in a subtle point:
 while dmenu completes the whole text, xprompt performs contextual completion.
 .PP
 The options are as follows:
+.TP
+.B \-d
+Rather than complete item names, complete item descriptions.
+Item names are hidden and only descriptions are listed on the dropdown list.
+When clicking Enter, the hidden item name is printed to stdout.
 .TP
 .B \-f
 Enables filename completion.
