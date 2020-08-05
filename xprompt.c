@@ -772,10 +772,10 @@ setpromptinput(struct Prompt *prompt)
 static void
 setpromptarray(struct Prompt *prompt)
 {
-	prompt->selitem = 0;
-	prompt->hoveritem = 0;
-	prompt->nitems = 0;
 	prompt->maxitems = config.number_items;
+	prompt->hoveritem = prompt->maxitems;
+	prompt->selitem = 0;
+	prompt->nitems = 0;
 	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
 		err(EXIT_FAILURE, "malloc");
 }
@@ -1352,6 +1352,7 @@ getcomplist(struct Prompt *prompt, struct Item *rootitem)
 				if ((*fstrncmp)(text, beg, len) == 0) {
 					curritem = item->child;
 					found = 1;
+					break;
 				}
 			}
 		}
@@ -1875,9 +1876,9 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	maxy = miny + prompt->h * prompt->nitems;
 
 	if (ev->y < miny || ev->y >= maxy)
-		return Noop;
-
-	prompt->hoveritem = getitem(prompt, ev->y);
+		prompt->hoveritem = prompt->maxitems;
+	else
+		prompt->hoveritem = getitem(prompt, ev->y);
 
 	return DrawPrompt;
 }
