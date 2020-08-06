@@ -1444,94 +1444,100 @@ BT
 237.589 179.762 Td
 (form) Tj
 ET
+/F1 11 Tf
 BT
-/F0 11 Tf
+/F1 11 Tf
 261.723 179.762 Td
-(<WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.) Tj
+(<WIDTH>x<HEIGHT>[{-+}<XOFFSET>{-+}<YOFFSET>].) Tj
 ET
+/F0 11 Tf
 BT
 /F0 11 Tf
 106.524 164.373 Td
 (Replace) Tj
 ET
+/F1 11 Tf
 BT
-/F0 11 Tf
+/F1 11 Tf
 144.705 164.373 Td
 (<WIDTH>) Tj
 ET
+/F0 11 Tf
 BT
 /F0 11 Tf
-196.515 164.373 Td
+199.111 164.373 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-210.265 164.373 Td
+212.861 164.373 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-226.457 164.373 Td
+229.053 164.373 Td
 (desired) Tj
 ET
 BT
 /F0 11 Tf
-260.975 164.373 Td
+263.571 164.373 Td
 (width,) Tj
 ET
+/F1 11 Tf
 BT
-/F0 11 Tf
-291.533 164.373 Td
+/F1 11 Tf
+294.129 164.373 Td
 (<HEIGHT>) Tj
 ET
+/F0 11 Tf
 BT
 /F0 11 Tf
-347.622 164.373 Td
+354.046 164.373 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-361.372 164.373 Td
+367.796 164.373 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-377.564 164.373 Td
+383.988 164.373 Td
 (desired) Tj
 ET
 BT
 /F0 11 Tf
-412.082 164.373 Td
+418.506 164.373 Td
 (height,) Tj
 ET
 BT
 /F0 11 Tf
-445.082 164.373 Td
+451.506 164.373 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-463.716 164.373 Td
+470.140 164.373 Td
 (so) Tj
 ET
 BT
 /F0 11 Tf
-476.245 164.373 Td
+482.669 164.373 Td
 (on.) Tj
 ET
 BT
 /F0 11 Tf
-495.495 164.373 Td
+501.919 164.373 Td
 (A) Tj
 ET
 BT
 /F0 11 Tf
-506.187 164.373 Td
+512.611 164.373 Td
 (value) Tj
 ET
 BT
 /F0 11 Tf
-532.763 164.373 Td
+539.187 164.373 Td
 (of) Tj
 ET
 BT
@@ -1669,14 +1675,176 @@ ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 102.817 Td
-(-h) Tj
+284.339 133.595 Td
+(<XOFFSET>) Tj
 ET
-/F2 11 Tf
+/F0 11 Tf
 BT
-/F2 11 Tf
-99.803 102.817 Td
-(file) Tj
+/F0 11 Tf
+350.361 133.595 Td
+(and) Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+368.995 133.595 Td
+(<YOFFSET>) Tj
+ET
+/F0 11 Tf
+BT
+/F0 11 Tf
+435.017 133.595 Td
+(are) Tj
+ET
+BT
+/F0 11 Tf
+451.198 133.595 Td
+(optional) Tj
+ET
+BT
+/F0 11 Tf
+490.006 133.595 Td
+(and) Tj
+ET
+BT
+/F0 11 Tf
+508.640 133.595 Td
+(can) Tj
+ET
+BT
+/F0 11 Tf
+526.658 133.595 Td
+(be) Tj
+ET
+BT
+/F0 11 Tf
+106.524 118.206 Td
+(preceded) Tj
+ET
+BT
+/F0 11 Tf
+148.973 118.206 Td
+(by) Tj
+ET
+BT
+/F0 11 Tf
+162.723 118.206 Td
+(either) Tj
+ET
+BT
+/F0 11 Tf
+190.520 118.206 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+198.154 118.206 Td
+(minus) Tj
+ET
+BT
+/F0 11 Tf
+227.799 118.206 Td
+(or) Tj
+ET
+BT
+/F0 11 Tf
+239.712 118.206 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+247.346 118.206 Td
+(plus) Tj
+ET
+BT
+/F0 11 Tf
+268.433 118.206 Td
+(\(meaning) Tj
+ET
+BT
+/F0 11 Tf
+312.730 118.206 Td
+(negative) Tj
+ET
+BT
+/F0 11 Tf
+352.748 118.206 Td
+(or) Tj
+ET
+BT
+/F0 11 Tf
+364.661 118.206 Td
+(positive) Tj
+ET
+BT
+/F0 11 Tf
+402.248 118.206 Td
+(values\).) Tj
+ET
+BT
+/F0 11 Tf
+442.266 118.206 Td
+(So,) Tj
+ET
+BT
+/F0 11 Tf
+459.382 118.206 Td
+(for) Tj
+ET
+BT
+/F0 11 Tf
+474.958 118.206 Td
+(example,) Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+517.726 118.206 Td
+(-g) Tj
+ET
+BT
+/F1 11 Tf
+106.524 102.817 Td
+(0x20) Tj
+ET
+/F0 11 Tf
+BT
+/F0 11 Tf
+131.274 102.817 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+141.361 102.817 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+157.553 102.817 Td
+(same) Tj
+ET
+BT
+/F0 11 Tf
+182.908 102.817 Td
+(as) Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+194.821 102.817 Td
+(-g) Tj
+ET
+/F0 11 Tf
+BT
+/F0 11 Tf
+203.984 102.817 Td
+(0x20+0+0) Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+249.392 102.817 Td
+(.) Tj
 ET
 /F0 11 Tf
 BT
@@ -1712,7 +1880,7 @@ ET
 endstream
 endobj
 8 0 obj
-15327
+16879
 endobj
 9 0 obj
 <<
@@ -1739,1663 +1907,1599 @@ endobj
 >>
 stream
 BT
+/F1 11 Tf
+87.274 702.988 Td
+(-h) Tj
+ET
+/F2 11 Tf
+BT
+/F2 11 Tf
+99.803 702.988 Td
+(file) Tj
+ET
 /F0 11 Tf
-106.524 702.988 Td
+BT
+/F0 11 Tf
+106.524 687.599 Td
 (Specifies) Tj
 ET
 BT
 /F0 11 Tf
-149.600 702.988 Td
+149.600 687.599 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-165.792 702.988 Td
+165.792 687.599 Td
 (file) Tj
 ET
 BT
 /F0 11 Tf
-183.205 702.988 Td
+183.205 687.599 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-194.513 702.988 Td
+194.513 687.599 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-207.647 702.988 Td
+207.647 687.599 Td
 (used) Tj
 ET
 BT
 /F0 11 Tf
-230.560 702.988 Td
+230.560 687.599 Td
 (for) Tj
 ET
 BT
 /F0 11 Tf
-246.136 702.988 Td
+246.136 687.599 Td
 (reading) Tj
 ET
 BT
 /F0 11 Tf
-281.875 702.988 Td
+281.875 687.599 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-300.509 702.988 Td
+300.509 687.599 Td
 (storing) Tj
 ET
 BT
 /F0 11 Tf
-333.817 702.988 Td
+333.817 687.599 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-350.009 702.988 Td
+350.009 687.599 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-383.317 702.988 Td
+383.317 687.599 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-395.230 702.988 Td
+395.230 687.599 Td
 (typed) Tj
 ET
 BT
 /F0 11 Tf
-422.422 702.988 Td
+422.422 687.599 Td
 (texts.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 672.210 Td
+87.274 656.821 Td
 (-i) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 672.210 Td
+106.524 656.821 Td
 (Makes) Tj
 ET
 BT
 /F0 11 Tf
-138.600 672.210 Td
+138.600 656.821 Td
 (xprompt) Tj
 ET
 BT
 /F0 11 Tf
-178.629 672.210 Td
+178.629 656.821 Td
 (match) Tj
 ET
 BT
 /F0 11 Tf
-208.263 672.210 Td
+208.263 656.821 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-234.850 672.210 Td
+234.850 656.821 Td
 (case) Tj
 ET
 BT
 /F0 11 Tf
-256.531 672.210 Td
+256.531 656.821 Td
 (insensitively.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-320.397 672.210 Td
+320.397 656.821 Td
 (-m) Tj
 ET
 /F2 11 Tf
 BT
 /F2 11 Tf
-335.973 672.210 Td
+335.973 656.821 Td
 (monitor) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-373.560 672.210 Td
+373.560 656.821 Td
 (Makes) Tj
 ET
 BT
 /F0 11 Tf
-405.636 672.210 Td
+405.636 656.821 Td
 (xprompt) Tj
 ET
 BT
 /F0 11 Tf
-445.665 672.210 Td
+445.665 656.821 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-458.799 672.210 Td
+458.799 656.821 Td
 (displayed) Tj
 ET
 BT
 /F0 11 Tf
-503.712 672.210 Td
+503.712 656.821 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-517.462 672.210 Td
+517.462 656.821 Td
 (the) Tj
-ET
-BT
-/F0 11 Tf
-106.524 656.821 Td
-(monitor) Tj
-ET
-BT
-/F0 11 Tf
-144.111 656.821 Td
-(specified.) Tj
-ET
-BT
-/F0 11 Tf
-192.071 656.821 Td
-(Monitor) Tj
-ET
-BT
-/F0 11 Tf
-230.879 656.821 Td
-(numbers) Tj
-ET
-BT
-/F0 11 Tf
-271.513 656.821 Td
-(start) Tj
-ET
-BT
-/F0 11 Tf
-293.205 656.821 Td
-(from) Tj
-ET
-BT
-/F0 11 Tf
-317.339 656.821 Td
-(0.) Tj
-ET
-BT
-/F0 11 Tf
-331.089 656.821 Td
-(Without) Tj
-ET
-BT
-/F0 11 Tf
-369.897 656.821 Td
-(this) Tj
-ET
-BT
-/F0 11 Tf
-388.542 656.821 Td
-(option,) Tj
-ET
-BT
-/F0 11 Tf
-422.158 656.821 Td
-(when) Tj
-ET
-BT
-/F0 11 Tf
-448.734 656.821 Td
-(xprompt) Tj
-ET
-BT
-/F0 11 Tf
-488.763 656.821 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-498.850 656.821 Td
-(not) Tj
 ET
 BT
 /F0 11 Tf
 106.524 641.432 Td
+(monitor) Tj
+ET
+BT
+/F0 11 Tf
+144.111 641.432 Td
+(specified.) Tj
+ET
+BT
+/F0 11 Tf
+192.071 641.432 Td
+(Monitor) Tj
+ET
+BT
+/F0 11 Tf
+230.879 641.432 Td
+(numbers) Tj
+ET
+BT
+/F0 11 Tf
+271.513 641.432 Td
+(start) Tj
+ET
+BT
+/F0 11 Tf
+293.205 641.432 Td
+(from) Tj
+ET
+BT
+/F0 11 Tf
+317.339 641.432 Td
+(0.) Tj
+ET
+BT
+/F0 11 Tf
+331.089 641.432 Td
+(Without) Tj
+ET
+BT
+/F0 11 Tf
+369.897 641.432 Td
+(this) Tj
+ET
+BT
+/F0 11 Tf
+388.542 641.432 Td
+(option,) Tj
+ET
+BT
+/F0 11 Tf
+422.158 641.432 Td
+(when) Tj
+ET
+BT
+/F0 11 Tf
+448.734 641.432 Td
+(xprompt) Tj
+ET
+BT
+/F0 11 Tf
+488.763 641.432 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+498.850 641.432 Td
+(not) Tj
+ET
+BT
+/F0 11 Tf
+106.524 626.043 Td
 (embedded) Tj
 ET
 BT
 /F0 11 Tf
-154.484 641.432 Td
+154.484 626.043 Td
 (\(i.e.,) Tj
 ET
 BT
 /F0 11 Tf
-177.089 641.432 Td
+177.089 626.043 Td
 (without) Tj
 ET
 BT
 /F0 11 Tf
-213.455 641.432 Td
+213.455 626.043 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-229.647 641.432 Td
+229.647 626.043 Td
 (-w) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-244.002 641.432 Td
+244.002 626.043 Td
 (option\),) Tj
 ET
 BT
 /F0 11 Tf
-281.281 641.432 Td
+281.281 626.043 Td
 (xprompt) Tj
 ET
 BT
 /F0 11 Tf
-321.310 641.432 Td
+321.310 626.043 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-331.397 641.432 Td
+331.397 626.043 Td
 (displayed) Tj
 ET
 BT
 /F0 11 Tf
-376.310 641.432 Td
+376.310 626.043 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-390.060 641.432 Td
+390.060 626.043 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-406.252 641.432 Td
+406.252 626.043 Td
 (same) Tj
 ET
 BT
 /F0 11 Tf
-431.607 641.432 Td
+431.607 626.043 Td
 (monitor) Tj
 ET
 BT
 /F0 11 Tf
-469.194 641.432 Td
+469.194 626.043 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-481.107 641.432 Td
+481.107 626.043 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-497.299 641.432 Td
+497.299 626.043 Td
 (focused) Tj
 ET
 BT
 /F0 11 Tf
-106.524 626.043 Td
+106.524 610.654 Td
 (window,) Tj
 ET
 BT
 /F0 11 Tf
-147.466 626.043 Td
+147.466 610.654 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-159.379 626.043 Td
+159.379 610.654 Td
 (\(if) Tj
 ET
 BT
 /F0 11 Tf
-172.513 626.043 Td
+172.513 610.654 Td
 (there) Tj
 ET
 BT
 /F0 11 Tf
-197.252 626.043 Td
+197.252 610.654 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-207.339 626.043 Td
+207.339 610.654 Td
 (no) Tj
 ET
 BT
 /F0 11 Tf
-221.089 626.043 Td
+221.089 610.654 Td
 (focused) Tj
 ET
 BT
 /F0 11 Tf
-258.049 626.043 Td
+258.049 610.654 Td
 (window\)) Tj
 ET
 BT
 /F0 11 Tf
-299.904 626.043 Td
+299.904 610.654 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-313.654 626.043 Td
+313.654 610.654 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-329.846 626.043 Td
+329.846 610.654 Td
 (monitor) Tj
 ET
 BT
 /F0 11 Tf
-367.433 626.043 Td
+367.433 610.654 Td
 (where) Tj
 ET
 BT
 /F0 11 Tf
-397.056 626.043 Td
+397.056 610.654 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-413.248 626.043 Td
+413.248 610.654 Td
 (mouse) Tj
 ET
 BT
 /F0 11 Tf
-444.719 626.043 Td
+444.719 610.654 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-454.806 626.043 Td
+454.806 610.654 Td
 (on.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 595.265 Td
+87.274 579.876 Td
 (-p) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-107.140 595.265 Td
+107.140 579.876 Td
 (Enable) Tj
 ET
 BT
 /F0 11 Tf
-140.437 595.265 Td
+140.437 579.876 Td
 (password) Tj
 ET
 BT
 /F0 11 Tf
-184.734 595.265 Td
+184.734 579.876 Td
 (mode.) Tj
 ET
 BT
 /F0 11 Tf
-217.426 595.265 Td
+217.426 579.876 Td
 (In) Tj
 ET
 BT
 /F0 11 Tf
-229.339 595.265 Td
+229.339 579.876 Td
 (this) Tj
 ET
 BT
 /F0 11 Tf
-247.984 595.265 Td
+247.984 579.876 Td
 (mode,) Tj
 ET
 BT
 /F0 11 Tf
-277.926 595.265 Td
+277.926 579.876 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-294.118 595.265 Td
+294.118 579.876 Td
 (typed) Tj
 ET
 BT
 /F0 11 Tf
-321.310 595.265 Td
+321.310 579.876 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-340.560 595.265 Td
+340.560 579.876 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-350.647 595.265 Td
+350.647 579.876 Td
 (not) Tj
 ET
 BT
 /F0 11 Tf
-367.455 595.265 Td
+367.455 579.876 Td
 (echoed) Tj
 ET
 BT
 /F0 11 Tf
-401.357 595.265 Td
+401.357 579.876 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-412.665 595.265 Td
+412.665 579.876 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-428.857 595.265 Td
+428.857 579.876 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-454.223 595.265 Td
+454.223 579.876 Td
 (field.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 564.487 Td
+87.274 549.098 Td
 (-s) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 564.487 Td
+106.524 549.098 Td
 (Makes) Tj
 ET
 BT
 /F0 11 Tf
-138.600 564.487 Td
+138.600 549.098 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-146.234 564.487 Td
+146.234 549.098 Td
 (single) Tj
 ET
 BT
 /F0 11 Tf
-175.263 564.487 Td
+175.263 549.098 Td
 (Enter) Tj
 ET
 BT
 /F0 11 Tf
-201.839 564.487 Td
+201.839 549.098 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-213.752 564.487 Td
+213.752 549.098 Td
 (Esc) Tj
 ET
 BT
 /F0 11 Tf
-232.386 564.487 Td
+232.386 549.098 Td
 (keypress) Tj
 ET
 BT
 /F0 11 Tf
-273.625 564.487 Td
+273.625 549.098 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-285.538 564.487 Td
+285.538 549.098 Td
 (mouse) Tj
 ET
 BT
 /F0 11 Tf
-317.009 564.487 Td
+317.009 549.098 Td
 (click) Tj
 ET
 BT
 /F0 11 Tf
-341.143 564.487 Td
+341.143 549.098 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-354.893 564.487 Td
+354.893 549.098 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-362.527 564.487 Td
+362.527 549.098 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-384.835 564.487 Td
+384.835 549.098 Td
 (exit) Tj
 ET
 BT
 /F0 11 Tf
-404.085 564.487 Td
+404.085 549.098 Td
 (xprompt,) Tj
 ET
 BT
 /F0 11 Tf
-446.864 564.487 Td
+446.864 549.098 Td
 (regardless) Tj
 ET
 BT
 /F0 11 Tf
-494.208 564.487 Td
+494.208 549.098 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-506.121 564.487 Td
+506.121 549.098 Td
 (a) Tj
-ET
-BT
-/F0 11 Tf
-106.524 549.098 Td
-(completion) Tj
-ET
-BT
-/F0 11 Tf
-158.774 549.098 Td
-(be) Tj
-ET
-BT
-/F0 11 Tf
-171.908 549.098 Td
-(in) Tj
-ET
-BT
-/F0 11 Tf
-183.216 549.098 Td
-(action.) Tj
-ET
-BT
-/F0 11 Tf
-218.350 549.098 Td
-(Without) Tj
-ET
-BT
-/F0 11 Tf
-257.158 549.098 Td
-(this) Tj
-ET
-BT
-/F0 11 Tf
-275.803 549.098 Td
-(option,) Tj
-ET
-BT
-/F0 11 Tf
-309.419 549.098 Td
-(when) Tj
-ET
-BT
-/F0 11 Tf
-335.995 549.098 Td
-(a) Tj
-ET
-BT
-/F0 11 Tf
-343.629 549.098 Td
-(completion) Tj
-ET
-BT
-/F0 11 Tf
-395.879 549.098 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-405.966 549.098 Td
-(in) Tj
-ET
-BT
-/F0 11 Tf
-417.274 549.098 Td
-(action,) Tj
-ET
-BT
-/F0 11 Tf
-449.658 549.098 Td
-(a) Tj
-ET
-BT
-/F0 11 Tf
-457.292 549.098 Td
-(Enter) Tj
-ET
-BT
-/F0 11 Tf
-483.868 549.098 Td
-(or) Tj
-ET
-BT
-/F0 11 Tf
-495.781 549.098 Td
-(Esc) Tj
 ET
 BT
 /F0 11 Tf
 106.524 533.709 Td
-(keypress) Tj
+(completion) Tj
 ET
 BT
 /F0 11 Tf
-147.763 533.709 Td
+158.774 533.709 Td
+(be) Tj
+ET
+BT
+/F0 11 Tf
+171.908 533.709 Td
+(in) Tj
+ET
+BT
+/F0 11 Tf
+183.216 533.709 Td
+(action.) Tj
+ET
+BT
+/F0 11 Tf
+218.350 533.709 Td
+(Without) Tj
+ET
+BT
+/F0 11 Tf
+257.158 533.709 Td
+(this) Tj
+ET
+BT
+/F0 11 Tf
+275.803 533.709 Td
+(option,) Tj
+ET
+BT
+/F0 11 Tf
+309.419 533.709 Td
+(when) Tj
+ET
+BT
+/F0 11 Tf
+335.995 533.709 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+343.629 533.709 Td
+(completion) Tj
+ET
+BT
+/F0 11 Tf
+395.879 533.709 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+405.966 533.709 Td
+(in) Tj
+ET
+BT
+/F0 11 Tf
+417.274 533.709 Td
+(action,) Tj
+ET
+BT
+/F0 11 Tf
+449.658 533.709 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+457.292 533.709 Td
+(Enter) Tj
+ET
+BT
+/F0 11 Tf
+483.868 533.709 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-159.676 533.709 Td
-(a) Tj
+495.781 533.709 Td
+(Esc) Tj
 ET
 BT
 /F0 11 Tf
-167.310 533.709 Td
-(mouse) Tj
-ET
-BT
-/F0 11 Tf
-198.781 533.709 Td
-(click) Tj
-ET
-BT
-/F0 11 Tf
-222.915 533.709 Td
-(first) Tj
-ET
-BT
-/F0 11 Tf
-243.386 533.709 Td
-(exits) Tj
-ET
-BT
-/F0 11 Tf
-266.915 533.709 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-283.107 533.709 Td
-(completion,) Tj
-ET
-BT
-/F0 11 Tf
-338.107 533.709 Td
-(and) Tj
-ET
-BT
-/F0 11 Tf
-356.741 533.709 Td
-(a) Tj
-ET
-BT
-/F0 11 Tf
-364.375 533.709 Td
-(second) Tj
-ET
-BT
-/F0 11 Tf
-397.672 533.709 Td
+106.524 518.320 Td
 (keypress) Tj
 ET
 BT
 /F0 11 Tf
-438.911 533.709 Td
+147.763 518.320 Td
+(or) Tj
+ET
+BT
+/F0 11 Tf
+159.676 518.320 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+167.310 518.320 Td
+(mouse) Tj
+ET
+BT
+/F0 11 Tf
+198.781 518.320 Td
+(click) Tj
+ET
+BT
+/F0 11 Tf
+222.915 518.320 Td
+(first) Tj
+ET
+BT
+/F0 11 Tf
+243.386 518.320 Td
 (exits) Tj
 ET
 BT
 /F0 11 Tf
-462.440 533.709 Td
+266.915 518.320 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+283.107 518.320 Td
+(completion,) Tj
+ET
+BT
+/F0 11 Tf
+338.107 518.320 Td
+(and) Tj
+ET
+BT
+/F0 11 Tf
+356.741 518.320 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+364.375 518.320 Td
+(second) Tj
+ET
+BT
+/F0 11 Tf
+397.672 518.320 Td
+(keypress) Tj
+ET
+BT
+/F0 11 Tf
+438.911 518.320 Td
+(exits) Tj
+ET
+BT
+/F0 11 Tf
+462.440 518.320 Td
 (xprompt.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 502.931 Td
+87.274 487.542 Td
 (-w) Tj
 ET
 /F2 11 Tf
 BT
 /F2 11 Tf
-101.629 502.931 Td
+101.629 487.542 Td
 (windowid) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 487.542 Td
+106.524 472.153 Td
 (Renders) Tj
 ET
 BT
 /F0 11 Tf
-145.321 487.542 Td
+145.321 472.153 Td
 (xprompt) Tj
 ET
 BT
 /F0 11 Tf
-185.350 487.542 Td
+185.350 472.153 Td
 (embeded) Tj
 ET
 BT
 /F0 11 Tf
-227.810 487.542 Td
+227.810 472.153 Td
 (into) Tj
 ET
 BT
 /F0 11 Tf
-247.676 487.542 Td
+247.676 472.153 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-263.868 487.542 Td
+263.868 472.153 Td
 (window) Tj
 ET
 /F2 11 Tf
 BT
 /F2 11 Tf
-302.060 487.542 Td
+302.060 472.153 Td
 (windowid) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-344.850 487.542 Td
+344.850 472.153 Td
 (.) Tj
 ET
 BT
 /F0 11 Tf
-87.274 456.764 Td
+87.274 441.375 Td
 (Each) Tj
 ET
 BT
 /F0 11 Tf
-112.013 456.764 Td
+112.013 441.375 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-134.321 456.764 Td
+134.321 441.375 Td
 (read) Tj
 ET
 BT
 /F0 11 Tf
-156.002 456.764 Td
+156.002 441.375 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-180.136 456.764 Td
+180.136 441.375 Td
 (stdin) Tj
 ET
 BT
 /F0 11 Tf
-204.281 456.764 Td
+204.281 441.375 Td
 (has) Tj
 ET
 BT
 /F0 11 Tf
-221.694 456.764 Td
+221.694 441.375 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-237.886 456.764 Td
+237.886 441.375 Td
 (following) Tj
 ET
 BT
 /F0 11 Tf
-283.415 456.764 Td
+283.415 441.375 Td
 (format:) Tj
 ET
 BT
 /F0 11 Tf
-106.524 425.986 Td
+106.524 410.597 Td
 (ITEM) Tj
 ET
 BT
 /F0 11 Tf
-136.158 425.986 Td
+136.158 410.597 Td
 (:=) Tj
 ET
 BT
 /F0 11 Tf
-148.170 425.986 Td
+148.170 410.597 Td
 ([TABS]) Tj
 ET
 BT
 /F0 11 Tf
-186.362 425.986 Td
+186.362 410.597 Td
 (WORD) Tj
 ET
 BT
 /F0 11 Tf
-222.717 425.986 Td
+222.717 410.597 Td
 ([TABS) Tj
 ET
 BT
 /F0 11 Tf
-257.246 425.986 Td
+257.246 410.597 Td
 (DESCRIPTION]) Tj
 ET
 BT
 /F0 11 Tf
-335.159 425.986 Td
+335.159 410.597 Td
 (NEWLINE) Tj
 ET
 BT
 /F0 11 Tf
-87.274 395.208 Td
+87.274 379.819 Td
 (That) Tj
 ET
 BT
 /F0 11 Tf
-110.187 395.208 Td
+110.187 379.819 Td
 (means) Tj
 ET
 BT
 /F0 11 Tf
-141.042 395.208 Td
+141.042 379.819 Td
 (that) Tj
 ET
 BT
 /F0 11 Tf
-160.292 395.208 Td
+160.292 379.819 Td
 (each) Tj
 ET
 BT
 /F0 11 Tf
-183.194 395.208 Td
+183.194 379.819 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-205.502 395.208 Td
+205.502 379.819 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-215.589 395.208 Td
+215.589 379.819 Td
 (composed) Tj
 ET
 BT
 /F0 11 Tf
-262.944 395.208 Td
+262.944 379.819 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-276.694 395.208 Td
+276.694 379.819 Td
 (zero) Tj
 ET
 BT
 /F0 11 Tf
-298.375 395.208 Td
+298.375 379.819 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-310.288 395.208 Td
+310.288 379.819 Td
 (more) Tj
 ET
 BT
 /F0 11 Tf
-335.643 395.208 Td
+335.643 379.819 Td
 (tabs,) Tj
 ET
 BT
 /F0 11 Tf
-358.864 395.208 Td
+358.864 379.819 Td
 (followed) Tj
 ET
 BT
 /F0 11 Tf
-400.719 395.208 Td
+400.719 379.819 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-414.469 395.208 Td
+414.469 379.819 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-422.103 395.208 Td
+422.103 379.819 Td
 (text,) Tj
 ET
 BT
 /F0 11 Tf
-444.103 395.208 Td
+444.103 379.819 Td
 (followed) Tj
 ET
 BT
 /F0 11 Tf
-485.958 395.208 Td
+485.958 379.819 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-499.708 395.208 Td
+499.708 379.819 Td
 (more) Tj
 ET
 BT
 /F0 11 Tf
-87.274 379.819 Td
+87.274 364.430 Td
 (tabs,) Tj
 ET
 BT
 /F0 11 Tf
-110.495 379.819 Td
+110.495 364.430 Td
 (followed) Tj
 ET
 BT
 /F0 11 Tf
-152.350 379.819 Td
+152.350 364.430 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-166.100 379.819 Td
+166.100 364.430 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-173.734 379.819 Td
+173.734 364.430 Td
 (description,) Tj
 ET
 BT
 /F0 11 Tf
-228.118 379.819 Td
+228.118 364.430 Td
 (followed) Tj
 ET
 BT
 /F0 11 Tf
-269.973 379.819 Td
+269.973 364.430 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-283.723 379.819 Td
+283.723 364.430 Td
 (newline.) Tj
 ET
 BT
 /F0 11 Tf
-326.799 379.819 Td
+326.799 364.430 Td
 (Brackets) Tj
 ET
 BT
 /F0 11 Tf
-368.038 379.819 Td
+368.038 364.430 Td
 (group) Tj
 ET
 BT
 /F0 11 Tf
-396.451 379.819 Td
+396.451 364.430 Td
 (optional) Tj
 ET
 BT
 /F0 11 Tf
-435.259 379.819 Td
+435.259 364.430 Td
 (elements.) Tj
 ET
 BT
 /F0 11 Tf
-106.524 349.041 Td
+106.524 333.652 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 349.041 Td
+126.379 333.652 Td
 (initial) Tj
 ET
 BT
 /F0 11 Tf
-154.803 349.041 Td
+154.803 333.652 Td
 (tabs) Tj
 ET
 BT
 /F0 11 Tf
-175.274 349.041 Td
+175.274 333.652 Td
 (indicate) Tj
 ET
 BT
 /F0 11 Tf
-212.850 349.041 Td
+212.850 333.652 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-229.042 349.041 Td
+229.042 333.652 Td
 (item) Tj
-ET
-BT
-/F0 11 Tf
-251.350 349.041 Td
-(hierarchy.) Tj
-ET
-BT
-/F0 11 Tf
-301.136 349.041 Td
-(An) Tj
-ET
-BT
-/F0 11 Tf
-317.328 349.041 Td
-(item) Tj
-ET
-BT
-/F0 11 Tf
-339.636 349.041 Td
-(without) Tj
-ET
-BT
-/F0 11 Tf
-376.002 349.041 Td
-(initial) Tj
-ET
-BT
-/F0 11 Tf
-404.426 349.041 Td
-(tabs) Tj
-ET
-BT
-/F0 11 Tf
-424.897 349.041 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-434.984 349.041 Td
-(listed) Tj
-ET
-BT
-/F0 11 Tf
-461.571 349.041 Td
-(for) Tj
-ET
-BT
-/F0 11 Tf
-477.147 349.041 Td
-(completion) Tj
-ET
-BT
-/F0 11 Tf
-529.397 349.041 Td
-(at) Tj
-ET
-BT
-/F0 11 Tf
-106.524 333.652 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-122.716 333.652 Td
-(beginning) Tj
-ET
-BT
-/F0 11 Tf
-169.466 333.652 Td
-(of) Tj
-ET
-BT
-/F0 11 Tf
-181.379 333.652 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-197.571 333.652 Td
-(input) Tj
-ET
-BT
-/F0 11 Tf
-222.937 333.652 Td
-(field.) Tj
 ET
 BT
 /F0 11 Tf
 251.350 333.652 Td
+(hierarchy.) Tj
+ET
+BT
+/F0 11 Tf
+301.136 333.652 Td
 (An) Tj
 ET
 BT
 /F0 11 Tf
-267.542 333.652 Td
+317.328 333.652 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-289.850 333.652 Td
-(with) Tj
+339.636 333.652 Td
+(without) Tj
 ET
 BT
 /F0 11 Tf
-312.158 333.652 Td
-(one) Tj
+376.002 333.652 Td
+(initial) Tj
 ET
 BT
 /F0 11 Tf
-330.792 333.652 Td
-(tab) Tj
-ET
-BT
-/F0 11 Tf
-346.984 333.652 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-357.071 333.652 Td
-(listed) Tj
-ET
-BT
-/F0 11 Tf
-383.658 333.652 Td
-(for) Tj
-ET
-BT
-/F0 11 Tf
-399.234 333.652 Td
-(completion) Tj
-ET
-BT
-/F0 11 Tf
-451.484 333.652 Td
-(for) Tj
-ET
-BT
-/F0 11 Tf
-467.060 333.652 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-483.252 333.652 Td
-(second) Tj
-ET
-BT
-/F0 11 Tf
-516.549 333.652 Td
-(word) Tj
-ET
-BT
-/F0 11 Tf
-106.524 318.263 Td
-(in) Tj
-ET
-BT
-/F0 11 Tf
-117.832 318.263 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-134.024 318.263 Td
-(input) Tj
-ET
-BT
-/F0 11 Tf
-159.390 318.263 Td
-(field.) Tj
-ET
-BT
-/F0 11 Tf
-187.803 318.263 Td
-(And) Tj
-ET
-BT
-/F0 11 Tf
-209.495 318.263 Td
-(so) Tj
-ET
-BT
-/F0 11 Tf
-222.024 318.263 Td
-(on.) Tj
-ET
-BT
-/F0 11 Tf
-106.524 287.485 Td
-(The) Tj
-ET
-BT
-/F0 11 Tf
-126.379 287.485 Td
-(word) Tj
-ET
-BT
-/F0 11 Tf
-151.734 287.485 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-161.821 287.485 Td
-(a) Tj
-ET
-BT
-/F0 11 Tf
-169.455 287.485 Td
-(string) Tj
-ET
-BT
-/F0 11 Tf
-197.263 287.485 Td
-(listed) Tj
-ET
-BT
-/F0 11 Tf
-223.850 287.485 Td
-(for) Tj
-ET
-BT
-/F0 11 Tf
-239.426 287.485 Td
-(completion) Tj
-ET
-BT
-/F0 11 Tf
-291.676 287.485 Td
-(in) Tj
-ET
-BT
-/F0 11 Tf
-302.984 287.485 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-319.176 287.485 Td
-(dropdown) Tj
-ET
-BT
-/F0 11 Tf
-366.531 287.485 Td
-(list) Tj
-ET
-BT
-/F0 11 Tf
-382.734 287.485 Td
-(that) Tj
-ET
-BT
-/F0 11 Tf
-401.984 287.485 Td
-(appears) Tj
-ET
-BT
-/F0 11 Tf
-438.328 287.485 Td
-(when) Tj
-ET
-BT
-/F0 11 Tf
-464.904 287.485 Td
-(pressing) Tj
-ET
-BT
-/F0 11 Tf
-504.317 287.485 Td
-(Tab.) Tj
-ET
-BT
-/F0 11 Tf
-106.524 256.707 Td
-(The) Tj
-ET
-BT
-/F0 11 Tf
-126.379 256.707 Td
-(second) Tj
-ET
-BT
-/F0 11 Tf
-159.676 256.707 Td
-(group) Tj
-ET
-BT
-/F0 11 Tf
-188.089 256.707 Td
-(of) Tj
-ET
-BT
-/F0 11 Tf
-200.002 256.707 Td
+404.426 333.652 Td
 (tabs) Tj
 ET
 BT
 /F0 11 Tf
-220.473 256.707 Td
-(separate) Tj
-ET
-BT
-/F0 11 Tf
-259.259 256.707 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-275.451 256.707 Td
-(word) Tj
-ET
-BT
-/F0 11 Tf
-300.806 256.707 Td
-(from) Tj
-ET
-BT
-/F0 11 Tf
-324.940 256.707 Td
-(its) Tj
-ET
-BT
-/F0 11 Tf
-338.085 256.707 Td
-(description.) Tj
-ET
-BT
-/F0 11 Tf
-106.524 225.929 Td
-(The) Tj
-ET
-BT
-/F0 11 Tf
-126.379 225.929 Td
-(description) Tj
-ET
-BT
-/F0 11 Tf
-178.013 225.929 Td
+424.897 333.652 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-188.100 225.929 Td
-(a) Tj
+434.984 333.652 Td
+(listed) Tj
 ET
 BT
 /F0 11 Tf
-195.734 225.929 Td
-(string) Tj
+461.571 333.652 Td
+(for) Tj
 ET
 BT
 /F0 11 Tf
-223.542 225.929 Td
-(describing) Tj
+477.147 333.652 Td
+(completion) Tj
 ET
 BT
 /F0 11 Tf
-272.118 225.929 Td
-(what) Tj
+529.397 333.652 Td
+(at) Tj
 ET
 BT
 /F0 11 Tf
-296.252 225.929 Td
+106.524 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-312.444 225.929 Td
-(word) Tj
+122.716 318.263 Td
+(beginning) Tj
 ET
 BT
 /F0 11 Tf
-337.799 225.929 Td
-(means.) Tj
+169.466 318.263 Td
+(of) Tj
 ET
 BT
 /F0 11 Tf
-106.524 195.151 Td
-(The) Tj
-ET
-BT
-/F0 11 Tf
-126.379 195.151 Td
-(newline) Tj
-ET
-BT
-/F0 11 Tf
-163.955 195.151 Td
-(terminates) Tj
-ET
-BT
-/F0 11 Tf
-212.531 195.151 Td
+181.379 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-228.723 195.151 Td
+197.571 318.263 Td
+(input) Tj
+ET
+BT
+/F0 11 Tf
+222.937 318.263 Td
+(field.) Tj
+ET
+BT
+/F0 11 Tf
+251.350 318.263 Td
+(An) Tj
+ET
+BT
+/F0 11 Tf
+267.542 318.263 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-251.031 195.151 Td
+289.850 318.263 Td
+(with) Tj
+ET
+BT
+/F0 11 Tf
+312.158 318.263 Td
+(one) Tj
+ET
+BT
+/F0 11 Tf
+330.792 318.263 Td
+(tab) Tj
+ET
+BT
+/F0 11 Tf
+346.984 318.263 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+357.071 318.263 Td
+(listed) Tj
+ET
+BT
+/F0 11 Tf
+383.658 318.263 Td
+(for) Tj
+ET
+BT
+/F0 11 Tf
+399.234 318.263 Td
+(completion) Tj
+ET
+BT
+/F0 11 Tf
+451.484 318.263 Td
+(for) Tj
+ET
+BT
+/F0 11 Tf
+467.060 318.263 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+483.252 318.263 Td
+(second) Tj
+ET
+BT
+/F0 11 Tf
+516.549 318.263 Td
+(word) Tj
+ET
+BT
+/F0 11 Tf
+106.524 302.874 Td
+(in) Tj
+ET
+BT
+/F0 11 Tf
+117.832 302.874 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+134.024 302.874 Td
+(input) Tj
+ET
+BT
+/F0 11 Tf
+159.390 302.874 Td
+(field.) Tj
+ET
+BT
+/F0 11 Tf
+187.803 302.874 Td
+(And) Tj
+ET
+BT
+/F0 11 Tf
+209.495 302.874 Td
+(so) Tj
+ET
+BT
+/F0 11 Tf
+222.024 302.874 Td
+(on.) Tj
+ET
+BT
+/F0 11 Tf
+106.524 272.096 Td
+(The) Tj
+ET
+BT
+/F0 11 Tf
+126.379 272.096 Td
+(word) Tj
+ET
+BT
+/F0 11 Tf
+151.734 272.096 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+161.821 272.096 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+169.455 272.096 Td
+(string) Tj
+ET
+BT
+/F0 11 Tf
+197.263 272.096 Td
+(listed) Tj
+ET
+BT
+/F0 11 Tf
+223.850 272.096 Td
+(for) Tj
+ET
+BT
+/F0 11 Tf
+239.426 272.096 Td
+(completion) Tj
+ET
+BT
+/F0 11 Tf
+291.676 272.096 Td
+(in) Tj
+ET
+BT
+/F0 11 Tf
+302.984 272.096 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+319.176 272.096 Td
+(dropdown) Tj
+ET
+BT
+/F0 11 Tf
+366.531 272.096 Td
+(list) Tj
+ET
+BT
+/F0 11 Tf
+382.734 272.096 Td
+(that) Tj
+ET
+BT
+/F0 11 Tf
+401.984 272.096 Td
+(appears) Tj
+ET
+BT
+/F0 11 Tf
+438.328 272.096 Td
+(when) Tj
+ET
+BT
+/F0 11 Tf
+464.904 272.096 Td
+(pressing) Tj
+ET
+BT
+/F0 11 Tf
+504.317 272.096 Td
+(Tab.) Tj
+ET
+BT
+/F0 11 Tf
+106.524 241.318 Td
+(The) Tj
+ET
+BT
+/F0 11 Tf
+126.379 241.318 Td
+(second) Tj
+ET
+BT
+/F0 11 Tf
+159.676 241.318 Td
+(group) Tj
+ET
+BT
+/F0 11 Tf
+188.089 241.318 Td
+(of) Tj
+ET
+BT
+/F0 11 Tf
+200.002 241.318 Td
+(tabs) Tj
+ET
+BT
+/F0 11 Tf
+220.473 241.318 Td
+(separate) Tj
+ET
+BT
+/F0 11 Tf
+259.259 241.318 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+275.451 241.318 Td
+(word) Tj
+ET
+BT
+/F0 11 Tf
+300.806 241.318 Td
+(from) Tj
+ET
+BT
+/F0 11 Tf
+324.940 241.318 Td
+(its) Tj
+ET
+BT
+/F0 11 Tf
+338.085 241.318 Td
+(description.) Tj
+ET
+BT
+/F0 11 Tf
+106.524 210.540 Td
+(The) Tj
+ET
+BT
+/F0 11 Tf
+126.379 210.540 Td
+(description) Tj
+ET
+BT
+/F0 11 Tf
+178.013 210.540 Td
+(is) Tj
+ET
+BT
+/F0 11 Tf
+188.100 210.540 Td
+(a) Tj
+ET
+BT
+/F0 11 Tf
+195.734 210.540 Td
+(string) Tj
+ET
+BT
+/F0 11 Tf
+223.542 210.540 Td
+(describing) Tj
+ET
+BT
+/F0 11 Tf
+272.118 210.540 Td
+(what) Tj
+ET
+BT
+/F0 11 Tf
+296.252 210.540 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+312.444 210.540 Td
+(word) Tj
+ET
+BT
+/F0 11 Tf
+337.799 210.540 Td
+(means.) Tj
+ET
+BT
+/F0 11 Tf
+106.524 179.762 Td
+(The) Tj
+ET
+BT
+/F0 11 Tf
+126.379 179.762 Td
+(newline) Tj
+ET
+BT
+/F0 11 Tf
+163.955 179.762 Td
+(terminates) Tj
+ET
+BT
+/F0 11 Tf
+212.531 179.762 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+228.723 179.762 Td
+(item) Tj
+ET
+BT
+/F0 11 Tf
+251.031 179.762 Td
 (specification.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 164.373 Td
+87.274 148.984 Td
 (xmenu) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-121.803 164.373 Td
+121.803 148.984 Td
 (saves) Tj
 ET
 BT
 /F0 11 Tf
-148.379 164.373 Td
+148.379 148.984 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-164.571 164.373 Td
+164.571 148.984 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-189.937 164.373 Td
+189.937 148.984 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-209.187 164.373 Td
+209.187 148.984 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-233.321 164.373 Td
+233.321 148.984 Td
 (previous) Tj
 ET
 BT
 /F0 11 Tf
-273.955 164.373 Td
+273.955 148.984 Td
 (runs) Tj
 ET
 BT
 /F0 11 Tf
-295.647 164.373 Td
+295.647 148.984 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-306.955 164.373 Td
+306.955 148.984 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-314.589 164.373 Td
+314.589 148.984 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-347.897 164.373 Td
+347.897 148.984 Td
 (file) Tj
 ET
 BT
 /F0 11 Tf
-365.310 164.373 Td
+365.310 148.984 Td
 (specified) Tj
 ET
 BT
 /F0 11 Tf
-407.770 164.373 Td
+407.770 148.984 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-421.520 164.373 Td
+421.520 148.984 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-437.712 164.373 Td
+437.712 148.984 Td
 (-h) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-450.241 164.373 Td
+450.241 148.984 Td
 (option) Tj
 ET
 BT
 /F0 11 Tf
-481.107 164.373 Td
+481.107 148.984 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-493.020 164.373 Td
+493.020 148.984 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-506.770 164.373 Td
+506.770 148.984 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 148.984 Td
+87.274 133.595 Td
 (XPROMPTHISTFILE) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-197.593 148.984 Td
+197.593 133.595 Td
 (environment) Tj
 ET
 BT
 /F0 11 Tf
-255.948 148.984 Td
+255.948 133.595 Td
 (variable.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-68.024 118.206 Td
+68.024 102.817 Td
 (USAGE) Tj
-ET
-BT
-/F1 11 Tf
-87.274 102.817 Td
-(xprompt) Tj
-ET
-/F0 11 Tf
-BT
-/F0 11 Tf
-130.966 102.817 Td
-(is) Tj
-ET
-BT
-/F0 11 Tf
-141.053 102.817 Td
-(controlled) Tj
-ET
-BT
-/F0 11 Tf
-188.408 102.817 Td
-(by) Tj
-ET
-BT
-/F0 11 Tf
-202.158 102.817 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-218.350 102.817 Td
-(keyboard.) Tj
-ET
-BT
-/F0 11 Tf
-267.531 102.817 Td
-(Pressing) Tj
-ET
-BT
-/F0 11 Tf
-307.560 102.817 Td
-(Tab) Tj
-ET
-BT
-/F0 11 Tf
-327.415 102.817 Td
-(initiates) Tj
-ET
-BT
-/F0 11 Tf
-365.002 102.817 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-381.194 102.817 Td
-(completion,) Tj
-ET
-BT
-/F0 11 Tf
-436.194 102.817 Td
-(pressing) Tj
-ET
-BT
-/F0 11 Tf
-475.607 102.817 Td
-(Up) Tj
-ET
-BT
-/F0 11 Tf
-491.799 102.817 Td
-(or) Tj
-ET
-BT
-/F0 11 Tf
-503.712 102.817 Td
-(Down) Tj
 ET
 /F0 11 Tf
 BT
@@ -3431,7 +3535,7 @@ ET
 endstream
 endobj
 12 0 obj
-15526
+14925
 endobj
 13 0 obj
 <<
@@ -3458,1132 +3562,1168 @@ endobj
 >>
 stream
 BT
-/F0 11 Tf
+/F1 11 Tf
 87.274 702.988 Td
-(navigates) Tj
-ET
-BT
-/F0 11 Tf
-131.571 702.988 Td
-(through) Tj
-ET
-BT
-/F0 11 Tf
-168.542 702.988 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-184.734 702.988 Td
-(history.) Tj
-ET
-/F1 11 Tf
-BT
-/F1 11 Tf
-87.274 672.210 Td
 (xprompt) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-130.966 672.210 Td
-(can) Tj
+130.966 702.988 Td
+(is) Tj
 ET
 BT
 /F0 11 Tf
-148.984 672.210 Td
-(also) Tj
-ET
-BT
-/F0 11 Tf
-169.455 672.210 Td
-(be) Tj
-ET
-BT
-/F0 11 Tf
-182.589 672.210 Td
+141.053 702.988 Td
 (controlled) Tj
 ET
 BT
 /F0 11 Tf
-229.944 672.210 Td
+188.408 702.988 Td
+(by) Tj
+ET
+BT
+/F0 11 Tf
+202.158 702.988 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+218.350 702.988 Td
+(keyboard.) Tj
+ET
+BT
+/F0 11 Tf
+267.531 702.988 Td
+(Pressing) Tj
+ET
+BT
+/F0 11 Tf
+307.560 702.988 Td
+(Tab) Tj
+ET
+BT
+/F0 11 Tf
+327.415 702.988 Td
+(initiates) Tj
+ET
+BT
+/F0 11 Tf
+365.002 702.988 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+381.194 702.988 Td
+(completion,) Tj
+ET
+BT
+/F0 11 Tf
+436.194 702.988 Td
+(pressing) Tj
+ET
+BT
+/F0 11 Tf
+475.607 702.988 Td
+(Up) Tj
+ET
+BT
+/F0 11 Tf
+491.799 702.988 Td
+(or) Tj
+ET
+BT
+/F0 11 Tf
+503.712 702.988 Td
+(Down) Tj
+ET
+BT
+/F0 11 Tf
+87.274 687.599 Td
+(navigates) Tj
+ET
+BT
+/F0 11 Tf
+131.571 687.599 Td
+(through) Tj
+ET
+BT
+/F0 11 Tf
+168.542 687.599 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+184.734 687.599 Td
+(history.) Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+87.274 656.821 Td
+(xprompt) Tj
+ET
+/F0 11 Tf
+BT
+/F0 11 Tf
+130.966 656.821 Td
+(can) Tj
+ET
+BT
+/F0 11 Tf
+148.984 656.821 Td
+(also) Tj
+ET
+BT
+/F0 11 Tf
+169.455 656.821 Td
+(be) Tj
+ET
+BT
+/F0 11 Tf
+182.589 656.821 Td
+(controlled) Tj
+ET
+BT
+/F0 11 Tf
+229.944 656.821 Td
 (via) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-246.136 672.210 Td
+246.136 656.821 Td
 (Ctrl) Tj
 ET
 BT
 /F1 11 Tf
-268.433 672.210 Td
+268.433 656.821 Td
 (+) Tj
 ET
 BT
 /F1 11 Tf
-277.453 672.210 Td
+277.453 656.821 Td
 (Key) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-299.145 672.210 Td
+299.145 656.821 Td
 (keybindings) Tj
 ET
 BT
 /F0 11 Tf
-355.674 672.210 Td
+355.674 656.821 Td
 (with) Tj
 ET
 BT
 /F0 11 Tf
-377.982 672.210 Td
+377.982 656.821 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-394.174 672.210 Td
+394.174 656.821 Td
 (XPROMPTCTRL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-483.087 672.210 Td
+483.087 656.821 Td
 (environment) Tj
 ET
 BT
 /F0 11 Tf
-87.274 656.821 Td
+87.274 641.432 Td
 (variable.) Tj
 ET
 BT
 /F0 11 Tf
-130.955 656.821 Td
+130.955 641.432 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-150.810 656.821 Td
+150.810 641.432 Td
 (default) Tj
 ET
 BT
 /F0 11 Tf
-184.107 656.821 Td
+184.107 641.432 Td
 (value) Tj
 ET
 BT
 /F0 11 Tf
-210.683 656.821 Td
+210.683 641.432 Td
 (for) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-226.259 656.821 Td
+226.259 641.432 Td
 (XPROMPTCTRL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-315.172 656.821 Td
+315.172 641.432 Td
 (is) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-325.259 656.821 Td
+325.259 641.432 Td
 ("vcmpn::::aebf::ukhdwAEBF::") Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-483.208 656.821 Td
+483.208 641.432 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-501.842 656.821 Td
+501.842 641.432 Td
 (can) Tj
 ET
 BT
 /F0 11 Tf
-519.860 656.821 Td
+519.860 641.432 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-87.274 641.432 Td
+87.274 626.043 Td
 (modified) Tj
 ET
 BT
 /F0 11 Tf
-129.745 641.432 Td
+129.745 626.043 Td
 (via) Tj
 ET
 BT
 /F0 11 Tf
-145.937 641.432 Td
+145.937 626.043 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-162.129 641.432 Td
+162.129 626.043 Td
 (config.h) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-202.466 641.432 Td
+202.466 626.043 Td
 (file.) Tj
 ET
 BT
 /F0 11 Tf
-87.274 610.654 Td
+87.274 595.265 Td
 (Each) Tj
 ET
 BT
 /F0 11 Tf
-112.013 610.654 Td
+112.013 595.265 Td
 (key) Tj
 ET
 BT
 /F0 11 Tf
-130.647 610.654 Td
+130.647 595.265 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-142.560 610.654 Td
+142.560 595.265 Td
 (keybinding) Tj
 ET
 BT
 /F0 11 Tf
-194.810 610.654 Td
+194.810 595.265 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-204.897 610.654 Td
+204.897 595.265 Td
 (assigned) Tj
 ET
 BT
 /F0 11 Tf
-245.531 610.654 Td
+245.531 595.265 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-253.165 610.654 Td
+253.165 595.265 Td
 (operation) Tj
 ET
 BT
 /F0 11 Tf
-297.462 610.654 Td
+297.462 595.265 Td
 (like) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-316.712 610.654 Td
+316.712 595.265 Td
 (CTRLCANCEL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-393.712 610.654 Td
+393.712 595.265 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-399.212 610.654 Td
+399.212 595.265 Td
 (CTRLNEXT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-460.328 610.654 Td
+460.328 595.265 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-465.828 610.654 Td
+465.828 595.265 Td
 (CTRLRIGHT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-533.060 610.654 Td
+533.060 595.265 Td
 (,) Tj
 ET
 BT
 /F0 11 Tf
-538.560 610.654 Td
+538.560 595.265 Td
 (etc.) Tj
 ET
 BT
 /F0 11 Tf
-87.274 595.265 Td
+87.274 579.876 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-107.129 595.265 Td
+107.129 579.876 Td
 (default) Tj
 ET
 BT
 /F0 11 Tf
-140.426 595.265 Td
+140.426 579.876 Td
 (values) Tj
 ET
 BT
 /F0 11 Tf
-171.281 595.265 Td
+171.281 579.876 Td
 (for) Tj
 ET
 BT
 /F0 11 Tf
-186.857 595.265 Td
+186.857 579.876 Td
 (each) Tj
 ET
 BT
 /F0 11 Tf
-209.759 595.265 Td
+209.759 579.876 Td
 (operation) Tj
 ET
 BT
 /F0 11 Tf
-254.056 595.265 Td
+254.056 579.876 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-264.143 595.265 Td
+264.143 579.876 Td
 (listed) Tj
 ET
 BT
 /F0 11 Tf
-290.730 595.265 Td
+290.730 579.876 Td
 (bellow) Tj
 ET
 BT
 /F0 11 Tf
-323.422 595.265 Td
+323.422 579.876 Td
 (between) Tj
 ET
 BT
 /F0 11 Tf
-362.824 595.265 Td
+362.824 579.876 Td
 (parentheses.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 564.487 Td
+87.274 549.098 Td
 (CTRLPASTE) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-156.035 564.487 Td
+156.035 549.098 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-159.698 564.487 Td
+159.698 549.098 Td
 (Ctrl+V) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-193.457 564.487 Td
+193.457 549.098 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 549.098 Td
+106.524 533.709 Td
 (Paste) Tj
 ET
 BT
 /F0 11 Tf
-132.495 549.098 Td
+132.495 533.709 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-156.629 549.098 Td
+156.629 533.709 Td
 (primary) Tj
 ET
 BT
 /F0 11 Tf
-194.205 549.098 Td
+194.205 533.709 Td
 (X) Tj
 ET
 BT
 /F0 11 Tf
-204.897 549.098 Td
+204.897 533.709 Td
 (selection.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 518.320 Td
+87.274 502.931 Td
 (CTRLCOPY) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-151.745 518.320 Td
+151.745 502.931 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-155.408 518.320 Td
+155.408 502.931 Td
 (Ctrl+C) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-189.167 518.320 Td
+189.167 502.931 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 502.931 Td
+106.524 487.542 Td
 (Copy) Tj
 ET
 BT
 /F0 11 Tf
-133.111 502.931 Td
+133.111 487.542 Td
 (selected) Tj
 ET
 BT
 /F0 11 Tf
-171.292 502.931 Td
+171.292 487.542 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-190.542 502.931 Td
+190.542 487.542 Td
 (into) Tj
 ET
 BT
 /F0 11 Tf
-210.408 502.931 Td
+210.408 487.542 Td
 (primary) Tj
 ET
 BT
 /F0 11 Tf
-247.984 502.931 Td
+247.984 487.542 Td
 (X) Tj
 ET
 BT
 /F0 11 Tf
-258.676 502.931 Td
+258.676 487.542 Td
 (selection.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 472.153 Td
+87.274 456.764 Td
 (CTRLENTER) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-158.477 472.153 Td
+158.477 456.764 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-162.140 472.153 Td
+162.140 456.764 Td
 (Enter) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-189.024 472.153 Td
+189.024 456.764 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-194.524 472.153 Td
+194.524 456.764 Td
 (Ctrl+M) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-230.725 472.153 Td
+230.725 456.764 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 456.764 Td
+106.524 441.375 Td
 (When) Tj
 ET
 BT
 /F0 11 Tf
-135.542 456.764 Td
+135.542 441.375 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-187.792 456.764 Td
+187.792 441.375 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-197.879 456.764 Td
+197.879 441.375 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-209.187 456.764 Td
+209.187 441.375 Td
 (operation,) Tj
 ET
 BT
 /F0 11 Tf
-256.234 456.764 Td
+256.234 441.375 Td
 (confirms) Tj
 ET
 BT
 /F0 11 Tf
-298.089 456.764 Td
+298.089 441.375 Td
 (text.) Tj
 ET
 BT
 /F0 11 Tf
-322.839 456.764 Td
+322.839 441.375 Td
 (When) Tj
 ET
 BT
 /F0 11 Tf
-351.857 456.764 Td
+351.857 441.375 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-404.107 456.764 Td
+404.107 441.375 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-414.194 456.764 Td
+414.194 441.375 Td
 (not) Tj
 ET
 BT
 /F0 11 Tf
-431.002 456.764 Td
+431.002 441.375 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-442.310 456.764 Td
+442.310 441.375 Td
 (operation,) Tj
 ET
 BT
 /F0 11 Tf
-489.357 456.764 Td
+489.357 441.375 Td
 (or) Tj
 ET
 BT
 /F0 11 Tf
-501.270 456.764 Td
+501.270 441.375 Td
 (when) Tj
 ET
 BT
 /F0 11 Tf
-527.846 456.764 Td
+527.846 441.375 Td
 (the) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-106.524 441.375 Td
+106.524 425.986 Td
 (-s) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-117.216 441.375 Td
+117.216 425.986 Td
 (option) Tj
 ET
 BT
 /F0 11 Tf
-148.082 441.375 Td
+148.082 425.986 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-158.169 441.375 Td
+158.169 425.986 Td
 (supplied,) Tj
 ET
 BT
 /F0 11 Tf
-200.948 441.375 Td
+200.948 425.986 Td
 (prints) Tj
 ET
 BT
 /F0 11 Tf
-228.756 441.375 Td
+228.756 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-244.948 441.375 Td
+244.948 425.986 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-270.314 441.375 Td
+270.314 425.986 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-289.564 441.375 Td
+289.564 425.986 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-300.872 441.375 Td
+300.872 425.986 Td
 (stdout,) Tj
 ET
 BT
 /F0 11 Tf
-333.267 441.375 Td
+333.267 425.986 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-351.901 441.375 Td
+351.901 425.986 Td
 (writes) Tj
 ET
 BT
 /F0 11 Tf
-381.535 441.375 Td
+381.535 425.986 Td
 (it) Tj
 ET
 BT
 /F0 11 Tf
-390.401 441.375 Td
+390.401 425.986 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-401.709 441.375 Td
+401.709 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-417.901 441.375 Td
+417.901 425.986 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-451.209 441.375 Td
+451.209 425.986 Td
 (file,) Tj
 ET
 BT
 /F0 11 Tf
-471.372 441.375 Td
+471.372 425.986 Td
 (if) Tj
 ET
 BT
 /F0 11 Tf
-480.843 441.375 Td
+480.843 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-497.035 441.375 Td
+497.035 425.986 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-522.401 441.375 Td
+522.401 425.986 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-106.524 425.986 Td
+106.524 410.597 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-116.611 425.986 Td
+116.611 410.597 Td
 (different) Tj
 ET
 BT
 /F0 11 Tf
-157.234 425.986 Td
+157.234 410.597 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-181.368 425.986 Td
+181.368 410.597 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-197.560 425.986 Td
+197.560 410.597 Td
 (last) Tj
 ET
 BT
 /F0 11 Tf
-215.589 425.986 Td
+215.589 410.597 Td
 (entry) Tj
 ET
 BT
 /F0 11 Tf
-240.944 425.986 Td
+240.944 410.597 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-252.252 425.986 Td
+252.252 410.597 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-268.444 425.986 Td
+268.444 410.597 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-301.752 425.986 Td
+301.752 410.597 Td
 (file.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 395.208 Td
+87.274 379.819 Td
 (CTRLPREV) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-150.524 395.208 Td
+150.524 379.819 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-154.187 395.208 Td
+154.187 379.819 Td
 (Shift+Tab) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-202.026 395.208 Td
+202.026 379.819 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-207.526 395.208 Td
+207.526 379.819 Td
 (Ctrl+P) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-240.064 395.208 Td
+240.064 379.819 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 379.819 Td
+106.524 364.430 Td
 (Selects) Tj
 ET
 BT
 /F0 11 Tf
-140.437 379.819 Td
+140.437 364.430 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-156.629 379.819 Td
+156.629 364.430 Td
 (previous) Tj
 ET
 BT
 /F0 11 Tf
-197.263 379.819 Td
+197.263 364.430 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-219.571 379.819 Td
+219.571 364.430 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-230.879 379.819 Td
+230.879 364.430 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-247.071 379.819 Td
+247.071 364.430 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-299.321 379.819 Td
+299.321 364.430 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-346.676 379.819 Td
+346.676 364.430 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 349.041 Td
+87.274 333.652 Td
 (CTRLNEXT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-151.140 349.041 Td
+151.140 333.652 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-154.803 349.041 Td
+154.803 333.652 Td
 (Tab) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-173.756 349.041 Td
+173.756 333.652 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-179.256 349.041 Td
+179.256 333.652 Td
 (Ctrl+N) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-213.015 349.041 Td
+213.015 333.652 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 333.652 Td
+106.524 318.263 Td
 (Selects) Tj
 ET
 BT
 /F0 11 Tf
-140.437 333.652 Td
+140.437 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-156.629 333.652 Td
+156.629 318.263 Td
 (next) Tj
 ET
 BT
 /F0 11 Tf
-178.321 333.652 Td
+178.321 318.263 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-200.629 333.652 Td
+200.629 318.263 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-211.937 333.652 Td
+211.937 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-228.129 333.652 Td
+228.129 318.263 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-280.379 333.652 Td
+280.379 318.263 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-327.734 333.652 Td
+327.734 318.263 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 302.874 Td
+87.274 287.485 Td
 (CTRLPGUP) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-150.524 302.874 Td
+150.524 287.485 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-154.187 302.874 Td
+154.187 287.485 Td
 (PgUp) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-180.466 302.874 Td
+180.466 287.485 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 287.485 Td
+106.524 272.096 Td
 (TODO.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 256.707 Td
+87.274 241.318 Td
 (CTRLPGDOWN) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-171.303 256.707 Td
+171.303 241.318 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-174.966 256.707 Td
+174.966 241.318 Td
 (PgDown) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-214.687 256.707 Td
+214.687 241.318 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 241.318 Td
+106.524 225.929 Td
 (TODO.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 210.540 Td
+87.274 195.151 Td
 (CTRLUP) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-135.245 210.540 Td
+135.245 195.151 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-138.908 210.540 Td
+138.908 195.151 Td
 (Up) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-152.966 210.540 Td
+152.966 195.151 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 195.151 Td
+106.524 179.762 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 195.151 Td
+136.158 179.762 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-152.350 195.151 Td
+152.350 179.762 Td
 (previous) Tj
 ET
 BT
 /F0 11 Tf
-192.984 195.151 Td
+192.984 179.762 Td
 (entered) Tj
 ET
 BT
 /F0 11 Tf
-228.107 195.151 Td
+228.107 179.762 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-247.357 195.151 Td
+247.357 179.762 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-258.665 195.151 Td
+258.665 179.762 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-274.857 195.151 Td
+274.857 179.762 Td
 (history.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 164.373 Td
+87.274 148.984 Td
 (CTRLDOWN) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-156.024 164.373 Td
+156.024 148.984 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-159.687 164.373 Td
+159.687 148.984 Td
 (Down) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-187.187 164.373 Td
+187.187 148.984 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 148.984 Td
+106.524 133.595 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 148.984 Td
+136.158 133.595 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-152.350 148.984 Td
+152.350 133.595 Td
 (next) Tj
 ET
 BT
 /F0 11 Tf
-174.042 148.984 Td
+174.042 133.595 Td
 (entered) Tj
 ET
 BT
 /F0 11 Tf
-209.165 148.984 Td
+209.165 133.595 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-228.415 148.984 Td
+228.415 133.595 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-239.723 148.984 Td
+239.723 133.595 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-255.915 148.984 Td
+255.915 133.595 Td
 (history.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 118.206 Td
+87.274 102.817 Td
 (CTRLBOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-143.814 118.206 Td
+143.814 102.817 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-147.477 118.206 Td
+147.477 102.817 Td
 (Home) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-175.582 118.206 Td
+175.582 102.817 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-181.082 118.206 Td
+181.082 102.817 Td
 (Ctrl+A) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-214.841 118.206 Td
+214.841 102.817 Td
 (\)) Tj
-ET
-BT
-/F0 11 Tf
-106.524 102.817 Td
-(Move) Tj
-ET
-BT
-/F0 11 Tf
-134.937 102.817 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-151.129 102.817 Td
-(cursor) Tj
-ET
-BT
-/F0 11 Tf
-181.368 102.817 Td
-(to) Tj
-ET
-BT
-/F0 11 Tf
-192.676 102.817 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-208.868 102.817 Td
-(beginning) Tj
-ET
-BT
-/F0 11 Tf
-255.618 102.817 Td
-(of) Tj
-ET
-BT
-/F0 11 Tf
-267.531 102.817 Td
-(line.) Tj
 ET
 /F0 11 Tf
 BT
@@ -4619,7 +4759,7 @@ ET
 endstream
 endobj
 16 0 obj
-10710
+11055
 endobj
 17 0 obj
 <<
@@ -4646,909 +4786,926 @@ endobj
 >>
 stream
 BT
+/F0 11 Tf
+106.524 702.988 Td
+(Move) Tj
+ET
+BT
+/F0 11 Tf
+134.937 702.988 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+151.129 702.988 Td
+(cursor) Tj
+ET
+BT
+/F0 11 Tf
+181.368 702.988 Td
+(to) Tj
+ET
+BT
+/F0 11 Tf
+192.676 702.988 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+208.868 702.988 Td
+(beginning) Tj
+ET
+BT
+/F0 11 Tf
+255.618 702.988 Td
+(of) Tj
+ET
+BT
+/F0 11 Tf
+267.531 702.988 Td
+(line.) Tj
+ET
 /F1 11 Tf
-87.274 702.988 Td
+BT
+/F1 11 Tf
+87.274 672.210 Td
 (CTRLEOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-143.814 702.988 Td
+143.814 672.210 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-147.477 702.988 Td
+147.477 672.210 Td
 (End) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-167.046 702.988 Td
+167.046 672.210 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-172.546 702.988 Td
+172.546 672.210 Td
 (Ctrl+E) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-205.700 702.988 Td
+205.700 672.210 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 687.599 Td
+106.524 656.821 Td
 (Move) Tj
 ET
 BT
 /F0 11 Tf
-134.937 687.599 Td
+134.937 656.821 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-151.129 687.599 Td
+151.129 656.821 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-181.368 687.599 Td
+181.368 656.821 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-192.676 687.599 Td
+192.676 656.821 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-208.868 687.599 Td
+208.868 656.821 Td
 (end) Tj
 ET
 BT
 /F0 11 Tf
-227.502 687.599 Td
+227.502 656.821 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-239.415 687.599 Td
+239.415 656.821 Td
 (line.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 656.821 Td
+87.274 626.043 Td
 (CTRLLEFT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-149.314 656.821 Td
+149.314 626.043 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-152.977 656.821 Td
+152.977 626.043 Td
 (Left) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-172.524 656.821 Td
+172.524 626.043 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-178.024 656.821 Td
+178.024 626.043 Td
 (Ctrl+B) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-211.178 656.821 Td
+211.178 626.043 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 641.432 Td
+106.524 610.654 Td
 (Move) Tj
 ET
 BT
 /F0 11 Tf
-134.937 641.432 Td
+134.937 610.654 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-151.129 641.432 Td
+151.129 610.654 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-181.368 641.432 Td
+181.368 610.654 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-200.002 641.432 Td
+200.002 610.654 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-243.056 641.432 Td
+243.056 610.654 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-254.364 641.432 Td
+254.364 610.654 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-270.556 641.432 Td
+270.556 610.654 Td
 (left.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 610.654 Td
+87.274 579.876 Td
 (CTRLRIGHT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-157.256 610.654 Td
+157.256 579.876 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-160.919 610.654 Td
+160.919 579.876 Td
 (Right) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-187.198 610.654 Td
+187.198 579.876 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-192.698 610.654 Td
+192.698 579.876 Td
 (Ctrl+F) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-225.236 610.654 Td
+225.236 579.876 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 595.265 Td
+106.524 564.487 Td
 (Move) Tj
 ET
 BT
 /F0 11 Tf
-134.937 595.265 Td
+134.937 564.487 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-151.129 595.265 Td
+151.129 564.487 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-181.368 595.265 Td
+181.368 564.487 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-200.002 595.265 Td
+200.002 564.487 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-243.056 595.265 Td
+243.056 564.487 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-254.364 595.265 Td
+254.364 564.487 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-270.556 595.265 Td
+270.556 564.487 Td
 (right.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 564.487 Td
+87.274 533.709 Td
 (CTRLWLEFT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-160.314 564.487 Td
+160.314 533.709 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-163.977 564.487 Td
+163.977 533.709 Td
 (Ctrl+Left) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-209.341 564.487 Td
+209.341 533.709 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 549.098 Td
+106.524 518.320 Td
 (Move) Tj
 ET
 BT
 /F0 11 Tf
-134.937 549.098 Td
+134.937 518.320 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-151.129 549.098 Td
+151.129 518.320 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-181.368 549.098 Td
+181.368 518.320 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-200.002 549.098 Td
+200.002 518.320 Td
 (word) Tj
 ET
 BT
 /F0 11 Tf
-225.357 549.098 Td
+225.357 518.320 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-236.665 549.098 Td
+236.665 518.320 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-252.857 549.098 Td
+252.857 518.320 Td
 (left.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 518.320 Td
+87.274 487.542 Td
 (CTRLWRIGHT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-168.256 518.320 Td
+168.256 487.542 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-171.919 518.320 Td
+171.919 487.542 Td
 (Ctrl+Right) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-224.015 518.320 Td
+224.015 487.542 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 502.931 Td
+106.524 472.153 Td
 (Move) Tj
 ET
 BT
 /F0 11 Tf
-134.937 502.931 Td
+134.937 472.153 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-151.129 502.931 Td
+151.129 472.153 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-181.368 502.931 Td
+181.368 472.153 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-200.002 502.931 Td
+200.002 472.153 Td
 (word) Tj
 ET
 BT
 /F0 11 Tf
-225.357 502.931 Td
+225.357 472.153 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-236.665 502.931 Td
+236.665 472.153 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-252.857 502.931 Td
+252.857 472.153 Td
 (right.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 472.153 Td
+87.274 441.375 Td
 (CTRLDELBOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-166.430 472.153 Td
+166.430 441.375 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-170.093 472.153 Td
+170.093 441.375 Td
 (Ctrl+U) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-203.852 472.153 Td
+203.852 441.375 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 456.764 Td
+106.524 425.986 Td
 (Delete) Tj
 ET
 BT
 /F0 11 Tf
-137.984 456.764 Td
+137.984 425.986 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-162.118 456.764 Td
+162.118 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-178.310 456.764 Td
+178.310 425.986 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-208.549 456.764 Td
+208.549 425.986 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-219.857 456.764 Td
+219.857 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-236.049 456.764 Td
+236.049 425.986 Td
 (beginning) Tj
 ET
 BT
 /F0 11 Tf
-282.799 456.764 Td
+282.799 425.986 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-294.712 456.764 Td
+294.712 425.986 Td
 (line.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 425.986 Td
+87.274 395.208 Td
 (CTRLDELEOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-166.430 425.986 Td
+166.430 395.208 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-170.093 425.986 Td
+170.093 395.208 Td
 (Ctrl+K) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-204.468 425.986 Td
+204.468 395.208 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 410.597 Td
+106.524 379.819 Td
 (Delete) Tj
 ET
 BT
 /F0 11 Tf
-137.984 410.597 Td
+137.984 379.819 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-162.118 410.597 Td
+162.118 379.819 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-178.310 410.597 Td
+178.310 379.819 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-208.549 410.597 Td
+208.549 379.819 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-219.857 410.597 Td
+219.857 379.819 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-236.049 410.597 Td
+236.049 379.819 Td
 (end) Tj
 ET
 BT
 /F0 11 Tf
-254.683 410.597 Td
+254.683 379.819 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-266.596 410.597 Td
+266.596 379.819 Td
 (line.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 379.819 Td
+87.274 349.041 Td
 (CTRLDELLEFT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-171.930 379.819 Td
+171.930 349.041 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-175.593 379.819 Td
+175.593 349.041 Td
 (Backspace) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-225.093 379.819 Td
+225.093 349.041 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-230.593 379.819 Td
+230.593 349.041 Td
 (Ctrl+H) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-264.968 379.819 Td
+264.968 349.041 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 364.430 Td
+106.524 333.652 Td
 (Delete) Tj
 ET
 BT
 /F0 11 Tf
-137.984 364.430 Td
+137.984 333.652 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-156.618 364.430 Td
+156.618 333.652 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-199.672 364.430 Td
+199.672 333.652 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-210.980 364.430 Td
+210.980 333.652 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-227.172 364.430 Td
+227.172 333.652 Td
 (left.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 333.652 Td
+87.274 302.874 Td
 (CTRLDELRIGHT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-179.872 333.652 Td
+179.872 302.874 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-183.535 333.652 Td
+183.535 302.874 Td
 (Delete) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-212.850 333.652 Td
+212.850 302.874 Td
 (,) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-218.350 333.652 Td
+218.350 302.874 Td
 (Ctrl+D) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-252.109 333.652 Td
+252.109 302.874 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 318.263 Td
+106.524 287.485 Td
 (Delete) Tj
 ET
 BT
 /F0 11 Tf
-137.984 318.263 Td
+137.984 287.485 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-156.618 318.263 Td
+156.618 287.485 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-199.672 318.263 Td
+199.672 287.485 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-210.980 318.263 Td
+210.980 287.485 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-227.172 318.263 Td
+227.172 287.485 Td
 (right.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 287.485 Td
+87.274 256.707 Td
 (CTRLDELWORD) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-178.640 287.485 Td
+178.640 256.707 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-182.303 287.485 Td
+182.303 256.707 Td
 (Ctrl+W) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-219.120 287.485 Td
+219.120 256.707 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 272.096 Td
+106.524 241.318 Td
 (Delete) Tj
 ET
 BT
 /F0 11 Tf
-137.984 272.096 Td
+137.984 241.318 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-156.618 272.096 Td
+156.618 241.318 Td
 (word) Tj
 ET
 BT
 /F0 11 Tf
-181.973 272.096 Td
+181.973 241.318 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-193.281 272.096 Td
+193.281 241.318 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-209.473 272.096 Td
+209.473 241.318 Td
 (left.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 241.318 Td
+87.274 210.540 Td
 (CTRLSELBOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-164.604 241.318 Td
+164.604 210.540 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-168.267 241.318 Td
+168.267 210.540 Td
 (Shift+Home) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-225.258 241.318 Td
+225.258 210.540 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 225.929 Td
+106.524 195.151 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 225.929 Td
+136.158 195.151 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 225.929 Td
+155.408 195.151 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 225.929 Td
+179.542 195.151 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 225.929 Td
+209.781 195.151 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 225.929 Td
+221.089 195.151 Td
 (beginning) Tj
 ET
 BT
 /F0 11 Tf
-267.839 225.929 Td
+267.839 195.151 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-279.752 225.929 Td
+279.752 195.151 Td
 (line.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 195.151 Td
+87.274 164.373 Td
 (CTRLSELEOL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-164.604 195.151 Td
+164.604 164.373 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-168.267 195.151 Td
+168.267 164.373 Td
 (Shift+End) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-216.722 195.151 Td
+216.722 164.373 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 179.762 Td
+106.524 148.984 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 179.762 Td
+136.158 148.984 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 179.762 Td
+155.408 148.984 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 179.762 Td
+179.542 148.984 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 179.762 Td
+209.781 148.984 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 179.762 Td
+221.089 148.984 Td
 (end) Tj
 ET
 BT
 /F0 11 Tf
-239.723 179.762 Td
+239.723 148.984 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-251.636 179.762 Td
+251.636 148.984 Td
 (line.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 148.984 Td
+87.274 118.206 Td
 (CTRLSELLEFT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-170.104 148.984 Td
+170.104 118.206 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-173.767 148.984 Td
+173.767 118.206 Td
 (Shift+Left) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-222.200 148.984 Td
+222.200 118.206 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 133.595 Td
+106.524 102.817 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 133.595 Td
+136.158 102.817 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 133.595 Td
+155.408 102.817 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 133.595 Td
+179.542 102.817 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 133.595 Td
+209.781 102.817 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 133.595 Td
+221.089 102.817 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-239.723 133.595 Td
+239.723 102.817 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-282.777 133.595 Td
+282.777 102.817 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-294.085 133.595 Td
+294.085 102.817 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-310.277 133.595 Td
+310.277 102.817 Td
 (left.) Tj
-ET
-/F1 11 Tf
-BT
-/F1 11 Tf
-87.274 102.817 Td
-(CTRLSELRIGHT) Tj
-ET
-/F0 11 Tf
-BT
-/F0 11 Tf
-178.046 102.817 Td
-(\() Tj
-ET
-/F1 11 Tf
-BT
-/F1 11 Tf
-181.709 102.817 Td
-(Shift+Right) Tj
-ET
-/F0 11 Tf
-BT
-/F0 11 Tf
-236.874 102.817 Td
-(\)) Tj
 ET
 /F0 11 Tf
 BT
@@ -5584,7 +5741,7 @@ ET
 endstream
 endobj
 20 0 obj
-8598
+8740
 endobj
 21 0 obj
 <<
@@ -5611,1253 +5768,1270 @@ endobj
 >>
 stream
 BT
+/F1 11 Tf
+87.274 702.988 Td
+(CTRLSELRIGHT) Tj
+ET
 /F0 11 Tf
-106.524 702.988 Td
+BT
+/F0 11 Tf
+178.046 702.988 Td
+(\() Tj
+ET
+/F1 11 Tf
+BT
+/F1 11 Tf
+181.709 702.988 Td
+(Shift+Right) Tj
+ET
+/F0 11 Tf
+BT
+/F0 11 Tf
+236.874 702.988 Td
+(\)) Tj
+ET
+BT
+/F0 11 Tf
+106.524 687.599 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 702.988 Td
+136.158 687.599 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 702.988 Td
+155.408 687.599 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 702.988 Td
+179.542 687.599 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 702.988 Td
+209.781 687.599 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 702.988 Td
+221.089 687.599 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-239.723 702.988 Td
+239.723 687.599 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-282.777 702.988 Td
+282.777 687.599 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-294.085 702.988 Td
+294.085 687.599 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-310.277 702.988 Td
+310.277 687.599 Td
 (right.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 672.210 Td
+87.274 656.821 Td
 (CTRLSELWLEFT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-181.104 672.210 Td
+181.104 656.821 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-184.767 672.210 Td
+184.767 656.821 Td
 (Ctrl+Shift+Left) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-259.017 672.210 Td
+259.017 656.821 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 656.821 Td
+106.524 641.432 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 656.821 Td
+136.158 641.432 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 656.821 Td
+155.408 641.432 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 656.821 Td
+179.542 641.432 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 656.821 Td
+209.781 641.432 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 656.821 Td
+221.089 641.432 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-239.723 656.821 Td
+239.723 641.432 Td
 (word) Tj
 ET
 BT
 /F0 11 Tf
-265.078 656.821 Td
+265.078 641.432 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-276.386 656.821 Td
+276.386 641.432 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-292.578 656.821 Td
+292.578 641.432 Td
 (left.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 626.043 Td
+87.274 610.654 Td
 (CTRLSELWRIGHT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-189.046 626.043 Td
+189.046 610.654 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-192.709 626.043 Td
+192.709 610.654 Td
 (Ctrl+Shift+Right) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-273.691 626.043 Td
+273.691 610.654 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 610.654 Td
+106.524 595.265 Td
 (Select) Tj
 ET
 BT
 /F0 11 Tf
-136.158 610.654 Td
+136.158 595.265 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-155.408 610.654 Td
+155.408 595.265 Td
 (from) Tj
 ET
 BT
 /F0 11 Tf
-179.542 610.654 Td
+179.542 595.265 Td
 (cursor) Tj
 ET
 BT
 /F0 11 Tf
-209.781 610.654 Td
+209.781 595.265 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-221.089 610.654 Td
+221.089 595.265 Td
 (one) Tj
 ET
 BT
 /F0 11 Tf
-239.723 610.654 Td
+239.723 595.265 Td
 (word) Tj
 ET
 BT
 /F0 11 Tf
-265.078 610.654 Td
+265.078 595.265 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-276.386 610.654 Td
+276.386 595.265 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-292.578 610.654 Td
+292.578 595.265 Td
 (right.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 579.876 Td
+87.274 564.487 Td
 (CTRLCANCEL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-167.024 579.876 Td
+167.024 564.487 Td
 (\() Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-170.687 579.876 Td
+170.687 564.487 Td
 (Esc) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-187.187 579.876 Td
+187.187 564.487 Td
 (\)) Tj
 ET
 BT
 /F0 11 Tf
-106.524 564.487 Td
+106.524 549.098 Td
 (When) Tj
 ET
 BT
 /F0 11 Tf
-135.542 564.487 Td
+135.542 549.098 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-187.792 564.487 Td
+187.792 549.098 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-197.879 564.487 Td
+197.879 549.098 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-209.187 564.487 Td
+209.187 549.098 Td
 (operation,) Tj
 ET
 BT
 /F0 11 Tf
-256.234 564.487 Td
+256.234 549.098 Td
 (exit) Tj
 ET
 BT
 /F0 11 Tf
-275.484 564.487 Td
+275.484 549.098 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-327.734 564.487 Td
+327.734 549.098 Td
 (without) Tj
 ET
 BT
 /F0 11 Tf
-364.100 564.487 Td
+364.100 549.098 Td
 (confirming) Tj
 ET
 BT
 /F0 11 Tf
-415.734 564.487 Td
+415.734 549.098 Td
 (text.) Tj
 ET
 BT
 /F0 11 Tf
-440.484 564.487 Td
+440.484 549.098 Td
 (When) Tj
 ET
 BT
 /F0 11 Tf
-469.502 564.487 Td
+469.502 549.098 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-521.752 564.487 Td
+521.752 549.098 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-106.524 549.098 Td
+106.524 533.709 Td
 (not) Tj
 ET
 BT
 /F0 11 Tf
-123.332 549.098 Td
+123.332 533.709 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-134.640 549.098 Td
+134.640 533.709 Td
 (operation,) Tj
 ET
 BT
 /F0 11 Tf
-181.687 549.098 Td
+181.687 533.709 Td
 (exit) Tj
 ET
 BT
 /F0 11 Tf
-200.937 549.098 Td
+200.937 533.709 Td
 (xprompt) Tj
 ET
 BT
 /F0 11 Tf
-240.966 549.098 Td
+240.966 533.709 Td
 (without) Tj
 ET
 BT
 /F0 11 Tf
-277.332 549.098 Td
+277.332 533.709 Td
 (printing) Tj
 ET
 BT
 /F0 11 Tf
-314.919 549.098 Td
+314.919 533.709 Td
 (anything.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 518.320 Td
+87.274 502.931 Td
 (xprompt) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-130.966 518.320 Td
+130.966 502.931 Td
 (can) Tj
 ET
 BT
 /F0 11 Tf
-148.984 518.320 Td
+148.984 502.931 Td
 (also) Tj
 ET
 BT
 /F0 11 Tf
-169.455 518.320 Td
+169.455 502.931 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-182.589 518.320 Td
+182.589 502.931 Td
 (controlled) Tj
 ET
 BT
 /F0 11 Tf
-229.944 518.320 Td
+229.944 502.931 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-243.694 518.320 Td
+243.694 502.931 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-259.886 518.320 Td
+259.886 502.931 Td
 (mouse.) Tj
 ET
 BT
 /F0 11 Tf
-296.857 518.320 Td
+296.857 502.931 Td
 (Clicking) Tj
 ET
 BT
 /F0 11 Tf
-337.502 518.320 Td
+337.502 502.931 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-351.252 518.320 Td
+351.252 502.931 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-358.886 518.320 Td
+358.886 502.931 Td
 (item) Tj
 ET
 BT
 /F0 11 Tf
-381.194 518.320 Td
+381.194 502.931 Td
 (selects) Tj
 ET
 BT
 /F0 11 Tf
-413.270 518.320 Td
+413.270 502.931 Td
 (it.) Tj
 ET
 BT
 /F0 11 Tf
-427.636 518.320 Td
+427.636 502.931 Td
 (Clicking) Tj
 ET
 BT
 /F0 11 Tf
-468.281 518.320 Td
+468.281 502.931 Td
 (on) Tj
 ET
 BT
 /F0 11 Tf
-482.031 518.320 Td
+482.031 502.931 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-498.223 518.320 Td
+498.223 502.931 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-523.589 518.320 Td
+523.589 502.931 Td
 (field) Tj
-ET
-BT
-/F0 11 Tf
-87.274 502.931 Td
-(with) Tj
-ET
-BT
-/F0 11 Tf
-109.582 502.931 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-125.774 502.931 Td
-(left) Tj
-ET
-BT
-/F0 11 Tf
-143.187 502.931 Td
-(button) Tj
-ET
-BT
-/F0 11 Tf
-174.053 502.931 Td
-(moves) Tj
-ET
-BT
-/F0 11 Tf
-205.524 502.931 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-221.716 502.931 Td
-(cursor.) Tj
-ET
-BT
-/F0 11 Tf
-257.455 502.931 Td
-(Clicking) Tj
-ET
-BT
-/F0 11 Tf
-298.100 502.931 Td
-(on) Tj
-ET
-BT
-/F0 11 Tf
-311.850 502.931 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-328.042 502.931 Td
-(input) Tj
-ET
-BT
-/F0 11 Tf
-353.408 502.931 Td
-(field) Tj
-ET
-BT
-/F0 11 Tf
-376.321 502.931 Td
-(with) Tj
-ET
-BT
-/F0 11 Tf
-398.629 502.931 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-414.821 502.931 Td
-(middle) Tj
-ET
-BT
-/F0 11 Tf
-448.129 502.931 Td
-(button) Tj
-ET
-BT
-/F0 11 Tf
-478.995 502.931 Td
-(pastes) Tj
-ET
-BT
-/F0 11 Tf
-508.629 502.931 Td
-(from) Tj
 ET
 BT
 /F0 11 Tf
 87.274 487.542 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-103.466 487.542 Td
-(primary) Tj
-ET
-BT
-/F0 11 Tf
-141.042 487.542 Td
-(selection.) Tj
-ET
-BT
-/F0 11 Tf
-188.397 487.542 Td
-(Clicking) Tj
-ET
-BT
-/F0 11 Tf
-229.042 487.542 Td
-(on) Tj
-ET
-BT
-/F0 11 Tf
-242.792 487.542 Td
-(the) Tj
-ET
-BT
-/F0 11 Tf
-258.984 487.542 Td
-(input) Tj
-ET
-BT
-/F0 11 Tf
-284.350 487.542 Td
-(field) Tj
-ET
-BT
-/F0 11 Tf
-307.263 487.542 Td
 (with) Tj
 ET
 BT
 /F0 11 Tf
-329.571 487.542 Td
+109.582 487.542 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-345.763 487.542 Td
+125.774 487.542 Td
 (left) Tj
 ET
 BT
 /F0 11 Tf
-363.176 487.542 Td
+143.187 487.542 Td
 (button) Tj
 ET
 BT
 /F0 11 Tf
-394.042 487.542 Td
-(and) Tj
+174.053 487.542 Td
+(moves) Tj
 ET
 BT
 /F0 11 Tf
-412.676 487.542 Td
-(moving) Tj
-ET
-BT
-/F0 11 Tf
-449.042 487.542 Td
+205.524 487.542 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-465.234 487.542 Td
-(mouse) Tj
+221.716 487.542 Td
+(cursor.) Tj
 ET
 BT
 /F0 11 Tf
-496.705 487.542 Td
-(selects) Tj
+257.455 487.542 Td
+(Clicking) Tj
+ET
+BT
+/F0 11 Tf
+298.100 487.542 Td
+(on) Tj
+ET
+BT
+/F0 11 Tf
+311.850 487.542 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+328.042 487.542 Td
+(input) Tj
+ET
+BT
+/F0 11 Tf
+353.408 487.542 Td
+(field) Tj
+ET
+BT
+/F0 11 Tf
+376.321 487.542 Td
+(with) Tj
+ET
+BT
+/F0 11 Tf
+398.629 487.542 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+414.821 487.542 Td
+(middle) Tj
+ET
+BT
+/F0 11 Tf
+448.129 487.542 Td
+(button) Tj
+ET
+BT
+/F0 11 Tf
+478.995 487.542 Td
+(pastes) Tj
+ET
+BT
+/F0 11 Tf
+508.629 487.542 Td
+(from) Tj
 ET
 BT
 /F0 11 Tf
 87.274 472.153 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+103.466 472.153 Td
+(primary) Tj
+ET
+BT
+/F0 11 Tf
+141.042 472.153 Td
+(selection.) Tj
+ET
+BT
+/F0 11 Tf
+188.397 472.153 Td
+(Clicking) Tj
+ET
+BT
+/F0 11 Tf
+229.042 472.153 Td
+(on) Tj
+ET
+BT
+/F0 11 Tf
+242.792 472.153 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+258.984 472.153 Td
+(input) Tj
+ET
+BT
+/F0 11 Tf
+284.350 472.153 Td
+(field) Tj
+ET
+BT
+/F0 11 Tf
+307.263 472.153 Td
+(with) Tj
+ET
+BT
+/F0 11 Tf
+329.571 472.153 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+345.763 472.153 Td
+(left) Tj
+ET
+BT
+/F0 11 Tf
+363.176 472.153 Td
+(button) Tj
+ET
+BT
+/F0 11 Tf
+394.042 472.153 Td
+(and) Tj
+ET
+BT
+/F0 11 Tf
+412.676 472.153 Td
+(moving) Tj
+ET
+BT
+/F0 11 Tf
+449.042 472.153 Td
+(the) Tj
+ET
+BT
+/F0 11 Tf
+465.234 472.153 Td
+(mouse) Tj
+ET
+BT
+/F0 11 Tf
+496.705 472.153 Td
+(selects) Tj
+ET
+BT
+/F0 11 Tf
+87.274 456.764 Td
 (text.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-68.024 441.375 Td
+68.024 425.986 Td
 (ENVIRONMENT) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-87.274 425.986 Td
+87.274 410.597 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-107.129 425.986 Td
+107.129 410.597 Td
 (following) Tj
 ET
 BT
 /F0 11 Tf
-152.658 425.986 Td
+152.658 410.597 Td
 (environment) Tj
 ET
 BT
 /F0 11 Tf
-211.013 425.986 Td
+211.013 410.597 Td
 (variables) Tj
 ET
 BT
 /F0 11 Tf
-253.473 425.986 Td
+253.473 410.597 Td
 (affect) Tj
 ET
 BT
 /F0 11 Tf
-281.259 425.986 Td
+281.259 410.597 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-297.451 425.986 Td
+297.451 410.597 Td
 (execution) Tj
 ET
 BT
 /F0 11 Tf
-342.969 425.986 Td
+342.969 410.597 Td
 (of) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-354.882 425.986 Td
+354.882 410.597 Td
 (xprompt) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-395.824 425.986 Td
+395.824 410.597 Td
 (.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 395.208 Td
+87.274 379.819 Td
 (XPROMPTHISTFILE) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 379.819 Td
+106.524 364.430 Td
 (Specifies) Tj
 ET
 BT
 /F0 11 Tf
-149.600 379.819 Td
+149.600 364.430 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-165.792 379.819 Td
+165.792 364.430 Td
 (file) Tj
 ET
 BT
 /F0 11 Tf
-183.205 379.819 Td
+183.205 364.430 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-194.513 379.819 Td
+194.513 364.430 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-207.647 379.819 Td
+207.647 364.430 Td
 (used) Tj
 ET
 BT
 /F0 11 Tf
-230.560 379.819 Td
+230.560 364.430 Td
 (for) Tj
 ET
 BT
 /F0 11 Tf
-246.136 379.819 Td
+246.136 364.430 Td
 (reading) Tj
 ET
 BT
 /F0 11 Tf
-281.875 379.819 Td
+281.875 364.430 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-300.509 379.819 Td
+300.509 364.430 Td
 (storing) Tj
 ET
 BT
 /F0 11 Tf
-333.817 379.819 Td
+333.817 364.430 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-350.009 379.819 Td
+350.009 364.430 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-383.317 379.819 Td
+383.317 364.430 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-395.230 379.819 Td
+395.230 364.430 Td
 (typed) Tj
 ET
 BT
 /F0 11 Tf
-422.422 379.819 Td
+422.422 364.430 Td
 (texts.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 349.041 Td
+87.274 333.652 Td
 (XPROMPTHISTSIZE) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 333.652 Td
+106.524 318.263 Td
 (Specifies) Tj
 ET
 BT
 /F0 11 Tf
-149.600 333.652 Td
+149.600 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-165.792 333.652 Td
+165.792 318.263 Td
 (number) Tj
 ET
 BT
 /F0 11 Tf
-202.147 333.652 Td
+202.147 318.263 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-214.060 333.652 Td
+214.060 318.263 Td
 (entries) Tj
 ET
 BT
 /F0 11 Tf
-246.136 333.652 Td
+246.136 318.263 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-257.444 333.652 Td
+257.444 318.263 Td
 (be) Tj
 ET
 BT
 /F0 11 Tf
-270.578 333.652 Td
+270.578 318.263 Td
 (kept) Tj
 ET
 BT
 /F0 11 Tf
-292.270 333.652 Td
+292.270 318.263 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-303.578 333.652 Td
+303.578 318.263 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-319.770 333.652 Td
+319.770 318.263 Td
 (history) Tj
 ET
 BT
 /F0 11 Tf
-353.078 333.652 Td
+353.078 318.263 Td
 (file.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 302.874 Td
+87.274 287.485 Td
 (XPROMPTCTRL) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 287.485 Td
+106.524 272.096 Td
 (This) Tj
 ET
 BT
 /F0 11 Tf
-128.832 287.485 Td
+128.832 272.096 Td
 (environment) Tj
 ET
 BT
 /F0 11 Tf
-187.187 287.485 Td
+187.187 272.096 Td
 (variable) Tj
 ET
 BT
 /F0 11 Tf
-225.368 287.485 Td
+225.368 272.096 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-235.455 287.485 Td
+235.455 272.096 Td
 (set) Tj
 ET
 BT
 /F0 11 Tf
-250.426 287.485 Td
+250.426 272.096 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-261.734 287.485 Td
+261.734 272.096 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-269.368 287.485 Td
+269.368 272.096 Td
 (list) Tj
 ET
 BT
 /F0 11 Tf
-285.571 287.485 Td
+285.571 272.096 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-297.484 287.485 Td
+297.484 272.096 Td
 (alphabetic) Tj
 ET
 BT
 /F0 11 Tf
-345.444 287.485 Td
+345.444 272.096 Td
 (characters,) Tj
 ET
 BT
 /F0 11 Tf
-395.527 287.485 Td
+395.527 272.096 Td
 (each) Tj
 ET
 BT
 /F0 11 Tf
-418.429 287.485 Td
+418.429 272.096 Td
 (character) Tj
 ET
 BT
 /F0 11 Tf
-461.483 287.485 Td
+461.483 272.096 Td
 (specify) Tj
 ET
 BT
 /F0 11 Tf
-496.001 287.485 Td
+496.001 272.096 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-503.635 287.485 Td
+503.635 272.096 Td
 (ctrl) Tj
 ET
 BT
 /F0 11 Tf
-106.524 272.096 Td
+106.524 256.707 Td
 (sequence) Tj
 ET
 BT
 /F0 11 Tf
-149.589 272.096 Td
+149.589 256.707 Td
 (for) Tj
 ET
 BT
 /F0 11 Tf
-165.165 272.096 Td
+165.165 256.707 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-172.799 272.096 Td
+172.799 256.707 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-198.165 272.096 Td
+198.165 256.707 Td
 (operation) Tj
 ET
 BT
 /F0 11 Tf
-242.462 272.096 Td
+242.462 256.707 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-253.770 272.096 Td
+253.770 256.707 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-269.962 272.096 Td
+269.962 256.707 Td
 (order) Tj
 ET
 BT
 /F0 11 Tf
-295.922 272.096 Td
+295.922 256.707 Td
 (listed) Tj
 ET
 BT
 /F0 11 Tf
-322.509 272.096 Td
+322.509 256.707 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-333.817 272.096 Td
+333.817 256.707 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-350.009 272.096 Td
+350.009 256.707 Td
 (section) Tj
 ET
 BT
 /F0 11 Tf
-383.922 272.096 Td
+383.922 256.707 Td
 (USAGE.) Tj
 ET
 BT
 /F0 11 Tf
-428.835 272.096 Td
+428.835 256.707 Td
 (For) Tj
 ET
 BT
 /F0 11 Tf
-446.864 272.096 Td
+446.864 256.707 Td
 (example,) Tj
 ET
 BT
 /F0 11 Tf
-489.632 272.096 Td
+489.632 256.707 Td
 (by) Tj
 ET
 BT
 /F0 11 Tf
-503.382 272.096 Td
+503.382 256.707 Td
 (default,) Tj
 ET
 BT
 /F0 11 Tf
-106.524 256.707 Td
+106.524 241.318 Td
 (XPROMPTCTRL) Tj
 ET
 BT
 /F0 11 Tf
-189.343 256.707 Td
+189.343 241.318 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-199.430 256.707 Td
+199.430 241.318 Td
 ("vcmpn::::aebf::ukhdwAEBF::",) Tj
 ET
 BT
 /F0 11 Tf
-345.301 256.707 Td
+345.301 241.318 Td
 (it) Tj
 ET
 BT
 /F0 11 Tf
-354.167 256.707 Td
+354.167 241.318 Td
 (means) Tj
 ET
 BT
 /F0 11 Tf
-385.022 256.707 Td
+385.022 241.318 Td
 (that) Tj
 ET
 BT
 /F0 11 Tf
-404.272 256.707 Td
+404.272 241.318 Td
 (pressing) Tj
 ET
 BT
 /F0 11 Tf
-443.685 256.707 Td
+443.685 241.318 Td
 (Ctrl+V) Tj
 ET
 BT
 /F0 11 Tf
-477.697 256.707 Td
+477.697 241.318 Td
 (enters) Tj
-ET
-BT
-/F0 11 Tf
-106.524 241.318 Td
-(CTRLPASTE,) Tj
-ET
-BT
-/F0 11 Tf
-173.756 241.318 Td
-(Ctrl+C) Tj
-ET
-BT
-/F0 11 Tf
-207.163 241.318 Td
-(enters) Tj
-ET
-BT
-/F0 11 Tf
-236.181 241.318 Td
-(CTRLCOPY,) Tj
-ET
-BT
-/F0 11 Tf
-299.134 241.318 Td
-(Ctrl+M) Tj
-ET
-BT
-/F0 11 Tf
-334.983 241.318 Td
-(enters) Tj
-ET
-BT
-/F0 11 Tf
-364.001 241.318 Td
-(CTRLENTER,) Tj
-ET
-BT
-/F0 11 Tf
-433.059 241.318 Td
-(etc.) Tj
-ET
-BT
-/F0 11 Tf
-454.135 241.318 Td
-(A) Tj
-ET
-BT
-/F0 11 Tf
-464.827 241.318 Td
-(colon) Tj
-ET
-BT
-/F0 11 Tf
-492.019 241.318 Td
-(specifies) Tj
 ET
 BT
 /F0 11 Tf
 106.524 225.929 Td
+(CTRLPASTE,) Tj
+ET
+BT
+/F0 11 Tf
+173.756 225.929 Td
+(Ctrl+C) Tj
+ET
+BT
+/F0 11 Tf
+207.163 225.929 Td
+(enters) Tj
+ET
+BT
+/F0 11 Tf
+236.181 225.929 Td
+(CTRLCOPY,) Tj
+ET
+BT
+/F0 11 Tf
+299.134 225.929 Td
+(Ctrl+M) Tj
+ET
+BT
+/F0 11 Tf
+334.983 225.929 Td
+(enters) Tj
+ET
+BT
+/F0 11 Tf
+364.001 225.929 Td
+(CTRLENTER,) Tj
+ET
+BT
+/F0 11 Tf
+433.059 225.929 Td
+(etc.) Tj
+ET
+BT
+/F0 11 Tf
+454.135 225.929 Td
+(A) Tj
+ET
+BT
+/F0 11 Tf
+464.827 225.929 Td
+(colon) Tj
+ET
+BT
+/F0 11 Tf
+492.019 225.929 Td
+(specifies) Tj
+ET
+BT
+/F0 11 Tf
+106.524 210.540 Td
 (that) Tj
 ET
 BT
 /F0 11 Tf
-125.774 225.929 Td
+125.774 210.540 Td
 (no) Tj
 ET
 BT
 /F0 11 Tf
-139.524 225.929 Td
+139.524 210.540 Td
 (Ctrl) Tj
 ET
 BT
 /F0 11 Tf
-159.390 225.929 Td
+159.390 210.540 Td
 (+) Tj
 ET
 BT
 /F0 11 Tf
-168.344 225.929 Td
+168.344 210.540 Td
 (Key) Tj
 ET
 BT
 /F0 11 Tf
-189.420 225.929 Td
+189.420 210.540 Td
 (sequence) Tj
 ET
 BT
 /F0 11 Tf
-232.485 225.929 Td
+232.485 210.540 Td
 (implements) Tj
 ET
 BT
 /F0 11 Tf
-286.572 225.929 Td
+286.572 210.540 Td
 (such) Tj
 ET
 BT
 /F0 11 Tf
-309.485 225.929 Td
+309.485 210.540 Td
 (operation.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 195.151 Td
+87.274 179.762 Td
 (WORDDELIMITERS) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 179.762 Td
+106.524 164.373 Td
 (A) Tj
 ET
 BT
 /F0 11 Tf
-117.216 179.762 Td
+117.216 164.373 Td
 (string) Tj
 ET
 BT
 /F0 11 Tf
-145.024 179.762 Td
+145.024 164.373 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-156.937 179.762 Td
+156.937 164.373 Td
 (characters) Tj
 ET
 BT
 /F0 11 Tf
-204.270 179.762 Td
+204.270 164.373 Td
 (that) Tj
 ET
 BT
 /F0 11 Tf
-223.520 179.762 Td
+223.520 164.373 Td
 (delimits) Tj
 ET
 BT
 /F0 11 Tf
-261.723 179.762 Td
+261.723 164.373 Td
 (words.) Tj
 ET
 BT
 /F0 11 Tf
-296.857 179.762 Td
+296.857 164.373 Td
 (By) Tj
 ET
 BT
 /F0 11 Tf
-312.444 179.762 Td
+312.444 164.373 Td
 (default) Tj
 ET
 BT
 /F0 11 Tf
-345.741 179.762 Td
+345.741 164.373 Td
 (it) Tj
 ET
 BT
 /F0 11 Tf
-354.607 179.762 Td
+354.607 164.373 Td
 (is) Tj
 ET
 BT
 /F0 11 Tf
-364.694 179.762 Td
+364.694 164.373 Td
 (a) Tj
 ET
 BT
 /F0 11 Tf
-372.328 179.762 Td
+372.328 164.373 Td
 (") Tj
 ET
 BT
 /F0 11 Tf
-379.566 179.762 Td
+379.566 164.373 Td
 (.,/:;\\<>'[]{}\(\)&$?!".) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-68.024 148.984 Td
+68.024 133.595 Td
 (RESOURCES) Tj
 ET
 BT
 /F1 11 Tf
-87.274 133.595 Td
+87.274 118.206 Td
 (xprompt) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-130.966 133.595 Td
+130.966 118.206 Td
 (understands) Tj
 ET
 BT
 /F0 11 Tf
-186.263 133.595 Td
+186.263 118.206 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-202.455 133.595 Td
+202.455 118.206 Td
 (following) Tj
 ET
 BT
 /F0 11 Tf
-247.984 133.595 Td
+247.984 118.206 Td
 (X) Tj
 ET
 BT
 /F0 11 Tf
-258.676 133.595 Td
+258.676 118.206 Td
 (resources.) Tj
-ET
-/F1 11 Tf
-BT
-/F1 11 Tf
-87.274 102.817 Td
-(xprompt.font) Tj
 ET
 /F0 11 Tf
 BT
@@ -6893,7 +7067,7 @@ ET
 endstream
 endobj
 24 0 obj
-11920
+12078
 endobj
 25 0 obj
 <<
@@ -6920,892 +7094,898 @@ endobj
 >>
 stream
 BT
+/F1 11 Tf
+87.274 702.988 Td
+(xprompt.font) Tj
+ET
 /F0 11 Tf
-106.524 702.988 Td
+BT
+/F0 11 Tf
+106.524 687.599 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 702.988 Td
+126.379 687.599 Td
 (font) Tj
 ET
 BT
 /F0 11 Tf
-146.850 702.988 Td
+146.850 687.599 Td
 (to) Tj
 ET
 BT
 /F0 11 Tf
-158.158 702.988 Td
+158.158 687.599 Td
 (drawn) Tj
 ET
 BT
 /F0 11 Tf
-188.397 702.988 Td
+188.397 687.599 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-204.589 702.988 Td
+204.589 687.599 Td
 (text.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 672.210 Td
+87.274 656.821 Td
 (xprompt.background) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 656.821 Td
+106.524 641.432 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 656.821 Td
+126.379 641.432 Td
 (background) Tj
 ET
 BT
 /F0 11 Tf
-181.060 656.821 Td
+181.060 641.432 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-206.415 656.821 Td
+206.415 641.432 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-218.328 656.821 Td
+218.328 641.432 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-234.520 656.821 Td
+234.520 641.432 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-259.886 656.821 Td
+259.886 641.432 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-279.136 656.821 Td
+279.136 641.432 Td
 (field,) Tj
 ET
 BT
 /F0 11 Tf
-304.799 656.821 Td
+304.799 641.432 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-323.433 656.821 Td
+323.433 641.432 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-335.346 656.821 Td
+335.346 641.432 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-351.538 656.821 Td
+351.538 641.432 Td
 (non-selected) Tj
 ET
 BT
 /F0 11 Tf
-409.882 656.821 Td
+409.882 641.432 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-436.469 656.821 Td
+436.469 641.432 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-447.777 656.821 Td
+447.777 641.432 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-463.969 656.821 Td
+463.969 641.432 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-106.524 641.432 Td
+106.524 626.043 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-158.774 641.432 Td
+158.774 626.043 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 610.654 Td
+87.274 595.265 Td
 (xprompt.foreground) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 595.265 Td
+106.524 579.876 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 595.265 Td
+126.379 579.876 Td
 (foreground) Tj
 ET
 BT
 /F0 11 Tf
-178.002 595.265 Td
+178.002 579.876 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-203.357 595.265 Td
+203.357 579.876 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-215.270 595.265 Td
+215.270 579.876 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-231.462 595.265 Td
+231.462 579.876 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-256.828 595.265 Td
+256.828 579.876 Td
 (text) Tj
 ET
 BT
 /F0 11 Tf
-276.078 595.265 Td
+276.078 579.876 Td
 (field,) Tj
 ET
 BT
 /F0 11 Tf
-301.741 595.265 Td
+301.741 579.876 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-320.375 595.265 Td
+320.375 579.876 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-332.288 595.265 Td
+332.288 579.876 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-348.480 595.265 Td
+348.480 579.876 Td
 (non-selected) Tj
 ET
 BT
 /F0 11 Tf
-406.824 595.265 Td
+406.824 579.876 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-433.411 595.265 Td
+433.411 579.876 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-444.719 595.265 Td
+444.719 579.876 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-460.911 595.265 Td
+460.911 579.876 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-106.524 579.876 Td
+106.524 564.487 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-158.774 579.876 Td
+158.774 564.487 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 549.098 Td
+87.274 533.709 Td
 (xprompt.description) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 533.709 Td
+106.524 518.320 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 533.709 Td
+126.379 518.320 Td
 (foreground) Tj
 ET
 BT
 /F0 11 Tf
-178.002 533.709 Td
+178.002 518.320 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-203.357 533.709 Td
+203.357 518.320 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-215.270 533.709 Td
+215.270 518.320 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-231.462 533.709 Td
+231.462 518.320 Td
 (description) Tj
 ET
 BT
 /F0 11 Tf
-283.096 533.709 Td
+283.096 518.320 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-295.009 533.709 Td
+295.009 518.320 Td
 (non-selected) Tj
 ET
 BT
 /F0 11 Tf
-353.353 533.709 Td
+353.353 518.320 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-379.940 533.709 Td
+379.940 518.320 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-391.248 533.709 Td
+391.248 518.320 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-407.440 533.709 Td
+407.440 518.320 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-454.795 533.709 Td
+454.795 518.320 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-507.045 533.709 Td
+507.045 518.320 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 502.931 Td
+87.274 487.542 Td
 (xprompt.hoverbackground) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 487.542 Td
+106.524 472.153 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 487.542 Td
+126.379 472.153 Td
 (background) Tj
 ET
 BT
 /F0 11 Tf
-181.060 487.542 Td
+181.060 472.153 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-206.415 487.542 Td
+206.415 472.153 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-218.328 487.542 Td
+218.328 472.153 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-234.520 487.542 Td
+234.520 472.153 Td
 (hovered) Tj
 ET
 BT
 /F0 11 Tf
-272.701 487.542 Td
+272.701 472.153 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-299.288 487.542 Td
+299.288 472.153 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-310.596 487.542 Td
+310.596 472.153 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-326.788 487.542 Td
+326.788 472.153 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-374.143 487.542 Td
+374.143 472.153 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-426.393 487.542 Td
+426.393 472.153 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 456.764 Td
+87.274 441.375 Td
 (xprompt.hoverforeground) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 441.375 Td
+106.524 425.986 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 441.375 Td
+126.379 425.986 Td
 (background) Tj
 ET
 BT
 /F0 11 Tf
-181.060 441.375 Td
+181.060 425.986 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-206.415 441.375 Td
+206.415 425.986 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-218.328 441.375 Td
+218.328 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-234.520 441.375 Td
+234.520 425.986 Td
 (hovered) Tj
 ET
 BT
 /F0 11 Tf
-272.701 441.375 Td
+272.701 425.986 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-299.288 441.375 Td
+299.288 425.986 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-310.596 441.375 Td
+310.596 425.986 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-326.788 441.375 Td
+326.788 425.986 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-374.143 441.375 Td
+374.143 425.986 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-426.393 441.375 Td
+426.393 425.986 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 410.597 Td
+87.274 395.208 Td
 (xprompt.hoverdescription) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 395.208 Td
+106.524 379.819 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 395.208 Td
+126.379 379.819 Td
 (foreground) Tj
 ET
 BT
 /F0 11 Tf
-178.002 395.208 Td
+178.002 379.819 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-203.357 395.208 Td
+203.357 379.819 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-215.270 395.208 Td
+215.270 379.819 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-231.462 395.208 Td
+231.462 379.819 Td
 (description) Tj
 ET
 BT
 /F0 11 Tf
-283.096 395.208 Td
+283.096 379.819 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-295.009 395.208 Td
+295.009 379.819 Td
 (hovered) Tj
 ET
 BT
 /F0 11 Tf
-333.190 395.208 Td
+333.190 379.819 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-359.777 395.208 Td
+359.777 379.819 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-371.085 395.208 Td
+371.085 379.819 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-387.277 395.208 Td
+387.277 379.819 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-434.632 395.208 Td
+434.632 379.819 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-486.882 395.208 Td
+486.882 379.819 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 364.430 Td
+87.274 349.041 Td
 (xprompt.selbackground) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 349.041 Td
+106.524 333.652 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 349.041 Td
+126.379 333.652 Td
 (background) Tj
 ET
 BT
 /F0 11 Tf
-181.060 349.041 Td
+181.060 333.652 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-206.415 349.041 Td
+206.415 333.652 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-218.328 349.041 Td
+218.328 333.652 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-234.520 349.041 Td
+234.520 333.652 Td
 (selected) Tj
 ET
 BT
 /F0 11 Tf
-272.701 349.041 Td
+272.701 333.652 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-299.288 349.041 Td
+299.288 333.652 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-310.596 349.041 Td
+310.596 333.652 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-326.788 349.041 Td
+326.788 333.652 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-374.143 349.041 Td
+374.143 333.652 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-426.393 349.041 Td
+426.393 333.652 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 318.263 Td
+87.274 302.874 Td
 (xprompt.selforeground) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 302.874 Td
+106.524 287.485 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 302.874 Td
+126.379 287.485 Td
 (background) Tj
 ET
 BT
 /F0 11 Tf
-181.060 302.874 Td
+181.060 287.485 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-206.415 302.874 Td
+206.415 287.485 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-218.328 302.874 Td
+218.328 287.485 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-234.520 302.874 Td
+234.520 287.485 Td
 (selected) Tj
 ET
 BT
 /F0 11 Tf
-272.701 302.874 Td
+272.701 287.485 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-299.288 302.874 Td
+299.288 287.485 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-310.596 302.874 Td
+310.596 287.485 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-326.788 302.874 Td
+326.788 287.485 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-374.143 302.874 Td
+374.143 287.485 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-426.393 302.874 Td
+426.393 287.485 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 272.096 Td
+87.274 256.707 Td
 (xprompt.seldescription) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 256.707 Td
+106.524 241.318 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 256.707 Td
+126.379 241.318 Td
 (foreground) Tj
 ET
 BT
 /F0 11 Tf
-178.002 256.707 Td
+178.002 241.318 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-203.357 256.707 Td
+203.357 241.318 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-215.270 256.707 Td
+215.270 241.318 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-231.462 256.707 Td
+231.462 241.318 Td
 (description) Tj
 ET
 BT
 /F0 11 Tf
-283.096 256.707 Td
+283.096 241.318 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-295.009 256.707 Td
+295.009 241.318 Td
 (selected) Tj
 ET
 BT
 /F0 11 Tf
-333.190 256.707 Td
+333.190 241.318 Td
 (items) Tj
 ET
 BT
 /F0 11 Tf
-359.777 256.707 Td
+359.777 241.318 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-371.085 256.707 Td
+371.085 241.318 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-387.277 256.707 Td
+387.277 241.318 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-434.632 256.707 Td
+434.632 241.318 Td
 (completion) Tj
 ET
 BT
 /F0 11 Tf
-486.882 256.707 Td
+486.882 241.318 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 225.929 Td
+87.274 210.540 Td
 (xprompt.border) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 210.540 Td
+106.524 195.151 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 210.540 Td
+126.379 195.151 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-151.734 210.540 Td
+151.734 195.151 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-163.647 210.540 Td
+163.647 195.151 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-179.839 210.540 Td
+179.839 195.151 Td
 (border) Tj
 ET
 BT
 /F0 11 Tf
-211.299 210.540 Td
+211.299 195.151 Td
 (around) Tj
 ET
 BT
 /F0 11 Tf
-244.596 210.540 Td
+244.596 195.151 Td
 (xprompt.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 179.762 Td
+87.274 164.373 Td
 (xprompt.separator) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 164.373 Td
+106.524 148.984 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 164.373 Td
+126.379 148.984 Td
 (color) Tj
 ET
 BT
 /F0 11 Tf
-151.734 164.373 Td
+151.734 148.984 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-163.647 164.373 Td
+163.647 148.984 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-179.839 164.373 Td
+179.839 148.984 Td
 (separator) Tj
 ET
 BT
 /F0 11 Tf
-222.904 164.373 Td
+222.904 148.984 Td
 (between) Tj
 ET
 BT
 /F0 11 Tf
-262.306 164.373 Td
+262.306 148.984 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-278.498 164.373 Td
+278.498 148.984 Td
 (input) Tj
 ET
 BT
 /F0 11 Tf
-303.864 164.373 Td
+303.864 148.984 Td
 (field) Tj
 ET
 BT
 /F0 11 Tf
-326.777 164.373 Td
+326.777 148.984 Td
 (and) Tj
 ET
 BT
 /F0 11 Tf
-345.411 164.373 Td
+345.411 148.984 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-361.603 164.373 Td
+361.603 148.984 Td
 (dropdown) Tj
 ET
 BT
 /F0 11 Tf
-408.958 164.373 Td
+408.958 148.984 Td
 (list.) Tj
 ET
 /F1 11 Tf
 BT
 /F1 11 Tf
-87.274 133.595 Td
+87.274 118.206 Td
 (xprompt.borderWidth) Tj
 ET
 /F0 11 Tf
 BT
 /F0 11 Tf
-106.524 118.206 Td
+106.524 102.817 Td
 (The) Tj
 ET
 BT
 /F0 11 Tf
-126.379 118.206 Td
+126.379 102.817 Td
 (size) Tj
 ET
 BT
 /F0 11 Tf
-146.234 118.206 Td
+146.234 102.817 Td
 (in) Tj
 ET
 BT
 /F0 11 Tf
-157.542 118.206 Td
+157.542 102.817 Td
 (pixels) Tj
 ET
 BT
 /F0 11 Tf
-186.571 118.206 Td
+186.571 102.817 Td
 (of) Tj
 ET
 BT
 /F0 11 Tf
-198.484 118.206 Td
+198.484 102.817 Td
 (the) Tj
 ET
 BT
 /F0 11 Tf
-214.676 118.206 Td
+214.676 102.817 Td
 (border) Tj
 ET
 BT
 /F0 11 Tf
-246.136 118.206 Td
+246.136 102.817 Td
 (around) Tj
 ET
 BT
 /F0 11 Tf
-279.433 118.206 Td
+279.433 102.817 Td
 (xprompt.) Tj
 ET
 /F0 11 Tf
@@ -7842,7 +8022,7 @@ ET
 endstream
 endobj
 28 0 obj
-8697
+8759
 endobj
 29 0 obj
 <<
@@ -9851,44 +10031,44 @@ xref
 0 40
 0000000000 65535 f 
 0000000009 00000 n 
-0000090765 00000 n 
+0000092423 00000 n 
 0000000030 00000 n 
 0000000112 00000 n 
 0000000193 00000 n 
 0000000276 00000 n 
 0000000363 00000 n 
-0000015742 00000 n 
-0000015763 00000 n 
-0000015858 00000 n 
-0000015939 00000 n 
-0000031519 00000 n 
-0000031541 00000 n 
-0000031637 00000 n 
-0000031720 00000 n 
-0000042484 00000 n 
-0000042506 00000 n 
-0000042602 00000 n 
-0000042685 00000 n 
-0000051337 00000 n 
-0000051358 00000 n 
-0000051454 00000 n 
-0000051537 00000 n 
-0000063511 00000 n 
-0000063533 00000 n 
-0000063629 00000 n 
-0000063712 00000 n 
-0000072463 00000 n 
-0000072484 00000 n 
-0000072580 00000 n 
-0000072663 00000 n 
-0000085886 00000 n 
-0000085908 00000 n 
-0000086004 00000 n 
-0000086087 00000 n 
-0000090565 00000 n 
-0000090586 00000 n 
-0000090682 00000 n 
-0000090897 00000 n 
+0000017294 00000 n 
+0000017315 00000 n 
+0000017410 00000 n 
+0000017491 00000 n 
+0000032470 00000 n 
+0000032492 00000 n 
+0000032588 00000 n 
+0000032671 00000 n 
+0000043780 00000 n 
+0000043802 00000 n 
+0000043898 00000 n 
+0000043981 00000 n 
+0000052775 00000 n 
+0000052796 00000 n 
+0000052892 00000 n 
+0000052975 00000 n 
+0000065107 00000 n 
+0000065129 00000 n 
+0000065225 00000 n 
+0000065308 00000 n 
+0000074121 00000 n 
+0000074142 00000 n 
+0000074238 00000 n 
+0000074321 00000 n 
+0000087544 00000 n 
+0000087566 00000 n 
+0000087662 00000 n 
+0000087745 00000 n 
+0000092223 00000 n 
+0000092244 00000 n 
+0000092340 00000 n 
+0000092555 00000 n 
 trailer
 <<
 /Size 40
@@ -9896,5 +10076,5 @@ trailer
 /Info 1 0 R
 >>
 startxref
-90947
+92605
 %%EOF

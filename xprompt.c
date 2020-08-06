@@ -47,6 +47,7 @@ static XftFont *getfontucode(FcChar32 ucode);
 static int drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len);
 
 /* prompt structure setters */
+static void parsegeometryspec(int *x, int *y, int *w, int *h);
 static void setpromptinput(struct Prompt *prompt);
 static void setpromptarray(struct Prompt *prompt);
 static void setpromptgeom(struct Prompt *prompt, Window parentwin);
@@ -756,6 +757,79 @@ drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *t
 	return textwidth;
 }
 
+/* get number from *s into n, return 1 if error */
+static int
+getnum(const char **s, int *n)
+{
+	int retval;
+	long num;
+	char *endp;
+
+	num = strtol(*s, &endp, 10);
+	retval = errno == ERANGE || num > INT_MAX || num < 0 || endp == *s;
+	*s = endp;
+	*n = num;
+	return retval;
+}
+
+/* parse geometry specification and return geometry values */
+static void
+parsegeometryspec(int *x, int *y, int *w, int *h)
+{
+	int sign;
+	int n;
+	const char *s;
+
+	*x = *y = *w = *h = 0;
+	s = config.geometryspec;
+
+	if (getnum(&s, &n))
+		goto error;
+	if (*s == '%') {
+		if (n > 100)
+			goto error;
+		*w = (n * (mon.w - config.border_pixels * 2))/100;
+		s++;
+	} else {
+		*w = n;
+	}
+
+	if (*s++ != 'x')
+		goto error;
+
+	if (getnum(&s, &n))
+		goto error;
+	if (*s == '%') {
+		if (n > 100)
+			goto error;
+		*h = (n * (mon.h - config.border_pixels * 2))/100;
+		s++;
+	} else {
+		*h = n;
+	}
+
+	if (*s == '+' || *s == '-') {
+		sign = (*s++ == '-') ? -1 : 1;
+		if (getnum(&s, &n))
+			goto error;
+		*x = n * sign;
+		if (*s != '+' && *s != '-')
+			goto error;
+
+		sign = (*s++ == '-') ? -1 : 1;
+		if (getnum(&s, &n))
+			goto error;
+		*y = n * sign;
+	}
+	if (*s != '\0')
+		goto error;
+
+	return;
+
+error:
+	errx(1, "improper geometry specification %s\n", config.geometryspec);
+}
+
 /* allocate memory for the text input field */
 static void
 setpromptinput(struct Prompt *prompt)
@@ -828,17 +902,19 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 		errx(EXIT_FAILURE, "Unknown gravity %s", config.gravityspec);
 
 	/* get prompt geometry */
-	XParseGeometry(config.geometryspec, &prompt->x, &prompt->y, &prompt->w, &prompt->h);
+	parsegeometryspec(&prompt->x, &prompt->y, &prompt->w, &prompt->h);
 
 	/* update prompt size, based on parent window's size */
 	if (prompt->w == 0)
 		prompt->w = w - prompt->border * 2;
-	prompt->w = MIN(prompt->w, (unsigned) w);
-	prompt->h = MIN(prompt->h, (unsigned) h);
+	if (prompt->h == 0)
+		prompt->h = DEFHEIGHT;
+	prompt->w = MIN(prompt->w, w);
+	prompt->h = MIN(prompt->h, h);
 
 	/* update prompt position, based on prompt's gravity */
-	prompt->x = x;
-	prompt->y = y;
+	prompt->x += x;
+	prompt->y += y;
 	switch (prompt->gravity) {
 	case NorthWestGravity:
 		break;
@@ -1073,7 +1149,7 @@ static void
 drawitem(struct Prompt *prompt, size_t n, int copy)
 {
 	XftColor *color;
-	unsigned textwidth = 0;
+	int textwidth = 0;
 	int y;
 
 	color = (n == prompt->selitem) ? dc.selected
@@ -1805,7 +1881,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
 			return Noop;
-		if ((unsigned)ev->y <= prompt->h) {
+		if (ev->y <= prompt->h) {
 			curpos = getcurpos(prompt, ev->x);
 			if (word && ev->time - lasttime < DOUBLECLICK) {
 				prompt->cursor = 0;
@@ -1822,7 +1898,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 			}
 			lasttime = ev->time;
 			return DrawInput;
-		} else if ((unsigned)ev->y > prompt->h + prompt->separator) {
+		} else if (ev->y > prompt->h + prompt->separator) {
 			prompt->selitem = getitem(prompt, ev->y);
 			if (sflag) {
 				insert(prompt, prompt->itemarray[prompt->selitem]->text,
@@ -1849,7 +1925,7 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 	prevselect = prompt->select;
 	prevcursor = prompt->cursor;
 
-	if (ev->y >= 0 && (unsigned) ev->y <= prompt->h)
+	if (ev->y >= 0 && ev->y <= prompt->h)
 		prompt->select = getcurpos(prompt, ev->x);
 	else if (ev->y < 0)
 		prompt->select = 0;
@@ -1912,7 +1988,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			retval = buttonpress(prompt, &ev.xbutton);
 			break;
 		case MotionNotify:
-			if ((unsigned)ev.xmotion.y <= prompt->h
+			if (ev.xmotion.y <= prompt->h
 			    && ev.xmotion.state == Button1Mask)
 				retval = buttonmotion(prompt, &ev.xmotion);
 			else

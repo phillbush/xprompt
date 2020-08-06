@@ -58,12 +58,26 @@ can be "N" for NorthGravity (display on the top center of the screen);
 etc.
 .TP
 .BI "\-g " geometry
-Specifies the geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
-Replace <WIDTH> by the desired width, <HEIGHT> by the desired height, and so on.
+Specifies the geometry in the form
+.B <WIDTH>x<HEIGHT>[{-+}<XOFFSET>{-+}<YOFFSET>].
+Replace
+.B <WIDTH>
+by the desired width,
+.B <HEIGHT>
+by the desired height, and so on.
 A value of 0 sets a field to the default value.
 So, for example,
 .B -g 0x20+0+0
 set the height to 20 pixels while maintaining other values to the default.
+.B <XOFFSET>
+and
+.B <YOFFSET>
+are optional and can be preceded by either a minus or a plus
+(meaning negative or positive values).
+So, for example,
+.B -g 0x20
+is the same as
+.BR -g 0x20+0+0 .
 .TP
 .BI "\-h " file
 Specifies the file to be used for reading and storing the history of typed texts.

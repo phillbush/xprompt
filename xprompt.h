@@ -1,3 +1,4 @@
+#define DEFHEIGHT    20     /* default height for each text line */
 #define DOUBLECLICK  250    /* time in miliseconds of a double click */
 #define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
 #define MINTEXTWIDTH 200    /* minimum width of the completion word */
@@ -133,10 +134,10 @@ struct Prompt {
 
 	int gravity;            /* where in the screen to map xprompt */
 	int x, y;               /* position of xprompt */
-	unsigned descx;         /* x position of the description field */
-	unsigned w, h;          /* width and height of xprompt */
-	unsigned border;        /* border width */
-	unsigned separator;     /* separator width */
+	int w, h;               /* width and height of xprompt */
+	int descx;              /* x position of the description field */
+	int border;             /* border width */
+	int separator;          /* separator width */
 
 	unsigned monitor;       /* monitor to draw the prompt in */
 
