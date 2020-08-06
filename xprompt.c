@@ -873,7 +873,7 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 	}
 
 	/* calculate prompt string width */
-	if (prompt->promptstr)
+	if (prompt->promptstr && *prompt->promptstr)
 		prompt->promptw = drawtext(NULL, NULL, 0, 0, 0, prompt->promptstr, 0) + dc.pad * 2;
 	else
 		prompt->promptw = dc.pad;
@@ -1024,7 +1024,7 @@ drawinput(struct Prompt *prompt, int copy)
 	int x, y, xtext;
 	int widthpre, widthsel, widthpos;
 
-	x = (prompt->promptstr) ? prompt->promptw : dc.pad;
+	x = prompt->promptw;
 
 	minpos = MIN(prompt->cursor, prompt->select);
 	maxpos = MAX(prompt->cursor, prompt->select);
@@ -1120,10 +1120,9 @@ drawprompt(struct Prompt *prompt)
 	h = prompt->h;
 
 	/* draw the prompt string and update x to the end of it */
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
 	if (prompt->promptstr) {
-		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
-
 		drawtext(prompt->draw, &dc.normal[ColorFG], x, 0, prompt->h,
 		         prompt->promptstr, 0);
 		x = prompt->promptw;
