@@ -549,7 +549,7 @@ builditems(unsigned level, const char *text, const char *description)
 		     item = item->parent, i++)
 			;
 		if (item == NULL)
-			errx(EXIT_FAILURE, "reached NULL item");
+			errx(EXIT_FAILURE, "improper identation detected");
 
 		curritem->parent = item->parent;
 		item->next = curritem;
@@ -591,6 +591,10 @@ parsestdin(FILE *fp)
 		s = buf + level;
 		text = strtok(s, "\t\n");
 		description = strtok(NULL, "\t\n");
+
+		/* discard empty text entries */
+		if (!text || *text == '\0')
+			continue;
 
 		rootitem = builditems(level, text, description);
 	}
