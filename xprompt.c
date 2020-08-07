@@ -580,6 +580,10 @@ parsestdin(FILE *fp)
 	rootitem = NULL;
 
 	while (fgets(buf, BUFSIZ, fp) != NULL) {
+		/* discard empty lines */
+		if (*buf && *buf == '\n')
+			continue;
+
 		/* get the indentation level */
 		level = strspn(buf, "\t");
 
