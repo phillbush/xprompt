@@ -46,8 +46,11 @@ static FcChar32 getnextutf8char(const char *s, const char **end_ret);
 static XftFont *getfontucode(FcChar32 ucode);
 static int drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len);
 
-/* prompt structure setters */
+/* parse geometry specification */
+static int getnum(const char **s, int *n);
 static void parsegeometryspec(int *x, int *y, int *w, int *h);
+
+/* prompt structure setters */
 static void setpromptinput(struct Prompt *prompt);
 static void setpromptarray(struct Prompt *prompt);
 static void setpromptgeom(struct Prompt *prompt, Window parentwin);
@@ -549,7 +552,7 @@ builditems(unsigned level, const char *text, const char *description)
 		     item = item->parent, i++)
 			;
 		if (item == NULL)
-			errx(EXIT_FAILURE, "improper identation detected");
+			errx(EXIT_FAILURE, "improper indentation detected");
 
 		curritem->parent = item->parent;
 		item->next = curritem;
