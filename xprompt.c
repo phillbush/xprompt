@@ -77,6 +77,7 @@ static void delword(struct Prompt *prompt);
 static char *navhist(struct History *hist, int direction);
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
+static int itemmatch(struct Item *item, const char *text, size_t textlen);
 static size_t fillitemarray(struct Prompt *prompt, struct Item *complist, int direction);
 static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 
@@ -1494,8 +1495,8 @@ getfilelist(struct Prompt *prompt)
 	return complist;
 }
 
-/* check whether item matches text, return item if it is, NULL otherwise */
-static struct Item *
+/* check whether item matches text */
+static int
 itemmatch(struct Item *item, const char *text, size_t textlen)
 {
 	const char *s;
@@ -1503,14 +1504,14 @@ itemmatch(struct Item *item, const char *text, size_t textlen)
 	s = (dflag && item->description) ? item->description : item->text;
 	while (*s) {
 		if ((*fstrncmp)(s, text, textlen) == 0)
-			return item;
+			return 1;
 		while (*s && strchr(config.worddelimiters, *s) == NULL)
 			s++;
 		while (*s && strchr(config.worddelimiters, *s) != NULL)
 			s++;
 	}
 
-	return NULL;
+	return 0;
 }
 
 /* fill array of items to be printed in the window, return index of item to be highlighted*/
