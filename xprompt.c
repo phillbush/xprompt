@@ -1494,13 +1494,32 @@ getfilelist(struct Prompt *prompt)
 	return complist;
 }
 
+/* check whether item matches text, return item if it is, NULL otherwise */
+static struct Item *
+itemmatch(struct Item *item, const char *text, size_t textlen)
+{
+	const char *s;
+
+	s = (dflag && item->description) ? item->description : item->text;
+	while (*s) {
+		if ((*fstrncmp)(s, text, textlen) == 0)
+			return item;
+		while (*s && strchr(config.worddelimiters, *s) == NULL)
+			s++;
+		while (*s && strchr(config.worddelimiters, *s) != NULL)
+			s++;
+	}
+
+	return NULL;
+}
+
 /* fill array of items to be printed in the window, return index of item to be highlighted*/
 static size_t
 fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 {
 	struct Item *item;
 	size_t beg, len;
-	char *s;
+	const char *text;
 
 	if (!prompt->cursor) {
 		beg = 0;
@@ -1513,6 +1532,7 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 			beg++;
 		len = prompt->cursor - beg;
 	}
+	text = prompt->text + beg;
 
 	if (direction >= 0) {
 		item = (direction == 0) ? complist : prompt->itemarray[prompt->nitems - 1];
@@ -1520,18 +1540,8 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		     prompt->nitems < prompt->maxitems && item != NULL;
 		     item = item->next) {
 
-			/* check if item->text matches prompt->text */
-			s = (dflag && item->description) ? item->description : item->text;
-			while (*s != '\0') {
-				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
-					prompt->itemarray[prompt->nitems++] = item;
-					break;
-				}
-				while (*s != '\0' && strchr(config.worddelimiters, *s) == NULL)
-					s++;
-				while (*s != '\0' && strchr(config.worddelimiters, *s) != NULL)
-					s++;
-			}
+			if (itemmatch(item, text, len))
+				prompt->itemarray[prompt->nitems++] = item;
 		}
 		return 0;
 	} else {
@@ -1542,18 +1552,8 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 		     n > 0 && item != NULL;
 		     item = item->prev) {
 
-			/* check if item->text matches prompt->text */
-			s = (dflag && item->description) ? item->description : item->text;
-			while (*s != '\0') {
-				if ((*fstrncmp)(s, prompt->text + beg, len) == 0) {
-					prompt->itemarray[--n] = item;
-					break;
-				}
-				while (*s != '\0' && strchr(config.worddelimiters, *s) == NULL)
-					s++;
-				while (*s != '\0' && strchr(config.worddelimiters, *s) != NULL)
-					s++;
-			}
+			if (itemmatch(item, text, len))
+				prompt->itemarray[--n] = item;
 		}
 
 		i = 0;
