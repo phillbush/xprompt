@@ -71,6 +71,7 @@ static size_t nextrune(struct Prompt *prompt, size_t position, int inc);
 static size_t movewordedge(struct Prompt *prompt, size_t position, int dir);
 static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
+static void insertselitem(struct Prompt *prompt);
 static void delword(struct Prompt *prompt);
 
 /* history functions */
@@ -141,6 +142,9 @@ static enum Ctrl ctrl[CaseLast][NLETTERS];
 
 /* comparison function */
 static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
+
+/* whether xprompt is in file completion */
+static int filecomp = 0;
 
 
 /*
@@ -1326,6 +1330,32 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 	prompt->select = prompt->cursor;
 }
 
+/* insert selected item on prompt->text */
+static void
+insertselitem(struct Prompt *prompt)
+{
+	if (prompt->cursor && !strchr(config.worddelimiters, prompt->text[prompt->cursor - 1]))
+		delword(prompt);
+	if (!filecomp) {
+		/*
+		 * If not completing a file, insert item as is
+		 */
+		insert(prompt, prompt->selitem->text,
+		       strlen(prompt->selitem->text));
+	} else {
+		/*
+		 * If completing a file, insert only the basename (the
+		 * part after the last slash).
+		 */
+		char *s, *p;
+		s = prompt->selitem->text;
+		for (p = prompt->selitem->text; *p; p++)
+			if (strchr("/", *p))
+				s = p + 1;
+		insert(prompt, s, strlen(s));
+	}
+}
+
 /* delete word from the input field */
 static void
 delword(struct Prompt *prompt)
@@ -1691,7 +1721,6 @@ static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
-	static int filecomp = 0;        /* whether xprompt is in file completion */
 	enum Ctrl operation;
 	char buf[32];
 	char *s;
@@ -1726,31 +1755,9 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			cleanitem(complist);
 		break;
 	case CTRLENTER:
-		if (prompt->matchlist) {
-			if (prompt->cursor && !strchr(config.worddelimiters, prompt->text[prompt->cursor - 1]))
-				delword(prompt);
-			if (!filecomp) {
-				/*
-				 * If not completing a file, insert item as is
-				 */
-				insert(prompt, prompt->selitem->text,
-				       strlen(prompt->selitem->text));
-			} else {
-				/*
-				 * If completing a file, insert only the basename (the
-				 * part after the last slash).
-				 */
-				char *s, *p;
-				s = prompt->selitem->text;
-				for (p = prompt->selitem->text; *p; p++)
-					if (strchr("/", *p))
-						s = p + 1;
-				insert(prompt, s, strlen(s));
-			}
-			if (sflag)
-				prompt->matchlist = NULL;
-		}
-		if (!prompt->matchlist) {
+		if (prompt->matchlist)
+			insertselitem(prompt);
+		if (sflag || !prompt->matchlist) {
 			puts(prompt->text);
 			return Enter;
 		}
@@ -1975,12 +1982,12 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 			return DrawInput;
 		} else if (ev->y > prompt->h + prompt->separator) {
 			prompt->selitem = getitem(prompt, ev->y);
+			insertselitem(prompt);
 			if (sflag) {
-				insert(prompt, prompt->selitem->text,
-				       strlen(prompt->selitem->text));
 				puts(prompt->text);
 				return Enter;
 			}
+			delmatchlist(prompt);
 			return DrawPrompt;
 		}
 		return Noop;
