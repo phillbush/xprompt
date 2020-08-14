@@ -1603,7 +1603,8 @@ getmatchlist(struct Prompt *prompt, struct Item *complist)
 			previtem = item;
 		}
 	}
-	previtem->nextmatch = NULL;
+	if (previtem)
+		previtem->nextmatch = NULL;
 
 	prompt->firstmatch = retitem;
 	prompt->matchlist = retitem;
@@ -1890,7 +1891,10 @@ insert:
 			if (complist == NULL)
 				return DrawPrompt;
 			getmatchlist(prompt, complist);
-			navmatchlist(prompt, 0);
+			if (!prompt->matchlist)
+				delmatchlist(prompt);
+			else
+				navmatchlist(prompt, 0);
 			return DrawPrompt;
 		} else {                        /* if not in completion just redraw input field */
 			return DrawInput;
