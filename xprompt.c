@@ -73,18 +73,22 @@ static void delselection(struct Prompt *prompt);
 static void insert(struct Prompt *prompt, const char *str, ssize_t n);
 static void delword(struct Prompt *prompt);
 
-/* history and completion functions */
+/* history functions */
 static char *navhist(struct History *hist, int direction);
+static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
+
+/* completion functions */
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
-static int itemmatch(struct Item *item, const char *text, size_t textlen);
-static size_t fillitemarray(struct Prompt *prompt, struct Item *complist, int direction);
-static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
+static int itemmatch(struct Item *item, const char *text, size_t textlen, int middle);
+static void getmatchlist(struct Prompt *prompt, struct Item *complist);
+static void navmatchlist(struct Prompt *prompt, int direction);
+static void delmatchlist(struct Prompt *prompt);
 
 /* utils for the event handlers */
 static enum Ctrl getoperation(KeySym ksym, unsigned state);
 static size_t getcurpos(struct Prompt *prompt, int x);
-static int getitem(struct Prompt *prompt, int y);
+static struct Item *getitem(struct Prompt *prompt, int y);
 
 /* event loop function and event handlers */
 static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
@@ -523,6 +527,7 @@ allocitem(const char *text, const char *description)
 	} else {
 		item->description = NULL;
 	}
+	item->prevmatch = item->nextmatch = NULL;
 	item->prev = item->next = NULL;
 	item->parent = NULL;
 	item->child = NULL;
@@ -859,9 +864,11 @@ setpromptinput(struct Prompt *prompt)
 static void
 setpromptarray(struct Prompt *prompt)
 {
+	prompt->firstmatch = NULL;
+	prompt->selitem = NULL;
+	prompt->hoveritem = NULL;
+	prompt->matchlist = NULL;
 	prompt->maxitems = config.number_items;
-	prompt->hoveritem = prompt->maxitems;
-	prompt->selitem = 0;
 	prompt->nitems = 0;
 	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
 		err(EXIT_FAILURE, "malloc");
@@ -1165,8 +1172,8 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 	int textwidth = 0;
 	int y;
 
-	color = (n == prompt->selitem) ? dc.selected
-	      : (n == prompt->hoveritem) ? dc.hover
+	color = (prompt->itemarray[n] == prompt->selitem) ? dc.selected
+	      : (prompt->itemarray[n] == prompt->hoveritem) ? dc.hover
 	      : dc.normal;
 	y = (n + 1) * prompt->h + prompt->separator;
 
@@ -1498,7 +1505,7 @@ getfilelist(struct Prompt *prompt)
 
 /* check whether item matches text */
 static int
-itemmatch(struct Item *item, const char *text, size_t textlen)
+itemmatch(struct Item *item, const char *text, size_t textlen, int middle)
 {
 	const char *s;
 
@@ -1506,20 +1513,26 @@ itemmatch(struct Item *item, const char *text, size_t textlen)
 	while (*s) {
 		if ((*fstrncmp)(s, text, textlen) == 0)
 			return 1;
-		while (*s && strchr(config.worddelimiters, *s) == NULL)
+		if (middle) {
 			s++;
-		while (*s && strchr(config.worddelimiters, *s) != NULL)
-			s++;
+		} else {
+			while (*s && strchr(config.worddelimiters, *s) == NULL)
+				s++;
+			while (*s && strchr(config.worddelimiters, *s) != NULL)
+				s++;
+		}
 	}
 
 	return 0;
 }
 
-/* fill array of items to be printed in the window, return index of item to be highlighted*/
-static size_t
-fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
+/* create list of matching items */
+static void
+getmatchlist(struct Prompt *prompt, struct Item *complist)
 {
-	struct Item *item;
+	struct Item *retitem = NULL;
+	struct Item *previtem = NULL;
+	struct Item *item = NULL;
 	size_t beg, len;
 	const char *text;
 
@@ -1536,36 +1549,85 @@ fillitemarray(struct Prompt *prompt, struct Item *complist, int direction)
 	}
 	text = prompt->text + beg;
 
-	if (direction >= 0) {
-		item = (direction == 0) ? complist : prompt->itemarray[prompt->nitems - 1];
-		for (prompt->nitems = 0;
-		     prompt->nitems < prompt->maxitems && item != NULL;
-		     item = item->next) {
-
-			if (itemmatch(item, text, len))
-				prompt->itemarray[prompt->nitems++] = item;
+	/* build list of matched items using the .nextmatch and .prevmatch pointers */
+	for (item = complist; item; item = item->next) {
+		if (itemmatch(item, text, len, 0)) {
+			if (!retitem)
+				retitem = item;
+			item->prevmatch = previtem;
+			if (previtem)
+				previtem->nextmatch = item;
+			previtem = item;
 		}
-		return 0;
-	} else {
-		size_t i, n;
-
-		item = prompt->itemarray[0];
-		for (n = prompt->maxitems;
-		     n > 0 && item != NULL;
-		     item = item->prev) {
-
-			if (itemmatch(item, text, len))
-				prompt->itemarray[--n] = item;
-		}
-
-		i = 0;
-		while (n < prompt->maxitems) {
-			prompt->itemarray[i++] = prompt->itemarray[n++];
-		}
-		prompt->nitems = i;
-
-		return (prompt->nitems) ? prompt->nitems - 1 : 0;
 	}
+	/* now search for items that match in the middle of the item */
+	for (item = complist; item; item = item->next) {
+		if (!itemmatch(item, text, len, 0) && itemmatch(item, text, len, 1)) {
+			if (!retitem)
+				retitem = item;
+			item->prevmatch = previtem;
+			if (previtem)
+				previtem->nextmatch = item;
+			previtem = item;
+		}
+	}
+	previtem->nextmatch = NULL;
+
+	prompt->firstmatch = retitem;
+	prompt->matchlist = retitem;
+	prompt->selitem = retitem;
+}
+
+/* navigate through the list of matching items */
+static void
+navmatchlist(struct Prompt *prompt, int direction)
+{
+	struct Item *item;
+	size_t i;
+
+	if (!prompt->selitem)
+		return;
+
+	if (direction > 0 && prompt->selitem->nextmatch) {
+		unsigned selnum;
+
+		prompt->selitem = prompt->selitem->nextmatch;
+		for (selnum = 0, item = prompt->matchlist; 
+		     selnum < prompt->maxitems && item != prompt->selitem;
+		     selnum++, item = item->nextmatch)
+			;
+		if (selnum + 1 >= prompt->maxitems) {
+			for (i = 0, item = prompt->matchlist;
+			     i < prompt->maxitems && item;
+			     i++, item = item->nextmatch)
+				;
+			prompt->matchlist = (item) ? item : prompt->selitem;
+		}
+	} else if (direction < 0 && prompt->selitem->prevmatch) {
+		prompt->selitem = prompt->selitem->prevmatch;
+		if (prompt->selitem == prompt->matchlist->prevmatch) {
+			for (i = 0, item = prompt->matchlist;
+			     i < prompt->maxitems && item;
+			     i++, item = item->prevmatch)
+				;
+			prompt->matchlist = (item) ? item : prompt->firstmatch;
+		}
+	}
+
+	/* fill .itemarray */
+	for (i = 0, item = prompt->matchlist;
+	     i < prompt->maxitems && item;
+	     i++, item = item->nextmatch)
+		prompt->itemarray[i] = item;
+	prompt->nitems = i;
+}
+
+/* zero variables for the list of matching items */
+static void
+delmatchlist(struct Prompt *prompt)
+{
+	prompt->matchlist = NULL;
+	prompt->nitems = 0;
 }
 
 /* get Ctrl input operation */
@@ -1627,7 +1689,6 @@ static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
-	static int completion = 0;      /* whether currently in completion */
 	static int filecomp = 0;        /* whether xprompt is in file completion */
 	enum Ctrl operation;
 	char buf[32];
@@ -1656,50 +1717,47 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
 		return Noop;
 	case CTRLCANCEL:
-		if (sflag || !completion || prompt->text[0] == '\0')
+		if (sflag || !prompt->matchlist || prompt->text[0] == '\0')
 			return Esc;
-		prompt->nitems = 0;
-		completion = 0;
+		delmatchlist(prompt);
 		if (filecomp)
 			cleanitem(complist);
 		break;
 	case CTRLENTER:
-		if (completion) {
+		if (prompt->matchlist) {
 			if (prompt->cursor && !strchr(config.worddelimiters, prompt->text[prompt->cursor - 1]))
 				delword(prompt);
 			if (!filecomp) {
 				/*
 				 * If not completing a file, insert item as is
 				 */
-				insert(prompt, prompt->itemarray[prompt->selitem]->text,
-				       strlen(prompt->itemarray[prompt->selitem]->text));
+				insert(prompt, prompt->selitem->text,
+				       strlen(prompt->selitem->text));
 			} else {
 				/*
 				 * If completing a file, insert only the basename (the
 				 * part after the last slash).
 				 */
 				char *s, *p;
-				for (p = prompt->itemarray[prompt->selitem]->text; *p; p++)
+				for (p = prompt->selitem->text; *p; p++)
 					if (strchr("/", *p))
 						s = p + 1;
 				insert(prompt, s, strlen(s));
 			}
-			prompt->nitems = 0;
 			if (sflag)
-				completion = 0;
+				prompt->matchlist = NULL;
 		}
-		if (!completion) {
+		if (!prompt->matchlist) {
 			puts(prompt->text);
 			return Enter;
 		}
-		completion = 0;
+		delmatchlist(prompt);
 		break;
 	case CTRLPREV:
 		/* FALLTHROUGH */
 	case CTRLNEXT:
-		if (!completion) {
+		if (!prompt->matchlist) {
 			complist = getcomplist(prompt, rootitem);
-			prompt->selitem = 0;
 			filecomp = 0;
 		}
 		if (complist == NULL && fflag) {
@@ -1710,19 +1768,13 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			filecomp = 0;
 			break;
 		}
-		completion = 1;
-		if (prompt->nitems == 0) {
-			prompt->selitem = fillitemarray(prompt, complist, 0);
+		if (!prompt->matchlist) {
+			getmatchlist(prompt, complist);
+			navmatchlist(prompt, 0);
 		} else if (operation == CTRLNEXT) {
-			if (prompt->selitem + 1 < prompt->nitems)
-				prompt->selitem++;
-			else if (prompt->itemarray[prompt->selitem]->next)
-				prompt->selitem = fillitemarray(prompt, complist, +1);
+			navmatchlist(prompt, 1);
 		} else if (operation == CTRLPREV) {
-			if (prompt->selitem > 0)
-				prompt->selitem--;
-			else if (prompt->itemarray[prompt->selitem]->prev)
-				prompt->selitem = fillitemarray(prompt, complist, -1);
+			navmatchlist(prompt, -1);
 		}
 		break;
 	case CTRLPGUP:
@@ -1749,8 +1801,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 			insert(prompt, NULL, 0 - prompt->cursor);
 			insert(prompt, s, strlen(s));
 		}
-		prompt->nitems = 0;
-		completion = 0;
+		delmatchlist(prompt);
 		break;
 	case CTRLSELLEFT:
 	case CTRLLEFT:
@@ -1819,19 +1870,17 @@ insert:
 		return DrawInput;
 	}
 	if (ISEDITING(operation)) {
-		if (completion && filecomp) {   /* if in a file completion, cancel it */
+		if (prompt->matchlist && filecomp) {   /* if in a file completion, cancel it */
 			cleanitem(complist);
 			filecomp = 0;
-			prompt->nitems = 0;
-			completion = 0;
+			delmatchlist(prompt);
 			return DrawPrompt;
-		} else if (completion) {        /* if in regular completion, rematch */
+		} else if (prompt->matchlist) {        /* if in regular completion, rematch */
 			complist = getcomplist(prompt, rootitem);
 			if (complist == NULL)
 				return DrawPrompt;
-			prompt->selitem = fillitemarray(prompt, complist, 0);
-			if (prompt->nitems == 0)
-				completion = 0;
+			getmatchlist(prompt, complist);
+			navmatchlist(prompt, 0);
 			return DrawPrompt;
 		} else {                        /* if not in completion just redraw input field */
 			return DrawInput;
@@ -1870,12 +1919,22 @@ getcurpos(struct Prompt *prompt, int x)
 }
 
 /* get item on a given y position */
-static int
+static struct Item *
 getitem(struct Prompt *prompt, int y)
 {
-	y -= prompt->h + prompt->separator;
+	struct Item *item;
+	size_t i, n;
 
-	return y / prompt->h;
+	y -= prompt->h + prompt->separator;
+	y = MAX(y, 0);
+	n = y / prompt->h;
+
+	for (i = 0, item = prompt->matchlist;
+	     i < n && item->nextmatch;
+	     i++, item = item->nextmatch)
+		;
+
+	return item;
 }
 
 /* handle button press */
@@ -1914,8 +1973,8 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 		} else if (ev->y > prompt->h + prompt->separator) {
 			prompt->selitem = getitem(prompt, ev->y);
 			if (sflag) {
-				insert(prompt, prompt->itemarray[prompt->selitem]->text,
-				       strlen(prompt->itemarray[prompt->selitem]->text));
+				insert(prompt, prompt->selitem->text,
+				       strlen(prompt->selitem->text));
 				puts(prompt->text);
 				return Enter;
 			}
@@ -1964,7 +2023,7 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	maxy = miny + prompt->h * prompt->nitems;
 
 	if (ev->y < miny || ev->y >= maxy)
-		prompt->hoveritem = prompt->maxitems;
+		prompt->hoveritem = NULL;
 	else
 		prompt->hoveritem = getitem(prompt, ev->y);
 

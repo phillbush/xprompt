@@ -102,11 +102,12 @@ struct DC {
 
 /* completion items */
 struct Item {
-	char *text;                 /* content of the completion item */
-	char *description;          /* description of the completion item */
-	struct Item *prev, *next;   /* previous and next items */
-	struct Item *parent;        /* parent item */
-	struct Item *child;         /* point to the list of child items */
+	struct Item *prevmatch, *nextmatch; /* previous and next items */
+	struct Item *prev, *next;           /* previous and next items */
+	struct Item *parent;                /* parent item */
+	struct Item *child;                 /* point to the list of child items */
+	char *text;                         /* content of the completion item */
+	char *description;                  /* description of the completion item */
 };
 
 /* monitor geometry structure */
@@ -126,8 +127,11 @@ struct Prompt {
 	size_t select;          /* position of the selection in the input field*/
 
 	struct Item **itemarray; /* array containing nitems matching text */
-	size_t hoveritem;       /* item hovered */
-	size_t selitem;         /* item selected */
+	struct Item *firstmatch;
+	struct Item *matchlist;
+	struct Item *selitem;
+	struct Item *hoveritem;
+
 	size_t nitems;          /* number of items in itemarray */
 	size_t maxitems;        /* maximum number of items in itemarray */
 
