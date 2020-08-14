@@ -77,9 +77,11 @@ static void delword(struct Prompt *prompt);
 static char *navhist(struct History *hist, int direction);
 static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
 
-/* completion functions */
+/* completion-list functions */
 static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
 static struct Item *getfilelist(struct Prompt *prompt);
+
+/* match-list functions */
 static int itemmatch(struct Item *item, const char *text, size_t textlen, int middle);
 static void getmatchlist(struct Prompt *prompt, struct Item *complist);
 static void navmatchlist(struct Prompt *prompt, int direction);
