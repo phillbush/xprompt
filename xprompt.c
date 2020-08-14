@@ -1626,7 +1626,7 @@ navmatchlist(struct Prompt *prompt, int direction)
 
 		prompt->selitem = prompt->selitem->nextmatch;
 		for (selnum = 0, item = prompt->matchlist; 
-		     selnum < prompt->maxitems && item != prompt->selitem;
+		     selnum < prompt->maxitems && item != prompt->selitem->prevmatch;
 		     selnum++, item = item->nextmatch)
 			;
 		if (selnum + 1 >= prompt->maxitems) {
