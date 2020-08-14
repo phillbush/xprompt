@@ -103,7 +103,7 @@ struct DC {
 /* completion items */
 struct Item {
 	struct Item *prevmatch, *nextmatch; /* previous and next items */
-	struct Item *prev, *next;           /* previous and next items */
+	struct Item *prev, *next;           /* previous and next matched items */
 	struct Item *parent;                /* parent item */
 	struct Item *child;                 /* point to the list of child items */
 	char *text;                         /* content of the completion item */
@@ -118,35 +118,34 @@ struct Monitor {
 
 /* prompt */
 struct Prompt {
-	const char *promptstr;  /* string appearing before the input field */
-	unsigned promptw;       /* prompt width */
+	const char *promptstr;      /* string appearing before the input field */
+	unsigned promptw;           /* prompt width */
 
-	char *text;             /* input field */
-	size_t textsize;        /* maximum size of the text in the input field */
-	size_t cursor;          /* position of the cursor in the input field */
-	size_t select;          /* position of the selection in the input field*/
+	char *text;                 /* input field */
+	size_t textsize;            /* maximum size of the text in the input field */
+	size_t cursor;              /* position of the cursor in the input field */
+	size_t select;              /* position of the selection in the input field*/
 
-	struct Item **itemarray; /* array containing nitems matching text */
-	struct Item *firstmatch;
-	struct Item *matchlist;
-	struct Item *selitem;
-	struct Item *hoveritem;
+	struct Item *firstmatch;    /* first item that matches input */
+	struct Item *matchlist;     /* first item that matches input to be listed */
+	struct Item *selitem;       /* selected item */
+	struct Item *hoveritem;     /* hovered item */
+	struct Item **itemarray;    /* array containing nitems matching text */
+	size_t nitems;              /* number of items in itemarray */
+	size_t maxitems;            /* maximum number of items in itemarray */
 
-	size_t nitems;          /* number of items in itemarray */
-	size_t maxitems;        /* maximum number of items in itemarray */
+	int gravity;                /* where in the screen to map xprompt */
+	int x, y;                   /* position of xprompt */
+	int w, h;                   /* width and height of xprompt */
+	int descx;                  /* x position of the description field */
+	int border;                 /* border width */
+	int separator;              /* separator width */
 
-	int gravity;            /* where in the screen to map xprompt */
-	int x, y;               /* position of xprompt */
-	int w, h;               /* width and height of xprompt */
-	int descx;              /* x position of the description field */
-	int border;             /* border width */
-	int separator;          /* separator width */
+	unsigned monitor;           /* monitor to draw the prompt in */
 
-	unsigned monitor;       /* monitor to draw the prompt in */
-
-	Drawable pixmap;        /* where to draw shapes on */
-	XftDraw *draw;          /* where to draw text on */
-	Window win;             /* xprompt window */
+	Drawable pixmap;            /* where to draw shapes on */
+	XftDraw *draw;              /* where to draw text on */
+	Window win;                 /* xprompt window */
 };
 
 /* history */
