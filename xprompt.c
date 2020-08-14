@@ -36,7 +36,7 @@ static void initdc(void);
 static void initctrl(void);
 
 /* parsers and structure builders */
-static struct Item *allocitem(unsigned level, const char *text, const char *description);
+static struct Item *allocitem(const char *text, const char *description);
 static struct Item *builditems(unsigned level, const char *text, const char *description);
 static struct Item *parsestdin(FILE *fp);
 static void loadhist(FILE *fp, struct History *hist);
@@ -509,7 +509,7 @@ initctrl(void)
 
 /* allocate a completion item */
 static struct Item *
-allocitem(unsigned level, const char *text, const char *description)
+allocitem(const char *text, const char *description)
 {
 	struct Item *item;
 
@@ -523,7 +523,6 @@ allocitem(unsigned level, const char *text, const char *description)
 	} else {
 		item->description = NULL;
 	}
-	item->level = level;
 	item->prev = item->next = NULL;
 	item->parent = NULL;
 	item->child = NULL;
@@ -537,19 +536,20 @@ builditems(unsigned level, const char *text, const char *description)
 {
 	static struct Item *rootitem = NULL;
 	static struct Item *previtem = NULL;
+	static unsigned prevlevel = 0;
 	struct Item *curritem;
 	struct Item *item;
 	unsigned i;
 
-	curritem = allocitem(level, text, description);
+	curritem = allocitem(text, description);
 
-	if (previtem == NULL) {               /* there is no item yet */
+	if (previtem == NULL) {             /* there is no item yet */
 		curritem->parent = NULL;
 		rootitem = curritem;
-	} else if (level < previtem->level) { /* item is continuation of a parent item */
+	} else if (level < prevlevel) {     /* item is continuation of a parent item */
 		/* go up the item tree until find the item the current one continues */
 		for (item = previtem, i = level;
-		     item != NULL && i != previtem->level;
+		     item != NULL && i != prevlevel;
 		     item = item->parent, i++)
 			;
 		if (item == NULL)
@@ -558,15 +558,16 @@ builditems(unsigned level, const char *text, const char *description)
 		curritem->parent = item->parent;
 		item->next = curritem;
 		curritem->prev = item;
-	} else if (level == previtem->level) { /* item is continues current item */
+	} else if (level == prevlevel) {    /* item is continues current item */
 		curritem->parent = previtem->parent;
 		previtem->next = curritem;
 		curritem->prev = previtem;
-	} else if (level > previtem->level) { /* item begins a new list */
+	} else if (level > prevlevel) {     /* item begins a new list */
 		previtem->child = curritem;
 		curritem->parent = previtem;
 	}
 
+	prevlevel = level;
 	previtem = curritem;
 
 	return rootitem;
@@ -1480,7 +1481,7 @@ getfilelist(struct Prompt *prompt)
 
 	previtem = NULL;
 	for (i = 0; i < g.gl_pathc; i++) {
-		item = allocitem(0, g.gl_pathv[i], NULL);
+		item = allocitem(g.gl_pathv[i], NULL);
 		if (previtem) {
 			item->prev = previtem;
 			previtem->next = item;

@@ -104,7 +104,6 @@ struct DC {
 struct Item {
 	char *text;                 /* content of the completion item */
 	char *description;          /* description of the completion item */
-	unsigned level;             /* word level the item completes */
 	struct Item *prev, *next;   /* previous and next items */
 	struct Item *parent;        /* parent item */
 	struct Item *child;         /* point to the list of child items */
