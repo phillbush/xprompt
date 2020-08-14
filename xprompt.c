@@ -1741,6 +1741,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 				 * part after the last slash).
 				 */
 				char *s, *p;
+				s = prompt->selitem->text;
 				for (p = prompt->selitem->text; *p; p++)
 					if (strchr("/", *p))
 						s = p + 1;
