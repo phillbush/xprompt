@@ -707,9 +707,12 @@ getfontucode(FcChar32 ucode)
 	XftResult result;
 	size_t i;
 
+	/* searches through the fonts supplied by the user for the first one supporting ucode */
 	for (i = 0; i < dc.nfonts; i++)
 		if (XftCharExists(dpy, dc.fonts[i], ucode) == FcTrue)
 			return dc.fonts[i];
+
+	/* if could not find a font in dc.fonts, searches through system fonts */
 
 	/* create a charset containing our code point */
 	fccharset = FcCharSetCreate();
