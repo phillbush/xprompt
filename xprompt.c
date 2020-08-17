@@ -1129,6 +1129,9 @@ drawinput(struct Prompt *prompt, int copy)
 	int x, y, xtext;
 	int widthpre, widthsel, widthpos;
 
+	if (pflag)
+		return;
+
 	x = prompt->promptw;
 
 	minpos = MIN(prompt->cursor, prompt->select);
@@ -1234,8 +1237,7 @@ drawprompt(struct Prompt *prompt)
 	}
 
 	/* draw input field text and set position of the cursor */
-	if (!pflag)
-		drawinput(prompt, 0);
+	drawinput(prompt, 0);
 
 	/* resize window and get new value of number of items */
 	nitems = resizeprompt(prompt, nitems);
