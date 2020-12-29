@@ -184,16 +184,16 @@ main(int argc, char *argv[])
 		config.worddelimiters = str;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "dfG:g:h:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
 		switch (ch) {
+		case 'G':
+			config.gravityspec = optarg;
+			break;
 		case 'd':
 			dflag = 1;
 			break;
 		case 'f':
 			fflag = 1;
-			break;
-		case 'G':
-			config.gravityspec = optarg;
 			break;
 		case 'g':
 			config.geometryspec = optarg;
@@ -300,7 +300,7 @@ static void
 ealloccolor(const char *s, XftColor *color)
 {
 	if(!XftColorAllocName(dpy, visual, colormap, s, color))
-		errx(1, "cannot allocate color: %s", s);
+		errx(1, "could not allocate color: %s", s);
 }
 
 /* get position of focused windows or of the cursor */
@@ -474,7 +474,7 @@ initresources(void)
 static void
 initdc(void)
 {
-	/* get color pixels */
+	/* get colors */
 	ealloccolor(config.hoverbackground_color,   &dc.hover[ColorBG]);
 	ealloccolor(config.hoverforeground_color,   &dc.hover[ColorFG]);
 	ealloccolor(config.hoverdescription_color,  &dc.hover[ColorCM]);
@@ -795,7 +795,7 @@ getnum(const char **s, int *n)
 	char *endp;
 
 	num = strtol(*s, &endp, 10);
-	retval = errno == ERANGE || num > INT_MAX || num < 0 || endp == *s;
+	retval = (errno == ERANGE || num > INT_MAX || num < 0 || endp == *s);
 	*s = endp;
 	*n = num;
 	return retval;
@@ -812,32 +812,36 @@ parsegeometryspec(int *x, int *y, int *w, int *h)
 	*x = *y = *w = *h = 0;
 	s = config.geometryspec;
 
-	if (getnum(&s, &n))
-		goto error;
-	if (*s == '%') {
-		if (n > 100)
+	if (*s != '+' && *s != '-') {
+		/* get *w */
+		if (getnum(&s, &n))
 			goto error;
-		*w = (n * (mon.w - config.border_pixels * 2))/100;
-		s++;
-	} else {
-		*w = n;
-	}
-
-	if (*s++ != 'x')
-		goto error;
-
-	if (getnum(&s, &n))
-		goto error;
-	if (*s == '%') {
-		if (n > 100)
+		if (*s == '%') {
+			if (n > 100)
+				goto error;
+			*w = (n * (mon.w - config.border_pixels * 2))/100;
+			s++;
+		} else {
+			*w = n;
+		}
+		if (*s++ != 'x')
 			goto error;
-		*h = (n * (mon.h - config.border_pixels * 2))/100;
-		s++;
-	} else {
-		*h = n;
+
+		/* get *h */
+		if (getnum(&s, &n))
+			goto error;
+		if (*s == '%') {
+			if (n > 100)
+				goto error;
+			*h = (n * (mon.h - config.border_pixels * 2))/100;
+			s++;
+		} else {
+			*h = n;
+		}
 	}
 
 	if (*s == '+' || *s == '-') {
+		/* get *x */
 		sign = (*s++ == '-') ? -1 : 1;
 		if (getnum(&s, &n))
 			goto error;
@@ -845,6 +849,7 @@ parsegeometryspec(int *x, int *y, int *w, int *h)
 		if (*s != '+' && *s != '-')
 			goto error;
 
+		/* get *y */
 		sign = (*s++ == '-') ? -1 : 1;
 		if (getnum(&s, &n))
 			goto error;
@@ -856,7 +861,7 @@ parsegeometryspec(int *x, int *y, int *w, int *h)
 	return;
 
 error:
-	errx(1, "improper geometry specification %s\n", config.geometryspec);
+	errx(1, "improper geometry specification %s", config.geometryspec);
 }
 
 /* allocate memory for the text input field */
