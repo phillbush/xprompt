@@ -957,12 +957,13 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 {
 	XftColor *color;
 	int textwidth = 0;
-	int y;
+	int x, y;
 
 	color = (prompt->itemarray[n] == prompt->selitem) ? dc.selected
 	      : (prompt->itemarray[n] == prompt->hoveritem) ? dc.hover
 	      : dc.normal;
 	y = (n + 1) * prompt->h + prompt->separator;
+	x = config.indent ? prompt->promptw : dc.pad;
 
 	/* draw background */
 	XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
@@ -970,9 +971,8 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 
 	if (!(dflag && prompt->itemarray[n]->description)) {
 		/* draw item text */
-		textwidth = drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
-		            prompt->itemarray[n]->text, 0);
-		textwidth = textwidth + dc.pad * 2 + prompt->promptw;
+		textwidth = drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h, prompt->itemarray[n]->text, 0);
+		textwidth = x + textwidth + dc.pad * 2;
 		textwidth = MAX(textwidth, prompt->descx);
 
 		/* if item has a description, draw it */
@@ -980,14 +980,13 @@ drawitem(struct Prompt *prompt, size_t n, int copy)
 			drawtext(prompt->draw, &color[ColorCM], textwidth, y, prompt->h,
 			         prompt->itemarray[n]->description, 0);
 	} else {    /* item has description and dflag is on */
-		drawtext(prompt->draw, &color[ColorFG], prompt->promptw, y, prompt->h,
+		drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h,
 		         prompt->itemarray[n]->description, 0);
 	}
 
 	/* commit drawing */
 	if (copy)
-		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, prompt->promptw, y,
-		          prompt->w - prompt->promptw, prompt->h, prompt->promptw, y);
+		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, y, prompt->w - x, prompt->h, x, y);
 }
 
 /* draw the prompt */

@@ -29,5 +29,8 @@ static struct Config config = {
 	.separator_pixels = 3,      /* space around separator */
 
 	/* history size */
-	.histsize = 15
+	.histsize = 15,
+
+	/* if nonzero, indent items on dropdown menu (as in dmenu) */
+	.indent = 0
 };

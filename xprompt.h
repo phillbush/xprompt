@@ -81,6 +81,8 @@ struct Config {
 	int separator_pixels;
 
 	size_t histsize;
+
+	int indent;
 };
 
 /* draw context structure */
