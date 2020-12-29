@@ -1,4 +1,4 @@
-/* See README file for copyright and license details. */
+/* See LICENSE file for copyright and license details. */
 
 #include <err.h>
 #include <errno.h>
