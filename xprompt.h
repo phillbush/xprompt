@@ -16,6 +16,11 @@
                        || (x) == CTRLSELRIGHT || (x) == CTRLSELWLEFT || (x) == CTRLSELWRIGHT)
 #define ISEDITING(x) ((x) == CTRLDELBOL || (x) == CTRLDELEOL || (x) == CTRLDELLEFT \
                      || (x) == CTRLDELRIGHT || (x) == CTRLDELWORD || (x) == INSERT)
+#define GETNUM(n, s, d) { \
+	unsigned long __TMP__; \
+	if ((__TMP__ = strtoul((s), NULL, (d))) < INT_MAX) \
+		(n) = __TMP__; \
+	}
 
 enum {ColorFG, ColorBG, ColorCM, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
@@ -56,6 +61,8 @@ enum Ctrl {
 
 /* configuration structure */
 struct Config {
+	Window parentwin;
+
 	const char *worddelimiters;
 	const char *xpromptctrl;
 	const char *font;
@@ -80,6 +87,7 @@ struct Config {
 	int border_pixels;
 	int separator_pixels;
 
+	const char *histfile;
 	size_t histsize;
 
 	int indent;

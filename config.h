@@ -24,12 +24,13 @@ static struct Config config = {
 	/* Default geometry */
 	.geometryspec = "0x0+0+0",
 	.gravityspec = "N",
-	.number_items = 8,          /* number of items listed for completion */
-	.border_pixels = 2,         /* prompt border */
-	.separator_pixels = 3,      /* space around separator */
+	.number_items = 8,      /* number of items listed for completion */
+	.border_pixels = 2,     /* prompt border */
+	.separator_pixels = 3,  /* space around separator */
 
-	/* history size */
-	.histsize = 15,
+	/* history */
+	.histfile = NULL,       /* keep NULL to set history via command-line options */
+	.histsize = 15,         /* history size */
 
 	/* if nonzero, indent items on dropdown menu (as in dmenu) */
 	.indent = 0

@@ -28,6 +28,8 @@ static Visual *visual;
 static Window rootwin;
 static Colormap colormap;
 static XIC xic;
+static XrmDatabase xdb;
+static char *xrm;
 static struct DC dc;
 static struct Monitor mon;
 static Atom utf8;
@@ -61,6 +63,113 @@ usage(void)
 	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(EXIT_FAILURE);
+}
+
+/* get configuration from X resources */
+static void
+getresources(void)
+{
+	XrmValue xval;
+	char *type;
+
+	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
+		GETNUM(config.number_items, xval.addr, 10)
+	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
+		GETNUM(config.border_pixels, xval.addr, 10)
+	if (XrmGetResource(xdb, "xprompt.separatorWidth", "*", &type, &xval) == True)
+		GETNUM(config.separator_pixels, xval.addr, 10)
+	if (XrmGetResource(xdb, "xprompt.background", "*", &type, &xval) == True)
+		config.background_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.foreground", "*", &type, &xval) == True)
+		config.foreground_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.description", "*", &type, &xval) == True)
+		config.description_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.hoverbackground", "*", &type, &xval) == True)
+		config.hoverbackground_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.hoverforeground", "*", &type, &xval) == True)
+		config.hoverforeground_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.hoverdescription", "*", &type, &xval) == True)
+		config.hoverdescription_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.selbackground", "*", &type, &xval) == True)
+		config.selbackground_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.selforeground", "*", &type, &xval) == True)
+		config.selforeground_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.seldescription", "*", &type, &xval) == True)
+		config.seldescription_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.separator", "*", &type, &xval) == True)
+		config.separator_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.border", "*", &type, &xval) == True)
+		config.border_color = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.font", "*", &type, &xval) == True)
+		config.font = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.geometry", "*", &type, &xval) == True)
+		config.geometryspec = xval.addr;
+	if (XrmGetResource(xdb, "xprompt.gravity", "*", &type, &xval) == True)
+		config.gravityspec = xval.addr;
+}
+
+/* get configuration from environment variables */
+static void
+getenvironment(void)
+{
+	char *s;
+
+	if ((s = getenv("XPROMPTHISTFILE")) != NULL)
+		config.histfile = s;
+	if ((s = getenv("XPROMPTHISTSIZE")) != NULL)
+		GETNUM(config.histsize, s, 10)
+	if ((s = getenv("XPROMPTCTRL")) != NULL)
+		config.xpromptctrl = s;
+	if ((s = getenv("WORDDELIMITERS")) != NULL)
+		config.worddelimiters = s;
+}
+
+/* get configuration from command-line options */
+static void
+getoptions(int argc, char *argv[])
+{
+	int ch;
+
+	/* get options */
+	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
+		switch (ch) {
+		case 'G':
+			config.gravityspec = optarg;
+			break;
+		case 'd':
+			dflag = 1;
+			break;
+		case 'f':
+			fflag = 1;
+			break;
+		case 'g':
+			config.geometryspec = optarg;
+			break;
+		case 'h':
+			config.histfile = optarg;
+			break;
+		case 'i':
+			fstrncmp = strncasecmp;
+			break;
+		case 'm':
+			mflag = 1;
+			GETNUM(mon.num, optarg, 10)
+			break;
+		case 'p':
+			pflag = 1;
+			break;
+		case 's':
+			sflag = 1;
+			break;
+		case 'w':
+			wflag = 1;
+			GETNUM(config.parentwin, optarg, 0)
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
 }
 
 /* get color from color string */
@@ -179,63 +288,6 @@ initmonitor(void)
 		mon.w = DisplayWidth(dpy, screen);
 		mon.h = DisplayHeight(dpy, screen);
 	}
-}
-
-/* read xrdb for configuration options */
-static void
-initresources(void)
-{
-	char *xrm;
-	long n;
-	char *type;
-	XrmDatabase xdb;
-	XrmValue xval;
-
-	XrmInitialize();
-	if ((xrm = XResourceManagerString(dpy)) == NULL)
-		return;
-
-	xdb = XrmGetStringDatabase(xrm);
-
-	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
-		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			config.number_items = n;
-	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
-		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			config.border_pixels = n;
-	if (XrmGetResource(xdb, "xprompt.separatorWidth", "*", &type, &xval) == True)
-		if ((n = strtol(xval.addr, NULL, 10)) > 0)
-			config.separator_pixels = n;
-	if (XrmGetResource(xdb, "xprompt.background", "*", &type, &xval) == True)
-		config.background_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.foreground", "*", &type, &xval) == True)
-		config.foreground_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.description", "*", &type, &xval) == True)
-		config.description_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.hoverbackground", "*", &type, &xval) == True)
-		config.hoverbackground_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.hoverforeground", "*", &type, &xval) == True)
-		config.hoverforeground_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.hoverdescription", "*", &type, &xval) == True)
-		config.hoverdescription_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.selbackground", "*", &type, &xval) == True)
-		config.selbackground_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.selforeground", "*", &type, &xval) == True)
-		config.selforeground_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.seldescription", "*", &type, &xval) == True)
-		config.seldescription_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.separator", "*", &type, &xval) == True)
-		config.separator_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.border", "*", &type, &xval) == True)
-		config.border_color = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.font", "*", &type, &xval) == True)
-		config.font = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.geometry", "*", &type, &xval) == True)
-		config.geometryspec = strdup(xval.addr);
-	if (XrmGetResource(xdb, "xprompt.gravity", "*", &type, &xval) == True)
-		config.gravityspec = strdup(xval.addr);
-
-	XrmDestroyDatabase(xdb);
 }
 
 /* init draw context */
@@ -660,15 +712,15 @@ setpromptarray(struct Prompt *prompt)
 
 /* calculate prompt geometry */
 static void
-setpromptgeom(struct Prompt *prompt, Window parentwin)
+setpromptgeom(struct Prompt *prompt)
 {
 	int x, y, w, h;     /* geometry of monitor or parent window */
 
 	/* try to get attributes of parent window */
 	if (wflag) {
 		XWindowAttributes wa;   /* window attributes of the parent window */
-		if (!XGetWindowAttributes(dpy, parentwin, &wa))
-			errx(1, "could not get window attributes of 0x%lx", parentwin);
+		if (!XGetWindowAttributes(dpy, config.parentwin, &wa))
+			errx(1, "could not get window attributes of 0x%lx", config.parentwin);
 		x = y = 0;
 		w = wa.width;
 		h = wa.height;
@@ -765,7 +817,7 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 
 /* set up prompt window */
 static void
-setpromptwin(struct Prompt *prompt, Window parentwin)
+setpromptwin(struct Prompt *prompt)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
@@ -779,7 +831,7 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	swa.border_pixel = dc.border.pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
 	               | ButtonPressMask | PointerMotionMask;
-	prompt->win = XCreateWindow(dpy, parentwin,
+	prompt->win = XCreateWindow(dpy, config.parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
 	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
@@ -815,8 +867,8 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 		Window *children;
 		unsigned i, nchildren;
 
-		XSelectInput(dpy, parentwin, FocusChangeMask);
-		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
+		XSelectInput(dpy, config.parentwin, FocusChangeMask);
+		if (XQueryTree(dpy, config.parentwin, &r, &p, &children, &nchildren)) {
 			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
 				XSelectInput(dpy, children[i], FocusChangeMask);
 			XFree(children);
@@ -1969,7 +2021,7 @@ cleanprompt(struct Prompt *prompt)
 
 /* clean up X stuff */
 static void
-cleanX(void)
+cleandc(void)
 {
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorFG]);
@@ -1977,9 +2029,7 @@ cleanX(void)
 	XftColorFree(dpy, visual, colormap, &dc.selected[ColorFG]);
 	XftColorFree(dpy, visual, colormap, &dc.separator);
 	XftColorFree(dpy, visual, colormap, &dc.border);
-
 	XFreeGC(dpy, dc.gc);
-	XCloseDisplay(dpy);
 }
 
 /* xprompt: a dmenu rip-off with contextual completion */
@@ -1989,72 +2039,7 @@ main(int argc, char *argv[])
 	struct History hist = {.entries = NULL, .index = 0, .size = 0};
 	struct Prompt prompt;
 	struct Item *rootitem;
-	Window parentwin = 0;
 	FILE *histfp;
-	char *histfile = NULL;
-	char *str;
-	int ch;
-	long n;
-
-	/* get environment */
-	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
-		histfile = str;
-	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
-		if ((n = strtol(str, NULL, 10)) > 0)
-			config.histsize = n;
-	if ((str = getenv("XPROMPTCTRL")) != NULL)
-		config.xpromptctrl = str;
-	if ((str = getenv("WORDDELIMITERS")) != NULL)
-		config.worddelimiters = str;
-
-	/* get options */
-	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
-		switch (ch) {
-		case 'G':
-			config.gravityspec = optarg;
-			break;
-		case 'd':
-			dflag = 1;
-			break;
-		case 'f':
-			fflag = 1;
-			break;
-		case 'g':
-			config.geometryspec = optarg;
-			break;
-		case 'h':
-			histfile = optarg;
-			break;
-		case 'i':
-			fstrncmp = strncasecmp;
-			break;
-		case 'm':
-			mflag = 1;
-			n = strtol(optarg, &str, 10);
-			if (errno == ERANGE || n > UINT_MAX || n < 0 || str == optarg || *str != '\0')
-				errx(1, "improper monitor %s", optarg);
-			mon.num = n;
-			break;
-		case 'p':
-			pflag = 1;
-			break;
-		case 's':
-			sflag = 1;
-			break;
-		case 'w':
-			wflag = 1;
-			parentwin = strtol(optarg, &str, 0);
-			break;
-		default:
-			usage();
-			break;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc > 1)
-		usage();
 
 	/* open connection to server and set X variables */
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
@@ -2065,34 +2050,44 @@ main(int argc, char *argv[])
 	visual = DefaultVisual(dpy, screen);
 	rootwin = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
+	XrmInitialize();
+	if ((xrm = XResourceManagerString(dpy)) != NULL)
+		xdb = XrmGetStringDatabase(xrm);
+
+	/* get configuration */
+	config.parentwin = rootwin;
+	getresources();
+	getenvironment();
+	getoptions(argc, argv);
+	argc -= optind;
+	argv += optind;
+	if (argc > 1)
+		usage();
 
 	/* init */
 	initmonitor();
-	initresources();
 	initctrl();
 	initdc();
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
 	/* setup prompt */
-	if (!parentwin)
-		parentwin = rootwin;
 	if (argc == 0)
 		prompt.promptstr = NULL;
 	else
 		prompt.promptstr = *argv;
 	setpromptinput(&prompt);
 	setpromptarray(&prompt);
-	setpromptgeom(&prompt, parentwin);
-	setpromptwin(&prompt, parentwin);
+	setpromptgeom(&prompt);
+	setpromptwin(&prompt);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
 
 	/* initiate history */
-	if (histfile != NULL && *histfile != '\0') {
-		if ((histfp = fopen(histfile, "a+")) == NULL)
-			warn("%s", histfile);
+	if (config.histfile != NULL && *config.histfile != '\0') {
+		if ((histfp = fopen(config.histfile, "a+")) == NULL)
+			warn("%s", config.histfile);
 		else {
 			loadhist(histfp, &hist);
 			if (!hflag)
@@ -2114,7 +2109,9 @@ main(int argc, char *argv[])
 	cleanitem(rootitem);
 	cleanhist(&hist);
 	cleanprompt(&prompt);
-	cleanX();
+	cleandc();
+	XrmDestroyDatabase(xdb);
+	XCloseDisplay(dpy);
 
 	return EXIT_SUCCESS;
 }
