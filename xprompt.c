@@ -124,9 +124,9 @@ getenvironment(void)
 		config.worddelimiters = s;
 }
 
-/* get configuration from command-line options */
-static void
-getoptions(int argc, char *argv[])
+/* get configuration from command-line options, return non-option argument */
+static char *
+getoptions(int argc, char *argv[], Window *win_ret)
 {
 	int ch;
 
@@ -163,13 +163,20 @@ getoptions(int argc, char *argv[])
 			break;
 		case 'w':
 			wflag = 1;
-			GETNUM(config.parentwin, optarg, 0)
+			GETNUM(*win_ret, optarg, 0)
 			break;
 		default:
 			usage();
 			break;
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc > 1)
+		usage();
+	else if (argc == 1)
+		return *argv;
+	return NULL;
 }
 
 /* get color from color string */
@@ -712,15 +719,15 @@ setpromptarray(struct Prompt *prompt)
 
 /* calculate prompt geometry */
 static void
-setpromptgeom(struct Prompt *prompt)
+setpromptgeom(struct Prompt *prompt, Window parentwin)
 {
 	int x, y, w, h;     /* geometry of monitor or parent window */
 
 	/* try to get attributes of parent window */
 	if (wflag) {
 		XWindowAttributes wa;   /* window attributes of the parent window */
-		if (!XGetWindowAttributes(dpy, config.parentwin, &wa))
-			errx(1, "could not get window attributes of 0x%lx", config.parentwin);
+		if (!XGetWindowAttributes(dpy, parentwin, &wa))
+			errx(1, "could not get window attributes of 0x%lx", parentwin);
 		x = y = 0;
 		w = wa.width;
 		h = wa.height;
@@ -817,7 +824,7 @@ setpromptgeom(struct Prompt *prompt)
 
 /* set up prompt window */
 static void
-setpromptwin(struct Prompt *prompt)
+setpromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
@@ -831,7 +838,7 @@ setpromptwin(struct Prompt *prompt)
 	swa.border_pixel = dc.border.pixel;
 	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
 	               | ButtonPressMask | PointerMotionMask;
-	prompt->win = XCreateWindow(dpy, config.parentwin,
+	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
 	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
@@ -867,8 +874,8 @@ setpromptwin(struct Prompt *prompt)
 		Window *children;
 		unsigned i, nchildren;
 
-		XSelectInput(dpy, config.parentwin, FocusChangeMask);
-		if (XQueryTree(dpy, config.parentwin, &r, &p, &children, &nchildren)) {
+		XSelectInput(dpy, parentwin, FocusChangeMask);
+		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
 			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
 				XSelectInput(dpy, children[i], FocusChangeMask);
 			XFree(children);
@@ -2039,6 +2046,7 @@ main(int argc, char *argv[])
 	struct History hist = {.entries = NULL, .index = 0, .size = 0};
 	struct Prompt prompt;
 	struct Item *rootitem;
+	Window parentwin;
 	FILE *histfp;
 
 	/* open connection to server and set X variables */
@@ -2055,14 +2063,10 @@ main(int argc, char *argv[])
 		xdb = XrmGetStringDatabase(xrm);
 
 	/* get configuration */
-	config.parentwin = rootwin;
+	parentwin = rootwin;
 	getresources();
 	getenvironment();
-	getoptions(argc, argv);
-	argc -= optind;
-	argv += optind;
-	if (argc > 1)
-		usage();
+	prompt.promptstr = getoptions(argc, argv, &parentwin);
 
 	/* init */
 	initmonitor();
@@ -2072,19 +2076,15 @@ main(int argc, char *argv[])
 	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
 	/* setup prompt */
-	if (argc == 0)
-		prompt.promptstr = NULL;
-	else
-		prompt.promptstr = *argv;
 	setpromptinput(&prompt);
 	setpromptarray(&prompt);
-	setpromptgeom(&prompt);
-	setpromptwin(&prompt);
+	setpromptgeom(&prompt, parentwin);
+	setpromptwin(&prompt, parentwin);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
 
-	/* initiate history */
+	/* open config.histfile and load history */
 	if (config.histfile != NULL && *config.histfile != '\0') {
 		if ((histfp = fopen(config.histfile, "a+")) == NULL)
 			warn("%s", config.histfile);

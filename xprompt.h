@@ -61,8 +61,6 @@ enum Ctrl {
 
 /* configuration structure */
 struct Config {
-	Window parentwin;
-
 	const char *worddelimiters;
 	const char *xpromptctrl;
 	const char *font;
