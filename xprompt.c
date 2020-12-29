@@ -27,6 +27,7 @@ static int screen;
 static Visual *visual;
 static Window rootwin;
 static Colormap colormap;
+static XIM xim;
 static XIC xic;
 static XrmDatabase xdb;
 static char *xrm;
@@ -62,7 +63,7 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
-	exit(EXIT_FAILURE);
+	exit(1);
 }
 
 /* get configuration from X resources */
@@ -356,12 +357,12 @@ allocitem(const char *text, const char *description)
 	struct Item *item;
 
 	if ((item = malloc(sizeof *item)) == NULL)
-		err(EXIT_FAILURE, "malloc");
+		err(1, "malloc");
 	if ((item->text = strdup(text)) == NULL)
-		err(EXIT_FAILURE, "strdup");
+		err(1, "strdup");
 	if (description != NULL) {
 		if ((item->description = strdup(description)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+			err(1, "strdup");
 	} else {
 		item->description = NULL;
 	}
@@ -396,7 +397,7 @@ builditems(unsigned level, const char *text, const char *description)
 		     item = item->parent, i++)
 			;
 		if (item == NULL)
-			errx(EXIT_FAILURE, "improper indentation detected");
+			errx(1, "improper indentation detected");
 
 		curritem->parent = item->parent;
 		item->next = curritem;
@@ -459,7 +460,7 @@ loadhist(FILE *fp, struct History *hist)
 	size_t len;
 
 	if ((hist->entries = calloc(config.histsize, sizeof *hist)) == NULL)
-		err(EXIT_FAILURE, "calloc");
+		err(1, "calloc");
 
 	hist->size = 0;
 
@@ -469,7 +470,7 @@ loadhist(FILE *fp, struct History *hist)
 		if (len && buf[--len] == '\n')
 			buf[len] = '\0';
 		if ((s = strdup(buf)) == NULL)
-			err(EXIT_FAILURE, "strdup");
+			err(1, "strdup");
 		hist->entries[hist->size++] = s;
 	}
 
@@ -699,7 +700,7 @@ static void
 setpromptinput(struct Prompt *prompt)
 {
 	if ((prompt->text = malloc(BUFSIZ)) == NULL)
-		err(EXIT_FAILURE, "malloc");
+		err(1, "malloc");
 	prompt->textsize = BUFSIZ;
 	prompt->text[0] = '\0';
 	prompt->cursor = 0;
@@ -717,7 +718,7 @@ setpromptarray(struct Prompt *prompt)
 	prompt->maxitems = config.number_items;
 	prompt->nitems = 0;
 	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
-		err(EXIT_FAILURE, "malloc");
+		err(1, "malloc");
 }
 
 /* calculate prompt geometry */
@@ -765,7 +766,7 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 	else if (strcmp(config.gravityspec, "SE") == 0)
 		prompt->gravity = SouthEastGravity;
 	else
-		errx(EXIT_FAILURE, "Unknown gravity %s", config.gravityspec);
+		errx(1, "Unknown gravity %s", config.gravityspec);
 
 	/* get prompt geometry */
 	parsegeometryspec(&prompt->x, &prompt->y, &prompt->w, &prompt->h);
@@ -832,7 +833,6 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
 	XClassHint classh = {PROGNAME, PROGNAME};
-	XIM xim;
 	unsigned h;
 
 	/* create prompt window */
@@ -861,12 +861,10 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
 
 	/* open input methods */
-	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
-		errx(EXIT_FAILURE, "XOpenIM: could not open input device");
 	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
 	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
 	if (xic == NULL)
-		errx(EXIT_FAILURE, "XCreateIC: could not obtain input method");
+		errx(1, "XCreateIC: could not obtain input method");
 
 	/* map window */
 	XMapRaised(dpy, prompt->win);
@@ -2067,6 +2065,8 @@ main(int argc, char *argv[])
 	XrmInitialize();
 	if ((xrm = XResourceManagerString(dpy)) != NULL)
 		xdb = XrmGetStringDatabase(xrm);
+	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
+		errx(1, "XOpenIM: could not open input device");
 
 	/* get configuration */
 	parentwin = rootwin;
@@ -2114,8 +2114,9 @@ main(int argc, char *argv[])
 	cleanhist(&hist);
 	cleanprompt(&prompt);
 	cleandc();
+	XCloseIM(xim);
 	XrmDestroyDatabase(xdb);
 	XCloseDisplay(dpy);
 
-	return EXIT_SUCCESS;
+	return 0;
 }
