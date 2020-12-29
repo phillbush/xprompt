@@ -2058,6 +2058,8 @@ main(int argc, char *argv[])
 	visual = DefaultVisual(dpy, screen);
 	rootwin = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
+	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
+	clip = XInternAtom(dpy, "CLIPBOARD", False);
 	XrmInitialize();
 	if ((xrm = XResourceManagerString(dpy)) != NULL)
 		xdb = XrmGetStringDatabase(xrm);
@@ -2072,8 +2074,6 @@ main(int argc, char *argv[])
 	initmonitor();
 	initctrl();
 	initdc();
-	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
-	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
 	/* setup prompt */
 	setpromptinput(&prompt);
