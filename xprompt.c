@@ -21,101 +21,6 @@
 
 #define PROGNAME "xprompt"
 
-
-/*
- * function declarations
- */
-
-/* initializers, and their helper routine */
-static void ealloccolor(const char *s, XftColor *color);
-static void getreferencepos(int *x_ret, int *y_ret);
-static void parsefonts(const char *s);
-static void initmonitor(void);
-static void initresources(void);
-static void initdc(void);
-static void initctrl(void);
-
-/* parsers and structure builders */
-static struct Item *allocitem(const char *text, const char *description);
-static struct Item *builditems(unsigned level, const char *text, const char *description);
-static struct Item *parsestdin(FILE *fp);
-static void loadhist(FILE *fp, struct History *hist);
-
-/* text drawer, and its helper routine */
-static FcChar32 getnextutf8char(const char *s, const char **end_ret);
-static XftFont *getfontucode(FcChar32 ucode);
-static int drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len);
-
-/* parse geometry specification */
-static int getnum(const char **s, int *n);
-static void parsegeometryspec(int *x, int *y, int *w, int *h);
-
-/* prompt structure setters */
-static void setpromptinput(struct Prompt *prompt);
-static void setpromptarray(struct Prompt *prompt);
-static void setpromptgeom(struct Prompt *prompt, Window parentwin);
-static void setpromptwin(struct Prompt *prompt, Window parentwin);
-
-/* grabbers */
-static void grabkeyboard(void);
-static void grabfocus(Window win);
-
-/* prompt drawers and controllers */
-static size_t resizeprompt(struct Prompt *prompt, size_t nitems_old);
-static void drawinput(struct Prompt *prompt, int copy);
-static void drawitem(struct Prompt *prompt, size_t n, int copy);
-static void drawprompt(struct Prompt *prompt);
-
-/* text operations */
-static size_t nextrune(struct Prompt *prompt, size_t position, int inc);
-static size_t movewordedge(struct Prompt *prompt, size_t position, int dir);
-static void delselection(struct Prompt *prompt);
-static void insert(struct Prompt *prompt, const char *str, ssize_t n);
-static void insertselitem(struct Prompt *prompt);
-static void delword(struct Prompt *prompt);
-
-/* history functions */
-static char *navhist(struct History *hist, int direction);
-static void savehist(struct Prompt *prompt, struct History *hist, FILE *fp);
-
-/* completion-list functions */
-static struct Item *getcomplist(struct Prompt *prompt, struct Item *rootitem);
-static struct Item *getfilelist(struct Prompt *prompt);
-
-/* match-list functions */
-static int itemmatch(struct Item *item, const char *text, size_t textlen, int middle);
-static void getmatchlist(struct Prompt *prompt, struct Item *complist);
-static void navmatchlist(struct Prompt *prompt, int direction);
-static void delmatchlist(struct Prompt *prompt);
-
-/* utils for the event handlers */
-static enum Ctrl getoperation(KeySym ksym, unsigned state);
-static size_t getcurpos(struct Prompt *prompt, int x);
-static struct Item *getitem(struct Prompt *prompt, int y);
-
-/* event loop function and event handlers */
-static int run(struct Prompt *prompt, struct Item *rootitem, struct History *hist);
-static enum Press_ret keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev);
-static enum Press_ret buttonpress(struct Prompt *prompt, XButtonEvent *ev);
-static enum Press_ret buttonmotion(struct Prompt *prompt, XMotionEvent *ev);
-static enum Press_ret pointermotion(struct Prompt *prompt, XMotionEvent *ev);
-static void paste(struct Prompt *prompt);
-static void copy(struct Prompt *prompt, XSelectionRequestEvent *ev);
-
-/* cleaners */
-static void cleanitem(struct Item *item);
-static void cleanhist(struct History *hist);
-static void cleanprompt(struct Prompt *prompt);
-static void cleanX(void);
-
-/* show usage */
-static void usage(void);
-
-
-/*
- * Global variables
- */
-
 /* X stuff */
 static Display *dpy;
 static int screen;
@@ -146,153 +51,16 @@ static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 /* whether xprompt is in file completion */
 static int filecomp = 0;
 
-
-/*
- * Include defaults
- */
-
+/* Include defaults */
 #include "config.h"
 
-
-/*
- * Function implementations
- */
-
-/* xprompt: a dmenu rip-off with contextual completion */
-int
-main(int argc, char *argv[])
+/* show usage */
+static void
+usage(void)
 {
-	struct History hist = {.entries = NULL, .index = 0, .size = 0};
-	struct Prompt prompt;
-	struct Item *rootitem;
-	Window parentwin = 0;
-	FILE *histfp;
-	char *histfile = NULL;
-	char *str;
-	int ch;
-	long n;
-
-	/* get environment */
-	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
-		histfile = str;
-	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
-		if ((n = strtol(str, NULL, 10)) > 0)
-			config.histsize = n;
-	if ((str = getenv("XPROMPTCTRL")) != NULL)
-		config.xpromptctrl = str;
-	if ((str = getenv("WORDDELIMITERS")) != NULL)
-		config.worddelimiters = str;
-
-	/* get options */
-	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
-		switch (ch) {
-		case 'G':
-			config.gravityspec = optarg;
-			break;
-		case 'd':
-			dflag = 1;
-			break;
-		case 'f':
-			fflag = 1;
-			break;
-		case 'g':
-			config.geometryspec = optarg;
-			break;
-		case 'h':
-			histfile = optarg;
-			break;
-		case 'i':
-			fstrncmp = strncasecmp;
-			break;
-		case 'm':
-			mflag = 1;
-			n = strtol(optarg, &str, 10);
-			if (errno == ERANGE || n > UINT_MAX || n < 0 || str == optarg || *str != '\0')
-				errx(1, "improper monitor %s", optarg);
-			mon.num = n;
-			break;
-		case 'p':
-			pflag = 1;
-			break;
-		case 's':
-			sflag = 1;
-			break;
-		case 'w':
-			wflag = 1;
-			parentwin = strtol(optarg, &str, 0);
-			break;
-		default:
-			usage();
-			break;
-		}
-	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc > 1)
-		usage();
-
-	/* open connection to server and set X variables */
-	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
-		warnx("warning: no locale support");
-	if ((dpy = XOpenDisplay(NULL)) == NULL)
-		errx(1, "cannot open display");
-	screen = DefaultScreen(dpy);
-	visual = DefaultVisual(dpy, screen);
-	rootwin = RootWindow(dpy, screen);
-	colormap = DefaultColormap(dpy, screen);
-
-	/* init */
-	initmonitor();
-	initresources();
-	initctrl();
-	initdc();
-	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
-	clip = XInternAtom(dpy, "CLIPBOARD", False);
-
-	/* setup prompt */
-	if (!parentwin)
-		parentwin = rootwin;
-	if (argc == 0)
-		prompt.promptstr = NULL;
-	else
-		prompt.promptstr = *argv;
-	setpromptinput(&prompt);
-	setpromptarray(&prompt);
-	setpromptgeom(&prompt, parentwin);
-	setpromptwin(&prompt, parentwin);
-
-	/* initiate item list */
-	rootitem = parsestdin(stdin);
-
-	/* initiate history */
-	if (histfile != NULL && *histfile != '\0') {
-		if ((histfp = fopen(histfile, "a+")) == NULL)
-			warn("%s", histfile);
-		else {
-			loadhist(histfp, &hist);
-			if (!hflag)
-				fclose(histfp);
-		}
-	}
-
-	/* grab input */
-	if (!wflag)
-		grabkeyboard();
-
-	/* run event loop; and, if run return nonzero, save the history */
-	if (run(&prompt, rootitem, &hist))
-		savehist(&prompt, &hist, histfp);
-
-	/* freeing stuff */
-	if (hflag)
-		fclose(histfp);
-	cleanitem(rootitem);
-	cleanhist(&hist);
-	cleanprompt(&prompt);
-	cleanX();
-
-	return EXIT_SUCCESS;
+	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
+	                      "               [-m monitor] [-w windowid] [prompt]\n");
+	exit(EXIT_FAILURE);
 }
 
 /* get color from color string */
@@ -1342,6 +1110,16 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 	prompt->select = prompt->cursor;
 }
 
+/* delete word from the input field */
+static void
+delword(struct Prompt *prompt)
+{
+	while (prompt->cursor > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
+	while (prompt->cursor > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
+}
+
 /* insert selected item on prompt->text */
 static void
 insertselitem(struct Prompt *prompt)
@@ -1366,16 +1144,6 @@ insertselitem(struct Prompt *prompt)
 				s = p + 1;
 		insert(prompt, s, strlen(s));
 	}
-}
-
-/* delete word from the input field */
-static void
-delword(struct Prompt *prompt)
-{
-	while (prompt->cursor > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
-		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
-	while (prompt->cursor > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
-		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
 }
 
 /* we have been given the current selection, now insert it into input */
@@ -1568,6 +1336,23 @@ itemmatch(struct Item *item, const char *text, size_t textlen, int middle)
 	}
 
 	return 0;
+}
+
+/* free a item tree */
+static void
+cleanitem(struct Item *root)
+{
+	struct Item *item, *tmp;
+
+	item = root;
+	while (item != NULL) {
+		if (item->child != NULL)
+			cleanitem(item->child);
+		tmp = item;
+		item = item->next;
+		free(tmp->text);
+		free(tmp);
+	}
 }
 
 /* create list of matching items */
@@ -2158,23 +1943,6 @@ savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
 		fprintf(fp, "%s\n", prompt->text);
 }
 
-/* free a item tree */
-static void
-cleanitem(struct Item *root)
-{
-	struct Item *item, *tmp;
-
-	item = root;
-	while (item != NULL) {
-		if (item->child != NULL)
-			cleanitem(item->child);
-		tmp = item;
-		item = item->next;
-		free(tmp->text);
-		free(tmp);
-	}
-}
-
 /* free history entries */
 static void
 cleanhist(struct History *hist)
@@ -2215,11 +1983,139 @@ cleanX(void)
 	XCloseDisplay(dpy);
 }
 
-/* show usage */
-static void
-usage(void)
+/* xprompt: a dmenu rip-off with contextual completion */
+int
+main(int argc, char *argv[])
 {
-	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
-	                      "               [-m monitor] [-w windowid] [prompt]\n");
-	exit(EXIT_FAILURE);
+	struct History hist = {.entries = NULL, .index = 0, .size = 0};
+	struct Prompt prompt;
+	struct Item *rootitem;
+	Window parentwin = 0;
+	FILE *histfp;
+	char *histfile = NULL;
+	char *str;
+	int ch;
+	long n;
+
+	/* get environment */
+	if ((str = getenv("XPROMPTHISTFILE")) != NULL)
+		histfile = str;
+	if ((str = getenv("XPROMPTHISTSIZE")) != NULL)
+		if ((n = strtol(str, NULL, 10)) > 0)
+			config.histsize = n;
+	if ((str = getenv("XPROMPTCTRL")) != NULL)
+		config.xpromptctrl = str;
+	if ((str = getenv("WORDDELIMITERS")) != NULL)
+		config.worddelimiters = str;
+
+	/* get options */
+	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
+		switch (ch) {
+		case 'G':
+			config.gravityspec = optarg;
+			break;
+		case 'd':
+			dflag = 1;
+			break;
+		case 'f':
+			fflag = 1;
+			break;
+		case 'g':
+			config.geometryspec = optarg;
+			break;
+		case 'h':
+			histfile = optarg;
+			break;
+		case 'i':
+			fstrncmp = strncasecmp;
+			break;
+		case 'm':
+			mflag = 1;
+			n = strtol(optarg, &str, 10);
+			if (errno == ERANGE || n > UINT_MAX || n < 0 || str == optarg || *str != '\0')
+				errx(1, "improper monitor %s", optarg);
+			mon.num = n;
+			break;
+		case 'p':
+			pflag = 1;
+			break;
+		case 's':
+			sflag = 1;
+			break;
+		case 'w':
+			wflag = 1;
+			parentwin = strtol(optarg, &str, 0);
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 1)
+		usage();
+
+	/* open connection to server and set X variables */
+	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
+		warnx("warning: no locale support");
+	if ((dpy = XOpenDisplay(NULL)) == NULL)
+		errx(1, "cannot open display");
+	screen = DefaultScreen(dpy);
+	visual = DefaultVisual(dpy, screen);
+	rootwin = RootWindow(dpy, screen);
+	colormap = DefaultColormap(dpy, screen);
+
+	/* init */
+	initmonitor();
+	initresources();
+	initctrl();
+	initdc();
+	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
+	clip = XInternAtom(dpy, "CLIPBOARD", False);
+
+	/* setup prompt */
+	if (!parentwin)
+		parentwin = rootwin;
+	if (argc == 0)
+		prompt.promptstr = NULL;
+	else
+		prompt.promptstr = *argv;
+	setpromptinput(&prompt);
+	setpromptarray(&prompt);
+	setpromptgeom(&prompt, parentwin);
+	setpromptwin(&prompt, parentwin);
+
+	/* initiate item list */
+	rootitem = parsestdin(stdin);
+
+	/* initiate history */
+	if (histfile != NULL && *histfile != '\0') {
+		if ((histfp = fopen(histfile, "a+")) == NULL)
+			warn("%s", histfile);
+		else {
+			loadhist(histfp, &hist);
+			if (!hflag)
+				fclose(histfp);
+		}
+	}
+
+	/* grab input */
+	if (!wflag)
+		grabkeyboard();
+
+	/* run event loop; and, if run return nonzero, save the history */
+	if (run(&prompt, rootitem, &hist))
+		savehist(&prompt, &hist, histfp);
+
+	/* freeing stuff */
+	if (hflag)
+		fclose(histfp);
+	cleanitem(rootitem);
+	cleanhist(&hist);
+	cleanprompt(&prompt);
+	cleanX();
+
+	return EXIT_SUCCESS;
 }
