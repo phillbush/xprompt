@@ -72,6 +72,9 @@ getresources(void)
 	XrmValue xval;
 	char *type;
 
+	if (xrm == NULL || xdb == NULL)
+		return;
+
 	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
 		GETNUM(config.number_items, xval.addr, 10)
 	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
@@ -2023,6 +2026,7 @@ cleanprompt(struct Prompt *prompt)
 
 	XFreePixmap(dpy, prompt->pixmap);
 	XftDrawDestroy(prompt->draw);
+	XDestroyIC(xic);
 	XDestroyWindow(dpy, prompt->win);
 }
 
