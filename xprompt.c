@@ -583,26 +583,28 @@ getfontucode(FcChar32 ucode)
 
 /* draw text into XftDraw, return width of text glyphs */
 static int
-drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t len)
+drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *text, size_t textlen)
 {
 	int textwidth = 0;
-	const char *end;
+	XftFont *currfont, *nextfont;
+	XGlyphInfo ext;
+	FcChar32 ucode;
+	const char *next, *tmp, *end;
+	size_t len = 0;
 
-	end = text + len;
-	while (*text && (!len || text < end)) {
-		XftFont *currfont;
-		XGlyphInfo ext;
-		FcChar32 ucode;
-		const char *next;
-		size_t len;
-
-		ucode = getnextutf8char(text, &next);
-		currfont = getfontucode(ucode);
-
+	nextfont = dc.fonts[0];
+	end = text + textlen;
+	while (*text && (!textlen || text < end)) {
+		tmp = text;
+		do {
+			next = tmp;
+			currfont = nextfont;
+			ucode = getnextutf8char(next, &tmp);
+			nextfont = getfontucode(ucode);
+		} while (*next && (!textlen || next < end) && currfont == nextfont);
 		len = next - text;
 		XftTextExtentsUtf8(dpy, currfont, (XftChar8 *)text, len, &ext);
 		textwidth += ext.xOff;
-
 		if (draw) {
 			int texty;
 
@@ -610,10 +612,8 @@ drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *t
 			XftDrawStringUtf8(draw, color, currfont, x, texty, (XftChar8 *)text, len);
 			x += ext.xOff;
 		}
-
 		text = next;
 	}
-
 	return textwidth;
 }
 
@@ -910,8 +910,10 @@ grabfocus(Window win)
 
 	for (i = 0; i < 100; ++i) {
 		XGetInputFocus(dpy, &focuswin, &revertwin);
-		if (focuswin == win)
+		if (focuswin == win) {
+			XSetICFocus(xic);
 			return;
+		}
 		XSetInputFocus(dpy, win, RevertToParent, CurrentTime);
 		nanosleep(&ts, NULL);
 	}
@@ -1887,17 +1889,18 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 static enum Press_ret
 pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 {
+	struct Item *prevhover;
 	int miny, maxy;
 
 	miny = prompt->h + prompt->separator;
 	maxy = miny + prompt->h * prompt->nitems;
-
+	prevhover = prompt->hoveritem;
 	if (ev->y < miny || ev->y >= maxy)
 		prompt->hoveritem = NULL;
 	else
 		prompt->hoveritem = getitem(prompt, ev->y);
 
-	return DrawPrompt;
+	return (prevhover != prompt->hoveritem) ? DrawPrompt : Noop;
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -1912,7 +1915,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
-
+		retval = Noop;
 		switch (ev.type) {
 		case Expose:
 			if (ev.xexpose.count == 0)
@@ -1966,8 +1969,6 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 		default:
 			break;
 		}
-
-		retval = Noop;
 	}
 
 	return 0;   /* UNREACHABLE */
