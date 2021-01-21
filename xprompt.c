@@ -21,6 +21,7 @@
 #include "xprompt.h"
 
 #define PROGNAME "xprompt"
+#define INPUTSIZ 1024
 
 /* X stuff */
 static Display *dpy;
@@ -64,6 +65,39 @@ usage(void)
 	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(1);
+}
+
+/* call strdup checking for error */
+static char *
+estrdup(const char *s)
+{
+	char *t;
+
+	if ((t = strdup(s)) == NULL)
+		err(1, "strdup");
+	return t;
+}
+
+/* call calloc checking for error */
+static void *
+ecalloc(size_t nmemb, size_t size)
+{
+	void *p;
+
+	if ((p = calloc(nmemb, size)) == NULL)
+		err(1, "calloc");
+	return p;
+}
+
+/* call malloc checking for error */
+static void *
+emalloc(size_t size)
+{
+	void *p;
+
+	if ((p = malloc(size)) == NULL)
+		err(1, "malloc");
+	return p;
 }
 
 /* get configuration from X resources */
@@ -227,17 +261,14 @@ static void
 parsefonts(const char *s)
 {
 	const char *p;
-	char buf[1024];
+	char buf[INPUTSIZ];
 	size_t nfont = 0;
 
 	dc.nfonts = 1;
 	for (p = s; *p; p++)
 		if (*p == ',')
 			dc.nfonts++;
-
-	if ((dc.fonts = calloc(dc.nfonts, sizeof *dc.fonts)) == NULL)
-		err(1, "calloc");
-
+	dc.fonts = ecalloc(dc.nfonts, sizeof *dc.fonts);
 	p = s;
 	while (*p != '\0') {
 		size_t i;
@@ -356,16 +387,9 @@ allocitem(const char *text, const char *description)
 {
 	struct Item *item;
 
-	if ((item = malloc(sizeof *item)) == NULL)
-		err(1, "malloc");
-	if ((item->text = strdup(text)) == NULL)
-		err(1, "strdup");
-	if (description != NULL) {
-		if ((item->description = strdup(description)) == NULL)
-			err(1, "strdup");
-	} else {
-		item->description = NULL;
-	}
+	item = emalloc(sizeof *item);
+	item->text = estrdup(text);
+	item->description = description ? estrdup(description) : NULL;
 	item->prevmatch = item->nextmatch = NULL;
 	item->prev = item->next = NULL;
 	item->parent = NULL;
@@ -422,13 +446,13 @@ static struct Item *
 parsestdin(FILE *fp)
 {
 	struct Item *rootitem;
-	char *s, buf[BUFSIZ];
+	char *s, buf[INPUTSIZ];
 	char *text, *description;
 	unsigned level = 0;
 
 	rootitem = NULL;
 
-	while (fgets(buf, BUFSIZ, fp) != NULL) {
+	while (fgets(buf, sizeof buf, fp) != NULL) {
 		/* discard empty lines */
 		if (*buf && *buf == '\n')
 			continue;
@@ -455,22 +479,18 @@ parsestdin(FILE *fp)
 static void
 loadhist(FILE *fp, struct History *hist)
 {
-	char buf[BUFSIZ];
+	char buf[INPUTSIZ];
 	char *s;
 	size_t len;
 
-	if ((hist->entries = calloc(config.histsize, sizeof *hist)) == NULL)
-		err(1, "calloc");
-
+	hist->entries = ecalloc(config.histsize, sizeof *hist);
 	hist->size = 0;
-
 	rewind(fp);
 	while (hist->size < config.histsize && fgets(buf, sizeof buf, fp) != NULL) {
 		len = strlen(buf);
 		if (len && buf[--len] == '\n')
 			buf[len] = '\0';
-		if ((s = strdup(buf)) == NULL)
-			err(1, "strdup");
+		s = estrdup(buf);
 		hist->entries[hist->size++] = s;
 	}
 
@@ -699,9 +719,8 @@ error:
 static void
 setpromptinput(struct Prompt *prompt)
 {
-	if ((prompt->text = malloc(BUFSIZ)) == NULL)
-		err(1, "malloc");
-	prompt->textsize = BUFSIZ;
+	prompt->text = emalloc(INPUTSIZ);
+	prompt->textsize = INPUTSIZ;
 	prompt->text[0] = '\0';
 	prompt->cursor = 0;
 	prompt->select = 0;
@@ -717,8 +736,7 @@ setpromptarray(struct Prompt *prompt)
 	prompt->matchlist = NULL;
 	prompt->maxitems = config.number_items;
 	prompt->nitems = 0;
-	if ((prompt->itemarray = calloc(sizeof *prompt->itemarray, prompt->maxitems)) == NULL)
-		err(1, "malloc");
+	prompt->itemarray = ecalloc(prompt->maxitems, sizeof *prompt->itemarray);
 }
 
 /* calculate prompt geometry */
@@ -1355,7 +1373,7 @@ getfilelist(struct Prompt *prompt)
 {
 	struct Item *previtem, *item;
 	struct Item *complist = NULL;
-	char buf[BUFSIZ];
+	char buf[INPUTSIZ];
 	size_t beg, len;
 	size_t i;
 	glob_t g;
@@ -1367,7 +1385,7 @@ getfilelist(struct Prompt *prompt)
 			beg--;
 	len = prompt->cursor - beg;
 
-	if (len >= BUFSIZ - 2)  /* 2 for '*' and NUL */
+	if (len >= INPUTSIZ - 2)  /* 2 for '*' and NUL */
 		return NULL;
 
 	buf[0] = '\0';
@@ -1597,8 +1615,8 @@ static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
+	static char buf[INPUTSIZ];
 	enum Ctrl operation;
-	char buf[32];
 	char *s;
 	int len;
 	int dir;
