@@ -833,7 +833,6 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
 	XClassHint classh = {PROGNAME, PROGNAME};
-	unsigned h;
 
 	/* create prompt window */
 	swa.override_redirect = True;
@@ -851,12 +850,30 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	sizeh.min_width = sizeh.max_width = prompt->w;
 	sizeh.min_height = sizeh.max_height = prompt->h;
 	XSetWMNormalHints(dpy, prompt->win, &sizeh);
+}
 
-	/* create drawables */
+/* setup pixmap */
+static void
+setpromptpix(struct Prompt *prompt)
+{
+	int h, y;
+
 	h = prompt->separator + prompt->h * (prompt->maxitems + 1);
 	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h,
 	                               DefaultDepth(dpy, screen));
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
+
+	/* draw the prompt string and update x to the end of it */
+	if (prompt->promptstr) {
+		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
+		drawtext(prompt->draw, &dc.normal[ColorFG], dc.pad, 0, prompt->h, prompt->promptstr, 0);
+	}
+
+	/* draw separator line */
+	y = prompt->h + prompt->separator/2;
+	XSetForeground(dpy, dc.gc, dc.separator.pixel);
+	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 }
 
 /* setup prompt input context */
@@ -1076,16 +1093,7 @@ drawprompt(struct Prompt *prompt)
 	int x, y;
 	size_t i;
 
-	x = dc.pad;
-	h = prompt->h;
-
-	/* draw the prompt string and update x to the end of it */
-	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
-	if (prompt->promptstr) {
-		drawtext(prompt->draw, &dc.normal[ColorFG], x, 0, prompt->h, prompt->promptstr, 0);
-		x = prompt->promptw;
-	}
+	x = prompt->promptw;
 
 	/* draw input field text and set position of the cursor */
 	drawinput(prompt, 0);
@@ -1098,16 +1106,10 @@ drawprompt(struct Prompt *prompt)
 		goto done;
 
 	/* background of items */
-	y = prompt->h;
-	h = prompt->h * prompt->nitems + prompt->separator;
+	y = prompt->h + prompt->separator;
+	h = prompt->h * prompt->nitems;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
-
-	/* draw separator line */
-	y = prompt->h + prompt->separator/2;
-	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
-	XSetForeground(dpy, dc.gc, dc.separator.pixel);
-	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 
 	/* draw items */
 	for (i = 0; i < prompt->nitems; i++)
@@ -1115,8 +1117,8 @@ drawprompt(struct Prompt *prompt)
 
 done:
 	/* commit drawing */
-	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0,
-	          prompt->w, h, 0, 0);
+	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0, prompt->w, h, 0, 0);
 }
 
 /* return location of next utf8 rune in the given direction (+1 or -1) */
@@ -2120,6 +2122,7 @@ main(int argc, char *argv[])
 	setpromptarray(&prompt);
 	setpromptgeom(&prompt, parentwin);
 	setpromptwin(&prompt, parentwin);
+	setpromptpix(&prompt);
 	setpromptic(&prompt);
 	setpromptevents(&prompt, parentwin);
 
