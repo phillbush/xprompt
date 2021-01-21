@@ -536,8 +536,8 @@ getfontucode(FcChar32 ucode)
 	FcCharSet *fccharset = NULL;
 	FcPattern *fcpattern = NULL;
 	FcPattern *match = NULL;
+	FcResult result;
 	XftFont *retfont = NULL;
-	XftResult result;
 	size_t i;
 
 	/* search through the fonts supplied by the user for the first one supporting ucode */
@@ -557,15 +557,15 @@ getfontucode(FcChar32 ucode)
 		FcPatternAddCharSet(fcpattern, FC_CHARSET, fccharset);
 	}
 
-	/* find pattern matching fcpattern */
+	/* find font matching fcpattern */
 	if (fcpattern) {
-		FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
 		FcDefaultSubstitute(fcpattern);
-		match = XftFontMatch(dpy, screen, fcpattern, &result);
+		FcConfigSubstitute(NULL, fcpattern, FcMatchPattern);
+		match = FcFontMatch(NULL, fcpattern, &result);
 	}
 
-	/* if found a pattern, open its font */
-	if (match) {
+	/* if found a font, open it */
+	if (match && result == FcResultMatch) {
 		retfont = XftFontOpenPattern(dpy, match);
 		if (retfont && XftCharExists(dpy, retfont, ucode) == FcTrue) {
 			if ((dc.fonts = realloc(dc.fonts, dc.nfonts+1)) == NULL)
@@ -833,6 +833,9 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
 	XClassHint classh = {PROGNAME, PROGNAME};
+	Window r, p;    /* unused variables */
+	Window *children;
+	unsigned i, nchildren;
 	unsigned h;
 
 	/* create prompt window */
@@ -860,21 +863,8 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	                               DefaultDepth(dpy, screen));
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
 
-	/* open input methods */
-	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
-	if (xic == NULL)
-		errx(1, "XCreateIC: could not obtain input method");
-
-	/* map window */
-	XMapRaised(dpy, prompt->win);
-
 	/* selecect focus event mask for the parent window */
 	if (wflag) {
-		Window r, p;    /* unused variables */
-		Window *children;
-		unsigned i, nchildren;
-
 		XSelectInput(dpy, parentwin, FocusChangeMask);
 		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
 			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
@@ -882,6 +872,16 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 			XFree(children);
 		}
 	}
+}
+
+/* setup prompt input context */
+static void
+setpromptic(struct Prompt *prompt)
+{
+	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
+	if (xic == NULL)
+		errx(1, "XCreateIC: could not obtain input method");
 }
 
 /* try to grab keyboard, we may have to wait for another process to ungrab */
@@ -1768,14 +1768,12 @@ getcurpos(struct Prompt *prompt, int x)
 	const char *s = prompt->text;
 	int w = prompt->promptw;
 	size_t len = 0;
+	const char *next;
+	int textwidth;
 
 	while (*s) {
-		const char *next;
-		int textwidth;
-
 		if (x < w)
 			break;
-
 		(void)getnextutf8char(s, &next);
 		len = strlen(prompt->text) - strlen(++s);
 		textwidth = drawtext(NULL, NULL, 0, 0, 0, prompt->text, len);
@@ -1910,8 +1908,8 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 	XEvent ev;
 	enum Press_ret retval = Noop;
 
+	XMapRaised(dpy, prompt->win);
 	grabfocus(prompt->win);
-
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
@@ -2052,20 +2050,30 @@ main(int argc, char *argv[])
 	Window parentwin;
 	FILE *histfp;
 
-	/* open connection to server and set X variables */
+	/* set locale and modifiers */
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		warnx("warning: no locale support");
+	if (!XSetLocaleModifiers(""))
+		warnx("warning: could not set locale modifiers");
+
+	/* open connection to server and set X variables */
 	if ((dpy = XOpenDisplay(NULL)) == NULL)
 		errx(1, "cannot open display");
 	screen = DefaultScreen(dpy);
 	visual = DefaultVisual(dpy, screen);
 	rootwin = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
+
+	/* intern atoms */
 	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
 	clip = XInternAtom(dpy, "CLIPBOARD", False);
+
+	/* initialize resource manager database */
 	XrmInitialize();
 	if ((xrm = XResourceManagerString(dpy)) != NULL)
 		xdb = XrmGetStringDatabase(xrm);
+
+	/* open input method */
 	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
 		errx(1, "XOpenIM: could not open input device");
 
@@ -2085,6 +2093,7 @@ main(int argc, char *argv[])
 	setpromptarray(&prompt);
 	setpromptgeom(&prompt, parentwin);
 	setpromptwin(&prompt, parentwin);
+	setpromptic(&prompt);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
