@@ -108,6 +108,14 @@ struct DC {
 	int pad;                        /* padding around text */
 };
 
+/* input context structure */
+struct IC {
+	XIM xim;
+	XIC xic;
+	Cursor cursor;
+	long eventmask;
+};
+
 /* completion items */
 struct Item {
 	struct Item *prevmatch, *nextmatch; /* previous and next items */

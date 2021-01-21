@@ -16,6 +16,7 @@
 #include <X11/Xresource.h>
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
+#include <X11/cursorfont.h>
 #include <X11/extensions/Xinerama.h>
 #include "xprompt.h"
 
@@ -27,10 +28,9 @@ static int screen;
 static Visual *visual;
 static Window rootwin;
 static Colormap colormap;
-static XIM xim;
-static XIC xic;
 static XrmDatabase xdb;
 static char *xrm;
+static struct IC ic;
 static struct DC dc;
 static struct Monitor mon;
 static Atom utf8;
@@ -833,21 +833,16 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
 	XClassHint classh = {PROGNAME, PROGNAME};
-	Window r, p;    /* unused variables */
-	Window *children;
-	unsigned i, nchildren;
 	unsigned h;
 
 	/* create prompt window */
 	swa.override_redirect = True;
 	swa.background_pixel = dc.normal[ColorBG].pixel;
 	swa.border_pixel = dc.border.pixel;
-	swa.event_mask = ExposureMask | KeyPressMask | VisibilityChangeMask
-	               | ButtonPressMask | PointerMotionMask;
 	prompt->win = XCreateWindow(dpy, parentwin,
 	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
 	                            CopyFromParent, CopyFromParent, CopyFromParent,
-	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel | CWEventMask,
+	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel,
 	                            &swa);
 	XSetClassHint(dpy, prompt->win, &classh);
 
@@ -862,6 +857,37 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h,
 	                               DefaultDepth(dpy, screen));
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
+}
+
+/* setup prompt input context */
+static void
+setpromptic(struct Prompt *prompt)
+{
+	if ((ic.xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL) /* open input method */
+		errx(1, "XOpenIM: could not open input device");
+	ic.xic = XCreateIC(ic.xim,
+	                   XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+	                   XNClientWindow, prompt->win,
+	                   XNFocusWindow, prompt->win,
+	                   NULL);
+	if (ic.xic == NULL)
+		errx(1, "XCreateIC: could not obtain input method");
+	if (XGetICValues(ic.xic, XNFilterEvents, &ic.eventmask, NULL))
+		errx(1, "XGetICValues: could not obtain input context values");
+	ic.cursor = XCreateFontCursor(dpy, XC_xterm);
+}
+
+/* select prompt window events */
+static void
+setpromptevents(struct Prompt *prompt, Window parentwin)
+{
+	Window r, p;    /* unused variables */
+	Window *children;
+	unsigned i, nchildren;
+
+	XSelectInput(dpy, prompt->win,
+	             ExposureMask | KeyPressMask | VisibilityChangeMask |
+	             ButtonPressMask | PointerMotionMask | ic.eventmask);
 
 	/* selecect focus event mask for the parent window */
 	if (wflag) {
@@ -872,16 +898,6 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 			XFree(children);
 		}
 	}
-}
-
-/* setup prompt input context */
-static void
-setpromptic(struct Prompt *prompt)
-{
-	xic = XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-	                XNClientWindow, prompt->win, XNFocusWindow, prompt->win, NULL);
-	if (xic == NULL)
-		errx(1, "XCreateIC: could not obtain input method");
 }
 
 /* try to grab keyboard, we may have to wait for another process to ungrab */
@@ -911,7 +927,7 @@ grabfocus(Window win)
 	for (i = 0; i < 100; ++i) {
 		XGetInputFocus(dpy, &focuswin, &revertwin);
 		if (focuswin == win) {
-			XSetICFocus(xic);
+			XSetICFocus(ic.xic);
 			return;
 		}
 		XSetInputFocus(dpy, win, RevertToParent, CurrentTime);
@@ -1587,7 +1603,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	KeySym ksym;
 	Status status;
 
-	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
+	len = XmbLookupString(ic.xic, ev, buf, sizeof buf, &ksym, &status);
 	switch (status) {
 	default: /* XLookupNone, XBufferOverflow */
 		return Nop;
@@ -1886,12 +1902,20 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 static enum Press_ret
 pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 {
+	static int intext = 0;
 	struct Item *prevhover;
 	int miny, maxy;
 
 	miny = prompt->h + prompt->separator;
 	maxy = miny + prompt->h * prompt->nitems;
 	prevhover = prompt->hoveritem;
+	if (ev->y < prompt->h && !intext) {
+		XDefineCursor(dpy, prompt->win, ic.cursor);
+		intext = 1;
+	} else if (ev->y >= prompt->h && intext) {
+		XUndefineCursor(dpy, prompt->win);
+		intext = 0;
+	}
 	if (ev->y < miny || ev->y >= maxy)
 		prompt->hoveritem = NULL;
 	else
@@ -2022,11 +2046,10 @@ cleanprompt(struct Prompt *prompt)
 
 	XFreePixmap(dpy, prompt->pixmap);
 	XftDrawDestroy(prompt->draw);
-	XDestroyIC(xic);
 	XDestroyWindow(dpy, prompt->win);
 }
 
-/* clean up X stuff */
+/* clean up draw context */
 static void
 cleandc(void)
 {
@@ -2037,6 +2060,15 @@ cleandc(void)
 	XftColorFree(dpy, visual, colormap, &dc.separator);
 	XftColorFree(dpy, visual, colormap, &dc.border);
 	XFreeGC(dpy, dc.gc);
+}
+
+/* clean up input context */
+static void
+cleanic(void)
+{
+	XDestroyIC(ic.xic);
+	XCloseIM(ic.xim);
+	XFreeCursor(dpy, ic.cursor);
 }
 
 /* xprompt: a dmenu rip-off with contextual completion */
@@ -2072,10 +2104,6 @@ main(int argc, char *argv[])
 	if ((xrm = XResourceManagerString(dpy)) != NULL)
 		xdb = XrmGetStringDatabase(xrm);
 
-	/* open input method */
-	if ((xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
-		errx(1, "XOpenIM: could not open input device");
-
 	/* get configuration */
 	parentwin = rootwin;
 	getresources();
@@ -2093,6 +2121,7 @@ main(int argc, char *argv[])
 	setpromptgeom(&prompt, parentwin);
 	setpromptwin(&prompt, parentwin);
 	setpromptic(&prompt);
+	setpromptevents(&prompt, parentwin);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
@@ -2123,7 +2152,7 @@ main(int argc, char *argv[])
 	cleanhist(&hist);
 	cleanprompt(&prompt);
 	cleandc();
-	XCloseIM(xim);
+	cleanic();
 	XrmDestroyDatabase(xdb);
 	XCloseDisplay(dpy);
 
