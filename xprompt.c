@@ -1067,8 +1067,7 @@ drawprompt(struct Prompt *prompt)
 	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
 	if (prompt->promptstr) {
-		drawtext(prompt->draw, &dc.normal[ColorFG], x, 0, prompt->h,
-		         prompt->promptstr, 0);
+		drawtext(prompt->draw, &dc.normal[ColorFG], x, 0, prompt->h, prompt->promptstr, 0);
 		x = prompt->promptw;
 	}
 
@@ -1591,7 +1590,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	len = XmbLookupString(xic, ev, buf, sizeof buf, &ksym, &status);
 	switch (status) {
 	default: /* XLookupNone, XBufferOverflow */
-		return Noop;
+		return Nop;
 	case XLookupChars:
 		goto insert;
 	case XLookupKeySym:
@@ -1602,10 +1601,10 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	switch (operation = getoperation(ksym, ev->state)) {
 	case CTRLPASTE:
 		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
-		return Noop;
+		return Nop;
 	case CTRLCOPY:
 		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
-		return Noop;
+		return Nop;
 	case CTRLCANCEL:
 		if (sflag || !prompt->matchlist || prompt->text[0] == '\0')
 			return Esc;
@@ -1649,7 +1648,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLPGUP:
 	case CTRLPGDOWN:
 		/* TODO */
-		return Noop;
+		return Nop;
 	case CTRLSELBOL:
 	case CTRLBOL:
 		prompt->cursor = 0;
@@ -1664,7 +1663,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLDOWN:
 		dir = (operation == CTRLUP) ? -1 : +1;
 		if (!hflag || !hist->size)
-			return Noop;
+			return Nop;
 		s = navhist(hist, dir);
 		if (s) {
 			insert(prompt, NULL, 0 - prompt->cursor);
@@ -1677,14 +1676,14 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (prompt->cursor > 0)
 			prompt->cursor = nextrune(prompt, prompt->cursor, -1);
 		else
-			return Noop;
+			return Nop;
 		break;
 	case CTRLSELRIGHT:
 	case CTRLRIGHT:
 		if (prompt->text[prompt->cursor] != '\0')
 			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
 		else
-			return Noop;
+			return Nop;
 		break;
 	case CTRLSELWLEFT:
 	case CTRLWLEFT:
@@ -1708,23 +1707,23 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		}
 		if (operation == CTRLDELRIGHT) {
 			if (prompt->text[prompt->cursor] == '\0')
-				return Noop;
+				return Nop;
 			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
 		}
 		if (prompt->cursor == 0)
-			return Noop;
+			return Nop;
 		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
 		break;
 	case CTRLDELWORD:
 		delword(prompt);
 		break;
 	case CTRLNOTHING:
-		return Noop;
+		return Nop;
 	case INSERT:
 insert:
 		operation = INSERT;
 		if (iscntrl(*buf))
-			return Noop;
+			return Nop;
 		delselection(prompt);
 		insert(prompt, buf, len);
 		break;
@@ -1819,10 +1818,10 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	case Button2:                               /* middle click paste */
 		delselection(prompt);
 		XConvertSelection(dpy, XA_PRIMARY, utf8, utf8, prompt->win, CurrentTime);
-		return Noop;
+		return Nop;
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
-			return Noop;
+			return Nop;
 		if (ev->y <= prompt->h) {
 			curpos = getcurpos(prompt, ev->x);
 			if (word && ev->time - lasttime < DOUBLECLICK) {
@@ -1850,12 +1849,12 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 			delmatchlist(prompt);
 			return DrawPrompt;
 		}
-		return Noop;
+		return Nop;
 	default:
-		return Noop;
+		return Nop;
 	}
 
-	return Noop;
+	return Nop;
 }
 
 /* handle button motion X event */
@@ -1874,11 +1873,11 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 	else if (prompt->text[prompt->cursor] != '\0')
 		prompt->cursor = strlen(prompt->text);
 	else
-		return Noop;
+		return Nop;
 
 	/* if the selection didn't change there's no need to redraw input */
 	if (prompt->select == prevselect && prompt->cursor == prevcursor)
-		return Noop;
+		return Nop;
 
 	return DrawInput;
 }
@@ -1898,7 +1897,7 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	else
 		prompt->hoveritem = getitem(prompt, ev->y);
 
-	return (prevhover != prompt->hoveritem) ? DrawPrompt : Noop;
+	return (prevhover != prompt->hoveritem) ? DrawPrompt : Nop;
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -1906,14 +1905,14 @@ static int
 run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 {
 	XEvent ev;
-	enum Press_ret retval = Noop;
+	enum Press_ret retval = Nop;
 
 	XMapRaised(dpy, prompt->win);
 	grabfocus(prompt->win);
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
-		retval = Noop;
+		retval = Nop;
 		switch (ev.type) {
 		case Expose:
 			if (ev.xexpose.count == 0)
