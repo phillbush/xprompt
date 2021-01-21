@@ -30,6 +30,7 @@ static Visual *visual;
 static Window rootwin;
 static Colormap colormap;
 static XrmDatabase xdb;
+static Cursor cursor;
 static char *xrm;
 static struct IC ic;
 static struct DC dc;
@@ -359,6 +360,13 @@ initdc(void)
 	dc.pad = dc.fonts[0]->height;
 }
 
+/* init cursors */
+static void
+initcursor(void)
+{
+	cursor = XCreateFontCursor(dpy, XC_xterm);
+}
+
 /* set control keybindings */
 static void
 initctrl(void)
@@ -637,6 +645,174 @@ drawtext(XftDraw *draw, XftColor *color, int x, int y, unsigned h, const char *t
 	return textwidth;
 }
 
+/* resize xprompt window and return how many items it has on the dropdown list */
+static size_t
+resizeprompt(struct Prompt *prompt, size_t nitems_old)
+{
+	size_t nitems_new;
+	unsigned h;
+	int y;
+
+	if (prompt->nitems && nitems_old != prompt->nitems) {
+		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+		y = prompt->y - h + prompt->h;
+
+		nitems_new = prompt->nitems;
+	} else if (nitems_old && !prompt->nitems) {
+		h = prompt->h;
+		y = prompt->y;
+
+		nitems_new = 0;
+	} else {
+		nitems_new = nitems_old;
+	}
+
+	/*
+	 * if the old and new number of items are the same,
+	 * there's no need to resize the window
+	 */
+	if (nitems_old != nitems_new) {
+		/* if gravity is south, resize and move, otherwise just resize */
+		if (ISSOUTH(prompt->gravity))
+			XMoveResizeWindow(dpy, prompt->win, prompt->x, y, prompt->w, h);
+		else
+			XResizeWindow(dpy, prompt->win, prompt->w, h);
+	}
+
+	return nitems_new;
+}
+
+/* draw the text on input field, return position of the cursor */
+static void
+drawinput(struct Prompt *prompt, int copy)
+{
+	unsigned minpos, maxpos;
+	unsigned curpos;            /* where to draw the cursor */
+	int x, y, xtext;
+	int widthpre, widthsel, widthpos;
+
+	if (pflag)
+		return;
+
+	x = prompt->promptw;
+
+	minpos = MIN(prompt->cursor, prompt->select);
+	maxpos = MAX(prompt->cursor, prompt->select);
+
+	/* draw background */
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, x, 0,
+	               prompt->w - x, prompt->h);
+
+	/* draw text before selection */
+	xtext = x;
+	widthpre = (minpos)
+	         ? drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
+	                    prompt->text, minpos)
+	         : 0;
+
+	/* draw selected text */
+	xtext += widthpre;
+	widthsel = (maxpos - minpos)
+	         ? drawtext(NULL, NULL, 0, 0, 0, prompt->text+minpos, maxpos-minpos)
+	         : 0;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, 0, widthsel, prompt->h);
+	drawtext(prompt->draw, &dc.normal[ColorBG], xtext, 0, prompt->h,
+	         prompt->text+minpos, maxpos-minpos);
+
+	/* draw text after selection */
+	xtext += widthsel;
+	widthpos = drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
+	                    prompt->text+maxpos, 0);
+
+	/* draw cursor rectangle */
+	curpos = x + widthpre;
+	y = prompt->h/2 - dc.pad/2;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.pad);
+
+	/* commit drawing */
+	if (copy)
+		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, 0,
+		          prompt->w - x, prompt->h, x, 0);
+}
+
+/* draw nth item in the item array */
+static void
+drawitem(struct Prompt *prompt, size_t n, int copy)
+{
+	XftColor *color;
+	int textwidth = 0;
+	int x, y;
+
+	color = (prompt->itemarray[n] == prompt->selitem) ? dc.selected
+	      : (prompt->itemarray[n] == prompt->hoveritem) ? dc.hover
+	      : dc.normal;
+	y = (n + 1) * prompt->h + prompt->separator;
+	x = config.indent ? prompt->promptw : dc.pad;
+
+	/* draw background */
+	XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
+
+	if (!(dflag && prompt->itemarray[n]->description)) {
+		/* draw item text */
+		textwidth = drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h, prompt->itemarray[n]->text, 0);
+		textwidth = x + textwidth + dc.pad * 2;
+		textwidth = MAX(textwidth, prompt->descx);
+
+		/* if item has a description, draw it */
+		if (prompt->itemarray[n]->description != NULL)
+			drawtext(prompt->draw, &color[ColorCM], textwidth, y, prompt->h,
+			         prompt->itemarray[n]->description, 0);
+	} else {    /* item has description and dflag is on */
+		drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h,
+		         prompt->itemarray[n]->description, 0);
+	}
+
+	/* commit drawing */
+	if (copy)
+		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, y, prompt->w - x, prompt->h, x, y);
+}
+
+/* draw the prompt */
+static void
+drawprompt(struct Prompt *prompt)
+{
+	static size_t nitems = 0;       /* number of items in the dropdown list */
+	unsigned h;
+	int x, y;
+	size_t i;
+
+	x = prompt->promptw;
+
+	/* draw input field text and set position of the cursor */
+	drawinput(prompt, 0);
+
+	/* resize window and get new value of number of items */
+	nitems = resizeprompt(prompt, nitems);
+
+	/* if there are no items to drawn, we are done */
+	if (!nitems)
+		goto done;
+
+	/* background of items */
+	y = prompt->h + prompt->separator;
+	h = prompt->h * prompt->nitems;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
+
+	/* draw items */
+	for (i = 0; i < prompt->nitems; i++)
+		drawitem(prompt, i, 0);
+
+done:
+	/* commit drawing */
+	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0, prompt->w, h, 0, 0);
+}
+
 /* get number from *s into n, return 1 if error */
 static int
 getnum(const char **s, int *n)
@@ -898,8 +1074,11 @@ setpromptpix(struct Prompt *prompt)
 static void
 setpromptic(struct Prompt *prompt)
 {
-	if ((ic.xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL) /* open input method */
+	/* open input method */
+	if ((ic.xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
 		errx(1, "XOpenIM: could not open input device");
+
+	/* create input context */
 	ic.xic = XCreateIC(ic.xim,
 	                   XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
 	                   XNClientWindow, prompt->win,
@@ -907,9 +1086,10 @@ setpromptic(struct Prompt *prompt)
 	                   NULL);
 	if (ic.xic == NULL)
 		errx(1, "XCreateIC: could not obtain input method");
+
+	/* get events the input method is interested in */
 	if (XGetICValues(ic.xic, XNFilterEvents, &ic.eventmask, NULL))
 		errx(1, "XGetICValues: could not obtain input context values");
-	ic.cursor = XCreateFontCursor(dpy, XC_xterm);
 }
 
 /* select prompt window events */
@@ -969,174 +1149,6 @@ grabfocus(Window win)
 		nanosleep(&ts, NULL);
 	}
 	errx(1, "cannot grab focus");
-}
-
-/* resize xprompt window and return how many items it has on the dropdown list */
-static size_t
-resizeprompt(struct Prompt *prompt, size_t nitems_old)
-{
-	size_t nitems_new;
-	unsigned h;
-	int y;
-
-	if (prompt->nitems && nitems_old != prompt->nitems) {
-		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
-		y = prompt->y - h + prompt->h;
-
-		nitems_new = prompt->nitems;
-	} else if (nitems_old && !prompt->nitems) {
-		h = prompt->h;
-		y = prompt->y;
-
-		nitems_new = 0;
-	} else {
-		nitems_new = nitems_old;
-	}
-
-	/*
-	 * if the old and new number of items are the same,
-	 * there's no need to resize the window
-	 */
-	if (nitems_old != nitems_new) {
-		/* if gravity is south, resize and move, otherwise just resize */
-		if (ISSOUTH(prompt->gravity))
-			XMoveResizeWindow(dpy, prompt->win, prompt->x, y, prompt->w, h);
-		else
-			XResizeWindow(dpy, prompt->win, prompt->w, h);
-	}
-
-	return nitems_new;
-}
-
-/* draw the text on input field, return position of the cursor */
-static void
-drawinput(struct Prompt *prompt, int copy)
-{
-	unsigned minpos, maxpos;
-	unsigned curpos;            /* where to draw the cursor */
-	int x, y, xtext;
-	int widthpre, widthsel, widthpos;
-
-	if (pflag)
-		return;
-
-	x = prompt->promptw;
-
-	minpos = MIN(prompt->cursor, prompt->select);
-	maxpos = MAX(prompt->cursor, prompt->select);
-
-	/* draw background */
-	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, x, 0,
-	               prompt->w - x, prompt->h);
-
-	/* draw text before selection */
-	xtext = x;
-	widthpre = (minpos)
-	         ? drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
-	                    prompt->text, minpos)
-	         : 0;
-
-	/* draw selected text */
-	xtext += widthpre;
-	widthsel = (maxpos - minpos)
-	         ? drawtext(NULL, NULL, 0, 0, 0, prompt->text+minpos, maxpos-minpos)
-	         : 0;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, 0, widthsel, prompt->h);
-	drawtext(prompt->draw, &dc.normal[ColorBG], xtext, 0, prompt->h,
-	         prompt->text+minpos, maxpos-minpos);
-
-	/* draw text after selection */
-	xtext += widthsel;
-	widthpos = drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
-	                    prompt->text+maxpos, 0);
-
-	/* draw cursor rectangle */
-	curpos = x + widthpre;
-	y = prompt->h/2 - dc.pad/2;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.pad);
-
-	/* commit drawing */
-	if (copy)
-		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, 0,
-		          prompt->w - x, prompt->h, x, 0);
-}
-
-/* draw nth item in the item array */
-static void
-drawitem(struct Prompt *prompt, size_t n, int copy)
-{
-	XftColor *color;
-	int textwidth = 0;
-	int x, y;
-
-	color = (prompt->itemarray[n] == prompt->selitem) ? dc.selected
-	      : (prompt->itemarray[n] == prompt->hoveritem) ? dc.hover
-	      : dc.normal;
-	y = (n + 1) * prompt->h + prompt->separator;
-	x = config.indent ? prompt->promptw : dc.pad;
-
-	/* draw background */
-	XSetForeground(dpy, dc.gc, color[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, prompt->h);
-
-	if (!(dflag && prompt->itemarray[n]->description)) {
-		/* draw item text */
-		textwidth = drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h, prompt->itemarray[n]->text, 0);
-		textwidth = x + textwidth + dc.pad * 2;
-		textwidth = MAX(textwidth, prompt->descx);
-
-		/* if item has a description, draw it */
-		if (prompt->itemarray[n]->description != NULL)
-			drawtext(prompt->draw, &color[ColorCM], textwidth, y, prompt->h,
-			         prompt->itemarray[n]->description, 0);
-	} else {    /* item has description and dflag is on */
-		drawtext(prompt->draw, &color[ColorFG], x, y, prompt->h,
-		         prompt->itemarray[n]->description, 0);
-	}
-
-	/* commit drawing */
-	if (copy)
-		XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, x, y, prompt->w - x, prompt->h, x, y);
-}
-
-/* draw the prompt */
-static void
-drawprompt(struct Prompt *prompt)
-{
-	static size_t nitems = 0;       /* number of items in the dropdown list */
-	unsigned h;
-	int x, y;
-	size_t i;
-
-	x = prompt->promptw;
-
-	/* draw input field text and set position of the cursor */
-	drawinput(prompt, 0);
-
-	/* resize window and get new value of number of items */
-	nitems = resizeprompt(prompt, nitems);
-
-	/* if there are no items to drawn, we are done */
-	if (!nitems)
-		goto done;
-
-	/* background of items */
-	y = prompt->h + prompt->separator;
-	h = prompt->h * prompt->nitems;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
-
-	/* draw items */
-	for (i = 0; i < prompt->nitems; i++)
-		drawitem(prompt, i, 0);
-
-done:
-	/* commit drawing */
-	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
-	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0, prompt->w, h, 0, 0);
 }
 
 /* return location of next utf8 rune in the given direction (+1 or -1) */
@@ -1930,7 +1942,7 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	maxy = miny + prompt->h * prompt->nitems;
 	prevhover = prompt->hoveritem;
 	if (ev->y < prompt->h && !intext) {
-		XDefineCursor(dpy, prompt->win, ic.cursor);
+		XDefineCursor(dpy, prompt->win, cursor);
 		intext = 1;
 	} else if (ev->y >= prompt->h && intext) {
 		XUndefineCursor(dpy, prompt->win);
@@ -2088,7 +2100,13 @@ cleanic(void)
 {
 	XDestroyIC(ic.xic);
 	XCloseIM(ic.xim);
-	XFreeCursor(dpy, ic.cursor);
+}
+
+/* clean up cursor */
+static void
+cleancursor(void)
+{
+	XFreeCursor(dpy, cursor);
 }
 
 /* xprompt: a dmenu rip-off with contextual completion */
@@ -2134,6 +2152,7 @@ main(int argc, char *argv[])
 	initmonitor();
 	initctrl();
 	initdc();
+	initcursor();
 
 	/* setup prompt */
 	setpromptinput(&prompt);
@@ -2174,6 +2193,7 @@ main(int argc, char *argv[])
 	cleanprompt(&prompt);
 	cleandc();
 	cleanic();
+	cleancursor();
 	XrmDestroyDatabase(xdb);
 	XCloseDisplay(dpy);
 

@@ -112,7 +112,6 @@ struct DC {
 struct IC {
 	XIM xim;
 	XIC xic;
-	Cursor cursor;
 	long eventmask;
 };
 
