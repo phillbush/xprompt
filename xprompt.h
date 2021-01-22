@@ -1,3 +1,5 @@
+#define PROGNAME     "xprompt"
+#define INPUTSIZ     1024
 #define DEFHEIGHT    20     /* default height for each text line */
 #define DOUBLECLICK  250    /* time in miliseconds of a double click */
 #define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
@@ -16,11 +18,7 @@
                        || (x) == CTRLSELRIGHT || (x) == CTRLSELWLEFT || (x) == CTRLSELWRIGHT)
 #define ISEDITING(x) ((x) == CTRLDELBOL || (x) == CTRLDELEOL || (x) == CTRLDELLEFT \
                      || (x) == CTRLDELRIGHT || (x) == CTRLDELWORD || (x) == INSERT)
-#define GETNUM(n, s, d) { \
-	unsigned long __TMP__; \
-	if ((__TMP__ = strtoul((s), NULL, (d))) < INT_MAX) \
-		(n) = __TMP__; \
-	}
+#define ISUNDO(x) ((x) == CTRLUNDO || (x) == CTRLREDO)
 
 enum {ColorFG, ColorBG, ColorCM, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
@@ -54,6 +52,8 @@ enum Ctrl {
 	CTRLSELRIGHT,   /* Select from cursor to one character to the right */
 	CTRLSELWLEFT,   /* Select from cursor to one word to the left */
 	CTRLSELWRIGHT,  /* Select from cursor to one word to the right */
+	CTRLUNDO,       /* Undo */
+	CTRLREDO,       /* Redo */
 	CTRLCANCEL,     /* Cancel */
 	CTRLNOTHING,    /* Control does nothing */
 	INSERT          /* Insert character as is */
@@ -112,7 +112,10 @@ struct DC {
 struct IC {
 	XIM xim;
 	XIC xic;
+	char *text;
+	int caret;
 	long eventmask;
+	int composing;              /* whether user is composing text */
 };
 
 /* completion items */
@@ -131,6 +134,12 @@ struct Monitor {
 	int x, y, w, h;         /* monitor geometry */
 };
 
+/* undo list entry */
+struct Undo {
+	struct Undo *prev, *next;
+	char *text;
+};
+
 /* prompt */
 struct Prompt {
 	const char *promptstr;      /* string appearing before the input field */
@@ -140,6 +149,9 @@ struct Prompt {
 	size_t textsize;            /* maximum size of the text in the input field */
 	size_t cursor;              /* position of the cursor in the input field */
 	size_t select;              /* position of the selection in the input field*/
+
+	struct Undo *undo;          /* undo list */
+	struct Undo *undocurr;      /* current undo entry */
 
 	struct Item *firstmatch;    /* first item that matches input */
 	struct Item *matchlist;     /* first item that matches input to be listed */

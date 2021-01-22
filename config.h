@@ -3,7 +3,7 @@ static struct Config config = {
 	.worddelimiters = " .,/:;\\<>'[]{}()&$?!",
 
 	/* CTRL key bindings */
-	.xpromptctrl = "vcmpn::::aebf::ukhdwAEBF::",
+	.xpromptctrl = "vcmpn::::aebf::ukhdwAEBF::zZ:",
 
 	/* font */
 	.font = "monospace:size=9",

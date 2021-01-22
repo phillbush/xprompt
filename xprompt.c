@@ -20,9 +20,6 @@
 #include <X11/extensions/Xinerama.h>
 #include "xprompt.h"
 
-#define PROGNAME "xprompt"
-#define INPUTSIZ 1024
-
 /* X stuff */
 static Display *dpy;
 static int screen;
@@ -112,11 +109,11 @@ getresources(void)
 		return;
 
 	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
-		GETNUM(config.number_items, xval.addr, 10)
+		config.number_items = strtoul(xval.addr, NULL, 10);
 	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
-		GETNUM(config.border_pixels, xval.addr, 10)
+		config.border_pixels = strtoul(xval.addr, NULL, 10);
 	if (XrmGetResource(xdb, "xprompt.separatorWidth", "*", &type, &xval) == True)
-		GETNUM(config.separator_pixels, xval.addr, 10)
+		config.separator_pixels = strtoul(xval.addr, NULL, 10);
 	if (XrmGetResource(xdb, "xprompt.background", "*", &type, &xval) == True)
 		config.background_color = xval.addr;
 	if (XrmGetResource(xdb, "xprompt.foreground", "*", &type, &xval) == True)
@@ -156,7 +153,7 @@ getenvironment(void)
 	if ((s = getenv("XPROMPTHISTFILE")) != NULL)
 		config.histfile = s;
 	if ((s = getenv("XPROMPTHISTSIZE")) != NULL)
-		GETNUM(config.histsize, s, 10)
+		config.histsize = strtoul(s, NULL, 10);
 	if ((s = getenv("XPROMPTCTRL")) != NULL)
 		config.xpromptctrl = s;
 	if ((s = getenv("WORDDELIMITERS")) != NULL)
@@ -192,7 +189,7 @@ getoptions(int argc, char *argv[], Window *win_ret)
 			break;
 		case 'm':
 			mflag = 1;
-			GETNUM(mon.num, optarg, 10)
+			mon.num = strtoul(optarg, NULL, 10);
 			break;
 		case 'p':
 			pflag = 1;
@@ -202,7 +199,7 @@ getoptions(int argc, char *argv[], Window *win_ret)
 			break;
 		case 'w':
 			wflag = 1;
-			GETNUM(*win_ret, optarg, 0)
+			*win_ret = strtoul(optarg, NULL, 0);
 			break;
 		default:
 			usage();
@@ -550,8 +547,7 @@ getnextutf8char(const char *s, const char **next_ret)
 	}
 
 	/* check if ucode is invalid or in utf-16 surrogate halves */
-	if (!BETWEEN(ucode, utfmin[usize], utfmax[usize])
-	    || BETWEEN (ucode, 0xD800, 0xDFFF))
+	if (!BETWEEN(ucode, utfmin[usize], utfmax[usize]) || BETWEEN (ucode, 0xD800, 0xDFFF))
 		return unknown;
 
 	return ucode;
@@ -711,15 +707,21 @@ drawinput(struct Prompt *prompt, int copy)
 	                    prompt->text, minpos)
 	         : 0;
 
-	/* draw selected text */
+	/* draw selected text or pre-edited text */
 	xtext += widthpre;
-	widthsel = (maxpos - minpos)
-	         ? drawtext(NULL, NULL, 0, 0, 0, prompt->text+minpos, maxpos-minpos)
-	         : 0;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, 0, widthsel, prompt->h);
-	drawtext(prompt->draw, &dc.normal[ColorBG], xtext, 0, prompt->h,
-	         prompt->text+minpos, maxpos-minpos);
+	widthsel = 0;
+	if (ic.composing) {                     /* draw pre-edit text and underline */
+		widthsel = drawtext(NULL, NULL, 0, 0, 0, ic.text, 0);
+		y = (prompt->h + dc.pad) / 2 + 1;
+		XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, y, widthsel, 1);
+		drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h, ic.text, 0);
+	} else if (maxpos - minpos > 0) {       /* draw seleceted text in reverse */
+		widthsel = drawtext(NULL, NULL, 0, 0, 0, prompt->text+minpos, maxpos-minpos);
+		XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
+		XFillRectangle(dpy, prompt->pixmap, dc.gc, xtext, 0, widthsel, prompt->h);
+		drawtext(prompt->draw, &dc.normal[ColorBG], xtext, 0, prompt->h, prompt->text+minpos, maxpos-minpos);
+	}
 
 	/* draw text after selection */
 	xtext += widthsel;
@@ -727,7 +729,7 @@ drawinput(struct Prompt *prompt, int copy)
 	                    prompt->text+maxpos, 0);
 
 	/* draw cursor rectangle */
-	curpos = x + widthpre;
+	curpos = x + widthpre + ((ic.composing && ic.caret) ? drawtext(NULL, NULL, 0, 0, 0, ic.text, ic.caret) : 0);
 	y = prompt->h/2 - dc.pad/2;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorFG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, curpos, y, 1, dc.pad);
@@ -813,6 +815,187 @@ done:
 	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0, prompt->w, h, 0, 0);
 }
 
+/* return location of next utf8 rune in the given direction (+1 or -1) */
+static size_t
+nextrune(const char *text, size_t position, int inc)
+{
+	ssize_t n;
+
+	for (n = position + inc; n + inc >= 0 && (text[n] & 0xc0) == 0x80; n += inc)
+		;
+	return n;
+}
+
+/* return bytes from beginning of text to nth utf8 rune to the right */
+static size_t
+runebytes(const char *text, size_t n)
+{
+	size_t ret;
+
+	ret = 0;
+	while (n-- > 0)
+		ret += nextrune(text + ret, 0, 1);
+	return ret;
+}
+
+/* return number of characters from beginning of text to nth byte to the right */
+static size_t
+runechars(const char *text, size_t n)
+{
+	size_t ret, i;
+
+	ret = i = 0;
+	while (i < n) {
+		i += nextrune(text + i, 0, 1);
+		ret++;
+	}
+	return ret;
+}
+
+/* move cursor to start (dir = -1) or end (dir = +1) of the word */
+static size_t
+movewordedge(const char *text, size_t pos, int dir)
+{
+	if (dir < 0) {
+		while (pos > 0 && strchr(config.worddelimiters, text[nextrune(text, pos, -1)]))
+			pos = nextrune(text, pos, -1);
+		while (pos > 0 && !strchr(config.worddelimiters, text[nextrune(text, pos, -1)]))
+			pos = nextrune(text, pos, -1);
+	} else {
+		while (text[pos] && strchr(config.worddelimiters, text[pos]))
+			pos = nextrune(text, pos, +1);
+		while (text[pos] && !strchr(config.worddelimiters, text[pos]))
+			pos = nextrune(text, pos, +1);
+	}
+	return pos;
+}
+
+/* when this is called, the input method was closed */
+static void
+icdestroy(XIC xic, XPointer clientdata, XPointer calldata)
+{
+	(void)xic;
+	(void)calldata;
+	(void)clientdata;
+	ic.xic = NULL;
+}
+
+/* start input method pre-editing */
+static int
+preeditstart(XIC xic, XPointer clientdata, XPointer calldata)
+{
+	(void)xic;
+	(void)calldata;
+	(void)clientdata;
+	ic.composing = 1;
+	ic.text = emalloc(INPUTSIZ);
+	ic.text[0] = '\0';
+	return INPUTSIZ;
+}
+
+/* end input method pre-editing */
+static void
+preeditdone(XIC xic, XPointer clientdata, XPointer calldata)
+{
+	(void)xic;
+	(void)clientdata;
+	(void)calldata;
+	ic.composing = 0;
+	free(ic.text);
+}
+
+/* draw input method pre-edit text */
+static void
+preeditdraw(XIC xic, XPointer clientdata, XPointer calldata)
+{
+	XIMPreeditDrawCallbackStruct *pdraw;
+	struct Prompt *prompt;
+	size_t beg, dellen, inslen, endlen;
+
+	(void)xic;
+	prompt = (struct Prompt *)clientdata;
+	pdraw = (XIMPreeditDrawCallbackStruct *)calldata;
+	if (!pdraw)
+		return;
+
+	/* we do not support wide characters */
+	if (pdraw->text && pdraw->text->encoding_is_wchar == True) {
+		warnx("warning: xprompt does not support wchar; use utf8!");
+		return;
+	}
+
+	beg = runebytes(ic.text, pdraw->chg_first);
+	dellen = runebytes(ic.text + beg, pdraw->chg_length);
+	inslen = pdraw->text ? runebytes(pdraw->text->string.multi_byte, pdraw->text->length) : 0;
+	endlen = 0;
+	if (beg + dellen < strlen(ic.text))
+		endlen = strlen(ic.text + beg + dellen);
+
+	/* we cannot change text past the end of our pre-edit string */
+	if (beg + dellen >= prompt->textsize || beg + inslen >= prompt->textsize)
+		return;
+
+	/* get space for text to be copied, and copy it */
+	memmove(ic.text + beg + inslen, ic.text + beg + dellen, endlen + 1);
+	if (pdraw->text && pdraw->text->length)
+		memcpy(ic.text + beg, pdraw->text->string.multi_byte, inslen);
+	(ic.text + beg + inslen + endlen)[0] = '\0';
+
+	/* get caret position */
+	ic.caret = runebytes(ic.text, pdraw->caret);
+
+	drawinput(prompt, 1);
+}
+
+/* move caret on pre-edit text */
+static void
+preeditcaret(XIC xic, XPointer clientdata, XPointer calldata)
+{
+	XIMPreeditCaretCallbackStruct *pcaret;
+	struct Prompt *prompt;
+
+	(void)xic;
+	prompt = (struct Prompt *)clientdata;
+	pcaret = (XIMPreeditCaretCallbackStruct *)calldata;
+	if (!pcaret)
+		return;
+	switch (pcaret->direction) {
+	case XIMForwardChar:
+		ic.caret = nextrune(ic.text, ic.caret, +1);
+		break;
+	case XIMBackwardChar:
+		ic.caret = nextrune(ic.text, ic.caret, -1);
+		break;
+	case XIMForwardWord:
+		ic.caret = movewordedge(ic.text, ic.caret, +1);
+		break;
+	case XIMBackwardWord:
+		ic.caret = movewordedge(ic.text, ic.caret, -1);
+		break;
+	case XIMLineStart:
+		ic.caret = 0;
+		break;
+	case XIMLineEnd:
+		if (ic.text[ic.caret] != '\0')
+			ic.caret = strlen(ic.text);
+		break;
+	case XIMAbsolutePosition:
+		ic.caret = runebytes(ic.text, pcaret->position);
+		break;
+	case XIMDontChange:
+		/* do nothing */
+		break;
+	case XIMCaretUp:
+	case XIMCaretDown:
+	case XIMNextLine:
+	case XIMPreviousLine:
+		/* not implemented */
+		break;
+	}
+	pcaret->position = runechars(ic.text, ic.caret);
+	drawinput(prompt, 1);
+}
+
 /* get number from *s into n, return 1 if error */
 static int
 getnum(const char **s, int *n)
@@ -822,7 +1005,7 @@ getnum(const char **s, int *n)
 	char *endp;
 
 	num = strtol(*s, &endp, 10);
-	retval = (errno == ERANGE || num > INT_MAX || num < 0 || endp == *s);
+	retval = (num > INT_MAX || num < 0 || endp == *s);
 	*s = endp;
 	*n = num;
 	return retval;
@@ -900,6 +1083,21 @@ setpromptinput(struct Prompt *prompt)
 	prompt->text[0] = '\0';
 	prompt->cursor = 0;
 	prompt->select = 0;
+}
+
+/* allocate memory for the undo list */
+static void
+setpromptundo(struct Prompt *prompt)
+{
+	/*
+	 * the last entry of the undo list is a dummy entry with text
+	 * set to NULL, we use it to know we are at the end of the list
+	 */
+	prompt->undo = emalloc(sizeof *prompt->undo);
+	prompt->undo->text = NULL;
+	prompt->undo->next = NULL;
+	prompt->undo->prev = NULL;
+	prompt->undocurr = NULL;
 }
 
 /* allocate memory for the item list displayed when completion is active */
@@ -1074,15 +1272,65 @@ setpromptpix(struct Prompt *prompt)
 static void
 setpromptic(struct Prompt *prompt)
 {
+	XICCallback start, done, draw, caret, destroy;
+	XVaNestedList preedit = NULL;
+	XIMStyles *imstyles;
+	XIMStyle preeditstyle;
+	XIMStyle statusstyle;
+	int i;
+
 	/* open input method */
 	if ((ic.xim = XOpenIM(dpy, NULL, NULL, NULL)) == NULL)
-		errx(1, "XOpenIM: could not open input device");
+		errx(1, "XOpenIM: could not open input method");
+
+	/* create callbacks for the input method */
+	destroy.client_data = NULL;
+	destroy.callback = (XICProc)icdestroy;
+
+	/* set destroy callback for the input method */
+	if (XSetIMValues(ic.xim, XNDestroyCallback, &destroy, NULL) != NULL)
+		warnx("XSetIMValues: could not set input method values");
+
+	/* get styles supported by input method */
+	if (XGetIMValues(ic.xim, XNQueryInputStyle, &imstyles, NULL) != NULL)
+		errx(1, "XGetIMValues: could not obtain input method values");
+
+	/* check whether input method support on-the-spot pre-editing */
+	preeditstyle = XIMPreeditNothing;
+	statusstyle = XIMStatusNothing;
+	for (i = 0; i < imstyles->count_styles; i++) {
+		if (imstyles->supported_styles[i] & XIMPreeditCallbacks) {
+			preeditstyle = XIMPreeditCallbacks;
+			break;
+		}
+	}
+
+	/* create callbacks for the input context */
+	start.client_data = NULL;
+	done.client_data = NULL;
+	draw.client_data = (XPointer)prompt;
+	caret.client_data = (XPointer)prompt;
+	start.callback = (XICProc)preeditstart;
+	done.callback = (XICProc)preeditdone;
+	draw.callback = (XICProc)preeditdraw;
+	caret.callback = (XICProc)preeditcaret;
+
+	/* create list of values for input context */
+	preedit = XVaCreateNestedList(0,
+                                      XNPreeditStartCallback, &start,
+                                      XNPreeditDoneCallback, &done,
+                                      XNPreeditDrawCallback, &draw,
+                                      XNPreeditCaretCallback, &caret,
+                                      NULL);
+	if (preedit == NULL)
+		errx(1, "XVaCreateNestedList: could not create nested list");
 
 	/* create input context */
 	ic.xic = XCreateIC(ic.xim,
-	                   XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+	                   XNInputStyle, preeditstyle | statusstyle,
+	                   XNPreeditAttributes, preedit,
 	                   XNClientWindow, prompt->win,
-	                   XNFocusWindow, prompt->win,
+	                   XNDestroyCallback, &destroy,
 	                   NULL);
 	if (ic.xic == NULL)
 		errx(1, "XCreateIC: could not obtain input method");
@@ -1090,6 +1338,8 @@ setpromptic(struct Prompt *prompt)
 	/* get events the input method is interested in */
 	if (XGetICValues(ic.xic, XNFilterEvents, &ic.eventmask, NULL))
 		errx(1, "XGetICValues: could not obtain input context values");
+	
+	XFree(preedit);
 }
 
 /* select prompt window events */
@@ -1151,38 +1401,6 @@ grabfocus(Window win)
 	errx(1, "cannot grab focus");
 }
 
-/* return location of next utf8 rune in the given direction (+1 or -1) */
-static size_t
-nextrune(struct Prompt *prompt, size_t position, int inc)
-{
-	ssize_t n;
-
-	for (n = position + inc;
-	     n + inc >= 0 && (prompt->text[n] & 0xc0) == 0x80;
-	     n += inc)
-		;
-	return n;
-}
-
-/* move cursor to start (dir = -1) or end (dir = +1) of the word */
-static size_t
-movewordedge(struct Prompt *prompt, size_t pos, int dir)
-{
-	if (dir < 0) {
-		while (pos > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
-			pos = nextrune(prompt, pos, -1);
-		while (pos > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, pos, -1)]))
-			pos = nextrune(prompt, pos, -1);
-	} else {
-		while (prompt->text[pos] && strchr(config.worddelimiters, prompt->text[pos]))
-			pos = nextrune(prompt, pos, +1);
-		while (prompt->text[pos] && !strchr(config.worddelimiters, prompt->text[pos]))
-			pos = nextrune(prompt, pos, +1);
-	}
-
-	return pos;
-}
-
 /* delete selected text */
 static void
 delselection(struct Prompt *prompt)
@@ -1222,10 +1440,10 @@ insert(struct Prompt *prompt, const char *str, ssize_t n)
 static void
 delword(struct Prompt *prompt)
 {
-	while (prompt->cursor > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
-		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
-	while (prompt->cursor > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt, prompt->cursor, -1)]))
-		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
+	while (prompt->cursor > 0 && strchr(config.worddelimiters, prompt->text[nextrune(prompt->text, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt->text, prompt->cursor, -1) - prompt->cursor);
+	while (prompt->cursor > 0 && !strchr(config.worddelimiters, prompt->text[nextrune(prompt->text, prompt->cursor, -1)]))
+		insert(prompt, NULL, nextrune(prompt->text, prompt->cursor, -1) - prompt->cursor);
 }
 
 /* insert selected item on prompt->text */
@@ -1254,6 +1472,40 @@ insertselitem(struct Prompt *prompt)
 	}
 }
 
+/* add entry to undo list */
+static void
+addundo(struct Prompt *prompt, int editing)
+{
+	struct Undo *undo, *tmp;
+
+	/* when adding a new entry to the undo list, delete the entries after current one */
+	if (prompt->undocurr && prompt->undocurr->prev) {
+		undo = prompt->undocurr->prev;
+		while (undo) {
+			tmp = undo;
+			undo = undo->prev;
+			free(tmp->text);
+			free(tmp);
+		}
+		prompt->undocurr->prev = NULL;
+		prompt->undo = prompt->undocurr;
+	}
+
+	/* add a new entry only if it differs from the one at the top of the list */
+	if (!prompt->undo->text || strcmp(prompt->undo->text, prompt->text) != 0) {
+		undo = emalloc(sizeof *undo);
+		undo->text = estrdup(prompt->text);
+		undo->next = prompt->undo;
+		undo->prev = NULL;
+		prompt->undo->prev = undo;
+		prompt->undo = undo;
+
+		/* if we are editing text, the current entry is the top one*/
+		if (editing)
+			prompt->undocurr = undo;
+	}
+}
+
 /* we have been given the current selection, now insert it into input */
 static void
 paste(struct Prompt *prompt)
@@ -1267,6 +1519,7 @@ paste(struct Prompt *prompt)
 	                       0, prompt->textsize / 4 + 1, False,
 	                       utf8, &da, &di, &dl, &dl, (unsigned char **)&p)
 	    == Success && p) {
+		addundo(prompt, 1);
 		insert(prompt, p, (q = strchr(p, '\n')) ? q - p : (ssize_t)strlen(p));
 		XFree(p);
 	}
@@ -1612,8 +1865,10 @@ getoperation(KeySym ksym, unsigned state)
 
 	/* handle Ctrl + Letter combinations */
 	if (state & ControlMask) {
-		if (ksym >= XK_a && ksym <= XK_z)
+		if (!(state & ShiftMask) && ksym >= XK_a && ksym <= XK_z)
 			return ctrl[LowerCase][ksym - XK_a];
+		if ((state & ShiftMask) && ksym >= XK_a && ksym <= XK_z)
+			return ctrl[UpperCase][ksym - XK_a];
 		if (ksym >= XK_A && ksym <= XK_Z)
 			return ctrl[UpperCase][ksym - XK_A];
 		return CTRLNOTHING;
@@ -1622,12 +1877,45 @@ getoperation(KeySym ksym, unsigned state)
 	return INSERT;
 }
 
+/* copy entry from undo list into text */
+static void
+undo(struct Prompt *prompt)
+{
+	if (prompt->undocurr) {
+		if (prompt->undocurr->text == NULL) {
+			return;
+		}
+		if (strcmp(prompt->undocurr->text, prompt->text) == 0)
+			prompt->undocurr = prompt->undocurr->next;
+	}
+	if (prompt->undocurr) {
+		insert(prompt, NULL, 0 - prompt->cursor);
+		insert(prompt, prompt->undocurr->text, strlen(prompt->undocurr->text));
+		prompt->undocurr = prompt->undocurr->next;
+	}
+}
+
+/* copy entry from undo list into text */
+static void
+redo(struct Prompt *prompt)
+{
+	if (prompt->undocurr && prompt->undocurr->prev)
+		prompt->undocurr = prompt->undocurr->prev;
+	if (prompt->undocurr && prompt->undocurr->prev && strcmp(prompt->undocurr->text, prompt->text) == 0)
+		prompt->undocurr = prompt->undocurr->prev;
+	if (prompt->undocurr) {
+		insert(prompt, NULL, 0 - prompt->cursor);
+		insert(prompt, prompt->undocurr->text, strlen(prompt->undocurr->text));
+	}
+}
+
 /* handle key press */
 static enum Press_ret
 keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKeyEvent *ev)
 {
 	static struct Item *complist;   /* list of possible completions */
 	static char buf[INPUTSIZ];
+	static enum Ctrl prevoperation = CTRLNOTHING;
 	enum Ctrl operation;
 	char *s;
 	int len;
@@ -1646,7 +1934,15 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		break;
 	}
 
-	switch (operation = getoperation(ksym, ev->state)) {
+	operation = getoperation(ksym, ev->state);
+	if (operation == INSERT && (iscntrl(*buf) || *buf == '\0'))
+		return Nop;
+	if (ISUNDO(operation) && ISEDITING(prevoperation))
+		addundo(prompt, 0);
+	if (ISEDITING(operation) && operation != prevoperation)
+		addundo(prompt, 1);
+	prevoperation = operation;
+	switch (operation) {
 	case CTRLPASTE:
 		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
 		return Nop;
@@ -1722,24 +2018,24 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLSELLEFT:
 	case CTRLLEFT:
 		if (prompt->cursor > 0)
-			prompt->cursor = nextrune(prompt, prompt->cursor, -1);
+			prompt->cursor = nextrune(prompt->text, prompt->cursor, -1);
 		else
 			return Nop;
 		break;
 	case CTRLSELRIGHT:
 	case CTRLRIGHT:
 		if (prompt->text[prompt->cursor] != '\0')
-			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
+			prompt->cursor = nextrune(prompt->text, prompt->cursor, +1);
 		else
 			return Nop;
 		break;
 	case CTRLSELWLEFT:
 	case CTRLWLEFT:
-		prompt->cursor = movewordedge(prompt, prompt->cursor, -1);
+		prompt->cursor = movewordedge(prompt->text, prompt->cursor, -1);
 		break;
 	case CTRLSELWRIGHT:
 	case CTRLWRIGHT:
-		prompt->cursor = movewordedge(prompt, prompt->cursor, +1);
+		prompt->cursor = movewordedge(prompt->text, prompt->cursor, +1);
 		break;
 	case CTRLDELBOL:
 		insert(prompt, NULL, 0 - prompt->cursor);
@@ -1756,21 +2052,27 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 		if (operation == CTRLDELRIGHT) {
 			if (prompt->text[prompt->cursor] == '\0')
 				return Nop;
-			prompt->cursor = nextrune(prompt, prompt->cursor, +1);
+			prompt->cursor = nextrune(prompt->text, prompt->cursor, +1);
 		}
 		if (prompt->cursor == 0)
 			return Nop;
-		insert(prompt, NULL, nextrune(prompt, prompt->cursor, -1) - prompt->cursor);
+		insert(prompt, NULL, nextrune(prompt->text, prompt->cursor, -1) - prompt->cursor);
 		break;
 	case CTRLDELWORD:
 		delword(prompt);
+		break;
+	case CTRLUNDO:
+		undo(prompt);
+		break;
+	case CTRLREDO:
+		redo(prompt);
 		break;
 	case CTRLNOTHING:
 		return Nop;
 	case INSERT:
 insert:
 		operation = INSERT;
-		if (iscntrl(*buf))
+		if (iscntrl(*buf) || *buf == '\0')
 			return Nop;
 		delselection(prompt);
 		insert(prompt, buf, len);
@@ -1785,7 +2087,7 @@ insert:
 		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
 		return DrawInput;
 	}
-	if (ISEDITING(operation)) {
+	if (ISEDITING(operation) || ISUNDO(operation)) {
 		if (prompt->matchlist && filecomp) {   /* if in a file completion, cancel it */
 			cleanitem(complist);
 			filecomp = 0;
@@ -1862,6 +2164,8 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	static Time lasttime = 0;
 	size_t curpos;
 
+	if (ic.composing)       /* we ignore mouse events when composing */
+		return Nop;
 	switch (ev->button) {
 	case Button2:                               /* middle click paste */
 		delselection(prompt);
@@ -1878,8 +2182,8 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 					prompt->select = strlen(prompt->text);
 				word = 0;
 			} else if (ev->time - lasttime < DOUBLECLICK) {
-				prompt->cursor = movewordedge(prompt, curpos, -1);
-				prompt->select = movewordedge(prompt, curpos, +1);
+				prompt->cursor = movewordedge(prompt->text, curpos, -1);
+				prompt->select = movewordedge(prompt->text, curpos, +1);
 				word = 1;
 			} else {
 				prompt->select = prompt->cursor = curpos;
@@ -1914,6 +2218,8 @@ buttonmotion(struct Prompt *prompt, XMotionEvent *ev)
 	prevselect = prompt->select;
 	prevcursor = prompt->cursor;
 
+	if (ic.composing)       /* we ignore mouse events when composing */
+		return Nop;
 	if (ev->y >= 0 && ev->y <= prompt->h)
 		prompt->select = getcurpos(prompt, ev->x);
 	else if (ev->y < 0)
@@ -1938,9 +2244,6 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	struct Item *prevhover;
 	int miny, maxy;
 
-	miny = prompt->h + prompt->separator;
-	maxy = miny + prompt->h * prompt->nitems;
-	prevhover = prompt->hoveritem;
 	if (ev->y < prompt->h && !intext) {
 		XDefineCursor(dpy, prompt->win, cursor);
 		intext = 1;
@@ -1948,6 +2251,11 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 		XUndefineCursor(dpy, prompt->win);
 		intext = 0;
 	}
+	if (ic.composing)       /* we ignore mouse events when composing */
+		return Nop;
+	miny = prompt->h + prompt->separator;
+	maxy = miny + prompt->h * prompt->nitems;
+	prevhover = prompt->hoveritem;
 	if (ev->y < miny || ev->y >= maxy)
 		prompt->hoveritem = NULL;
 	else
@@ -2007,7 +2315,6 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			copy(prompt, &ev.xselectionrequest);
 			break;
 		}
-
 		switch (retval) {
 		case Esc:
 			return 0;   /* return 0 to not save history */
@@ -2023,7 +2330,6 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		}
 	}
-
 	return 0;   /* UNREACHABLE */
 }
 
@@ -2067,6 +2373,20 @@ cleanhist(struct History *hist)
 
 	if (hist->entries)
 		free(hist->entries);
+}
+
+/* free undo list */
+static void
+cleanundo(struct Undo *undo)
+{
+	struct Undo *tmp;
+
+	while (undo) {
+		tmp = undo;
+		undo = undo->next;
+		free(tmp->text);
+		free(tmp);
+	}
 }
 
 /* free and clean up a prompt */
@@ -2156,6 +2476,7 @@ main(int argc, char *argv[])
 
 	/* setup prompt */
 	setpromptinput(&prompt);
+	setpromptundo(&prompt);
 	setpromptarray(&prompt);
 	setpromptgeom(&prompt, parentwin);
 	setpromptwin(&prompt, parentwin);
@@ -2190,6 +2511,7 @@ main(int argc, char *argv[])
 		fclose(histfp);
 	cleanitem(rootitem);
 	cleanhist(&hist);
+	cleanundo(prompt.undo);
 	cleanprompt(&prompt);
 	cleandc();
 	cleanic();

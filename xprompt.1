@@ -147,6 +147,10 @@ Pressing Tab initiates the completion,
 pressing Up or Down navigates through the history.
 .PP
 .B xprompt
+supports XIM-based input methods with on-the-spot pre-editing.
+When the input method is in progress, the pre-edited text is underlined.
+.PP
+.B xprompt
 can also be controlled via
 .B Ctrl + Key
 keybindings with the
@@ -155,17 +159,13 @@ environment variable.
 The default value for
 .B XPROMPTCTRL
 is
-.B \(lqvcmpn::::aebf::ukhdwAEBF::\(rq
-and can be modified via the
-.B config.h
-file.
-.PP
+.BR \(dqvcmpn::::aebf::ukhdwAEBF::zZ:\(dq .
 Each key or keybinding is assigned a operation like
 .BR CTRLCANCEL ,
 .BR CTRLNEXT ,
 .BR CTRLRIGHT ,
 etc.
-The default values for each operation is listed bellow between parentheses.
+The default value for each operation is listed bellow between parentheses.
 .TP
 .BR CTRLPASTE " (" Ctrl+V )
 Paste from primary X selection.
@@ -250,16 +250,24 @@ Select text from cursor to one word to the left.
 .BR CTRLSELWRIGHT " (" Ctrl+Shift+Right )
 Select text from cursor to one word to the right.
 .TP
+.BR CTRLUNDO " (" Ctrl+Z )
+Undo the last editing operation.
+.TP
+.BR CTRLREDO " (" Ctrl+Shift+Z )
+Redo an editing operation.
+.TP
 .BR CTRLCANCEL " (" Esc )
-When completion is in operation, exit completion without confirming text.
-When completion is not in operation, exit xprompt without printing anything.
+When completion is in progress, exit completion without confirming text.
+When completion is not in progress, exit xprompt without printing anything.
 .PP
 .B xprompt
-can also be controlled by the mouse.
+can also be controlled with the mouse.
 Clicking on a item selects it.
 Clicking on the input field with the left button moves the cursor.
 Clicking on the input field with the middle button pastes from the primary selection.
 Clicking on the input field with the left button and moving the mouse selects text.
+Clicking on the input field with the left button twice selects a word.
+Clicking on the input field with the left button three times selects the whole text.
 .SH ENVIRONMENT
 The following environment variables affect the execution of
 .BR xprompt .
@@ -274,7 +282,7 @@ Specifies the number of entries to be kept in the history file.
 This environment variable is set to a list of alphabetic characters,
 each character specify a ctrl sequence for a input operation in the
 order listed in the section USAGE.
-For example, by default, XPROMPTCTRL is \(lqvcmpn::::aebf::ukhdwAEBF::\(rq,
+For example, by default, XPROMPTCTRL is \(dqvcmpn::::aebf::ukhdwAEBF::zZ:\(dq,
 it means that pressing Ctrl+V enters CTRLPASTE, Ctrl+C enters CTRLCOPY, Ctrl+M enters CTRLENTER, etc.
 A colon specifies that no Ctrl + Key sequence implements such operation.
 .TP
@@ -287,6 +295,8 @@ understands the following X resources.
 .TP
 .B xprompt.font
 The font to drawn the text.
+Multiple fonts can be added as fallback fonts;
+they must be separated by a comma.
 .TP
 .B xprompt.background
 The background color of the input text field,
