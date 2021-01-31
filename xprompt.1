@@ -3,7 +3,7 @@
 xprompt \- read line utility for X
 .SH SYNOPSIS
 .B xprompt
-.RB [ \-dfips ]
+.RB [ \-adfiprs ]
 .RB [ \-G
 .IR gravity ]
 .RB [ \-g
@@ -34,6 +34,13 @@ xprompt resembles dmenu, but they differ in a subtle point:
 while dmenu completes the whole text, xprompt performs contextual completion.
 .PP
 The options are as follows:
+.TP
+.B \-a
+Without this option, after selecting a command argument in the dropdown list,
+no more arguments are completed.
+With this option,
+.B xprompt
+keeps listing possible completions for following arguments.
 .TP
 .B \-d
 Rather than complete item names, complete item descriptions.
@@ -98,6 +105,15 @@ or (if there is no focused window) on the monitor where the mouse is on.
 .B \-p
 Enable password mode.
 In this mode, the typed text is not echoed in the input field.
+.TP
+.B \-r
+When this option is used,
+.B xprompt
+listen to key presses on the root window, and shows the prompt when a key is pressed.
+This option makes
+.B xprompt
+run coninuously,
+so it should be run in background on a X startup file (like ~/.xinitrc, ~/.xprofile, etc).
 .TP
 .B \-s
 Makes a single Enter or Esc keypress or mouse click on a item exit xprompt,

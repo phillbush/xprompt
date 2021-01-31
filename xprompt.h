@@ -79,6 +79,7 @@ struct Config {
 
 	const char *geometryspec;
 	const char *gravityspec;
+	int gravity;
 
 	unsigned number_items;
 
@@ -173,6 +174,9 @@ struct Prompt {
 	Drawable pixmap;            /* where to draw shapes on */
 	XftDraw *draw;              /* where to draw text on */
 	Window win;                 /* xprompt window */
+	Window parent;              /* xprompt parent window (-w) */
+
+	int mapped;                 /* whether the prompt window is currently mapped */
 };
 
 /* history */
@@ -180,4 +184,5 @@ struct History {
 	char **entries;     /* array of history entries */
 	size_t index;       /* index to the selected entry in the array */
 	size_t size;        /* how many entries there are in the array */
+	FILE *fp;
 };
