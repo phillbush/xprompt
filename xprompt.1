@@ -54,6 +54,8 @@ When the
 option is used, when no item from the standard input matches the current text,
 .B xprompt
 tries to complete a file name.
+The file name must be the last part of the input string.
+It is not possible to try to complete an argument after completing a file name.
 .TP
 .BI "\-G " gravity
 Specify the gravity,
