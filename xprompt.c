@@ -36,6 +36,7 @@ static Atom utf8;
 static Atom clip;
 
 /* flags */
+static int aflag = 0;   /* whether to keep looking for arguments to complete */
 static int dflag = 0;   /* whether to show only item descriptions */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
@@ -60,7 +61,7 @@ static int filecomp = 0;
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-dfips] [-G gravity] [-g geometry] [-h file]\n"
+	(void)fprintf(stderr, "usage: xprompt [-adfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(1);
 }
@@ -167,10 +168,13 @@ getoptions(int argc, char *argv[], Window *win_ret)
 	int ch;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "G:dfg:h:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "G:adfg:h:im:psw:")) != -1) {
 		switch (ch) {
 		case 'G':
 			config.gravityspec = optarg;
+			break;
+		case 'a':
+			aflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -1083,6 +1087,7 @@ setpromptinput(struct Prompt *prompt)
 	prompt->text[0] = '\0';
 	prompt->cursor = 0;
 	prompt->select = 0;
+	prompt->file = 0;
 }
 
 /* allocate memory for the undo list */
@@ -1452,23 +1457,13 @@ insertselitem(struct Prompt *prompt)
 {
 	if (prompt->cursor && !strchr(config.worddelimiters, prompt->text[prompt->cursor - 1]))
 		delword(prompt);
-	if (!filecomp) {
-		/*
-		 * If not completing a file, insert item as is
-		 */
+	if (!filecomp) {        /* If not completing a file, insert item as is */
 		insert(prompt, prompt->selitem->text,
 		       strlen(prompt->selitem->text));
-	} else {
-		/*
-		 * If completing a file, insert only the basename (the
-		 * part after the last slash).
-		 */
-		char *s, *p;
-		s = prompt->selitem->text;
-		for (p = prompt->selitem->text; *p; p++)
-			if (strchr("/", *p))
-				s = p + 1;
-		insert(prompt, s, strlen(s));
+	} else if (prompt->file > 0) {
+		memmove(prompt->text + prompt->file, prompt->text + prompt->cursor, strlen(prompt->text + prompt->cursor) + 1);
+		prompt->cursor = prompt->file;
+		insert(prompt, prompt->selitem->text, strlen(prompt->selitem->text));
 	}
 }
 
@@ -1618,6 +1613,8 @@ getcomplist(struct Prompt *prompt, struct Item *rootitem)
 			for (item = curritem; item != NULL; item = item->next) {
 				text = (dflag && item->description) ? item->description : item->text;
 				if ((*fstrncmp)(text, beg, len) == 0) {
+					if (aflag && item->child == NULL && curritem != rootitem)
+						return curritem;
 					curritem = item->child;
 					found = 1;
 					break;
@@ -1644,10 +1641,14 @@ getfilelist(struct Prompt *prompt)
 	glob_t g;
 
 	/* find filename to be completed */
-	beg = prompt->cursor;
-	if (beg)
-		while (beg && !isspace(prompt->text[beg - 1]))
+	if (prompt->file > 0 && prompt->file <= prompt->cursor) {
+		beg = prompt->file;
+	} else if ((beg = prompt->cursor) > 0) {
+		while (beg && !isspace(prompt->text[beg - 1])) {
 			beg--;
+		}
+		prompt->file = beg;
+	}
 	len = prompt->cursor - beg;
 
 	if (len >= INPUTSIZ - 2)  /* 2 for '*' and NUL */
@@ -2081,7 +2082,8 @@ insert:
 
 	if (ISMOTION(operation)) {          /* moving cursor while selecting */
 		prompt->select = prompt->cursor;
-		return DrawInput;
+		delmatchlist(prompt);
+		return DrawPrompt;
 	}
 	if (ISSELECTION(operation)) {       /* moving cursor while selecting */
 		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
@@ -2264,8 +2266,37 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	return (prevhover != prompt->hoveritem) ? DrawPrompt : Nop;
 }
 
-/* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
-static int
+/* save history in history file */
+static void
+savehist(struct Prompt *prompt, struct History *hist)
+{
+	int diff;   /* whether the last history entry differs from prompt->text */
+	int fd;
+
+	if (hflag == 0)
+		return;
+
+	fd = fileno(hist->fp);
+	ftruncate(fd, 0);
+
+	if (!hist->size) {
+		fprintf(hist->fp, "%s\n", prompt->text);
+		return;
+	}
+
+	diff = strcmp(hist->entries[hist->size-1], prompt->text);
+
+	hist->index = (diff && hist->size == config.histsize) ? 1 : 0;
+
+	while (hist->index < hist->size)
+		fprintf(hist->fp, "%s\n", hist->entries[hist->index++]);
+
+	if (diff)
+		fprintf(hist->fp, "%s\n", prompt->text);
+}
+
+/* run event loop */
+static void
 run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 {
 	XEvent ev;
@@ -2317,9 +2348,10 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 		}
 		switch (retval) {
 		case Esc:
-			return 0;   /* return 0 to not save history */
+			return;
 		case Enter:
-			return 1;   /* return 1 to save history */
+			savehist(prompt, hist);
+			return;
 		case DrawInput:
 			drawinput(prompt, 1);
 			break;
@@ -2330,36 +2362,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		}
 	}
-	return 0;   /* UNREACHABLE */
-}
-
-/* save history in history file */
-static void
-savehist(struct Prompt *prompt, struct History *hist, FILE *fp)
-{
-	int diff;   /* whether the last history entry differs from prompt->text */
-	int fd;
-
-	if (hflag == 0)
-		return;
-
-	fd = fileno(fp);
-	ftruncate(fd, 0);
-
-	if (!hist->size) {
-		fprintf(fp, "%s\n", prompt->text);
-		return;
-	}
-
-	diff = strcmp(hist->entries[hist->size-1], prompt->text);
-
-	hist->index = (diff && hist->size == config.histsize) ? 1 : 0;
-
-	while (hist->index < hist->size)
-		fprintf(fp, "%s\n", hist->entries[hist->index++]);
-
-	if (diff)
-		fprintf(fp, "%s\n", prompt->text);
+	/* UNREACHABLE */
 }
 
 /* free history entries */
@@ -2437,7 +2440,6 @@ main(int argc, char *argv[])
 	struct Prompt prompt;
 	struct Item *rootitem;
 	Window parentwin;
-	FILE *histfp;
 
 	/* set locale and modifiers */
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
@@ -2489,12 +2491,12 @@ main(int argc, char *argv[])
 
 	/* open config.histfile and load history */
 	if (config.histfile != NULL && *config.histfile != '\0') {
-		if ((histfp = fopen(config.histfile, "a+")) == NULL)
+		if ((hist.fp = fopen(config.histfile, "a+")) == NULL)
 			warn("%s", config.histfile);
 		else {
-			loadhist(histfp, &hist);
+			loadhist(hist.fp, &hist);
 			if (!hflag)
-				fclose(histfp);
+				fclose(hist.fp);
 		}
 	}
 
@@ -2503,12 +2505,11 @@ main(int argc, char *argv[])
 		grabkeyboard();
 
 	/* run event loop; and, if run return nonzero, save the history */
-	if (run(&prompt, rootitem, &hist))
-		savehist(&prompt, &hist, histfp);
+	run(&prompt, rootitem, &hist);
 
 	/* freeing stuff */
 	if (hflag)
-		fclose(histfp);
+		fclose(hist.fp);
 	cleanitem(rootitem);
 	cleanhist(&hist);
 	cleanundo(prompt.undo);

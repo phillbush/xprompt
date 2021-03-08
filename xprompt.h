@@ -149,6 +149,7 @@ struct Prompt {
 	size_t textsize;            /* maximum size of the text in the input field */
 	size_t cursor;              /* position of the cursor in the input field */
 	size_t select;              /* position of the selection in the input field*/
+	size_t file;                /* position of the beginning of the file name */
 
 	struct Undo *undo;          /* undo list */
 	struct Undo *undocurr;      /* current undo entry */
@@ -177,6 +178,7 @@ struct Prompt {
 
 /* history */
 struct History {
+	FILE *fp;
 	char **entries;     /* array of history entries */
 	size_t index;       /* index to the selected entry in the array */
 	size_t size;        /* how many entries there are in the array */
