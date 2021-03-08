@@ -36,6 +36,9 @@ in dmenu:
   dropdown list (with `-d` option).
 * The position of the xprompt on the screen or on the parent window can
   be set with the `-g` and the `-G` options.
+* Support for input methods with on-the-spot pre-editing.
+* Undo/redo (by default bound to Ctrl-Z and Ctrl-Shift-Z).
+* Copy/paste both via mouse and keybindings.
 
 
 ## Files
