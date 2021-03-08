@@ -150,7 +150,6 @@ struct Prompt {
 	size_t textsize;            /* maximum size of the text in the input field */
 	size_t cursor;              /* position of the cursor in the input field */
 	size_t select;              /* position of the selection in the input field*/
-	ssize_t file;               /* position of the beginning of file name */
 
 	struct Undo *undo;          /* undo list */
 	struct Undo *undocurr;      /* current undo entry */

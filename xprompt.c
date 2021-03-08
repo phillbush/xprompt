@@ -1360,9 +1360,7 @@ setpromptpix(struct Prompt *prompt)
 static void
 resetprompt(struct Prompt *prompt)
 {
-	filecomp = 0;
 	prompt->text[0] = '\0';
-	prompt->file = -1;
 	prompt->cursor = 0;
 	prompt->select = 0;
 	prompt->nitems = 0;
@@ -1478,10 +1476,17 @@ insertselitem(struct Prompt *prompt)
 		 */
 		insert(prompt, prompt->selitem->text,
 		       strlen(prompt->selitem->text));
-	} else if (prompt->file > 0) {
-		memmove(prompt->text + prompt->file, prompt->text + prompt->cursor, strlen(prompt->text + prompt->cursor) + 1);
-		prompt->cursor = prompt->file;
-		insert(prompt, prompt->selitem->text, strlen(prompt->selitem->text));
+	} else {
+		/*
+		 * If completing a file, insert only the basename (the
+		 * part after the last slash).
+		 */
+		char *s, *p;
+		s = prompt->selitem->text;
+		for (p = prompt->selitem->text; *p; p++)
+			if (strchr("/", *p))
+				s = p + 1;
+		insert(prompt, s, strlen(s));
 	}
 }
 
@@ -1659,14 +1664,10 @@ getfilelist(struct Prompt *prompt)
 	glob_t g;
 
 	/* find filename to be completed */
-	if (prompt->file > 0 && (size_t)prompt->file <= prompt->cursor) {
-		beg = prompt->file;
-	} else if ((beg = prompt->cursor) > 0) {
-		while (beg && !isspace(prompt->text[beg - 1])) {
+	beg = prompt->cursor;
+	if (beg)
+		while (beg && !isspace(prompt->text[beg - 1]))
 			beg--;
-		}
-		prompt->file = beg;
-	}
 	len = prompt->cursor - beg;
 
 	if (len >= INPUTSIZ - 2)  /* 2 for '*' and NUL */
