@@ -528,29 +528,23 @@ parsestdin(FILE *fp)
 static void
 loadhist(FILE *fp, struct History *hist)
 {
-	struct Entry *entry;
 	char buf[INPUTSIZ];
+	char *s;
 	size_t len;
 
-	hist->head = hist->tail = NULL;
-	hist->curr = NULL;
+	hist->entries = ecalloc(config.histsize, sizeof *hist);
 	hist->size = 0;
 	rewind(fp);
 	while (hist->size < config.histsize && fgets(buf, sizeof buf, fp) != NULL) {
-		hist->size++;
-		entry = emalloc(sizeof *entry);
-		entry->next = NULL;
-		entry->prev = hist->tail;
-		if (hist->head == NULL)
-			hist->head = entry;
-		if (hist->tail)
-			hist->tail->next = entry;
-		hist->tail = entry;
 		len = strlen(buf);
 		if (len && buf[--len] == '\n')
 			buf[len] = '\0';
-		entry->text = estrdup(buf);
+		s = estrdup(buf);
+		hist->entries[hist->size++] = s;
 	}
+
+	if (hist->size)
+		hist->index = hist->size;
 
 	hflag = (ferror(fp)) ? 0 : 1;
 }
@@ -1362,13 +1356,6 @@ setpromptpix(struct Prompt *prompt)
 	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 }
 
-/* reset history to its initial state */
-static void
-resethist(struct History *hist)
-{
-	hist->curr = NULL;
-}
-
 /* reset prompt to its initial state */
 static void
 resetprompt(struct Prompt *prompt)
@@ -1603,27 +1590,18 @@ done:
 static char *
 navhist(struct History *hist, int direction)
 {
-	static char *str = "";
-	struct Entry *entry;
+	if (direction < 0) {
+		if (hist->index > 0)
+			hist->index--;
+	} else {
+		if (hist->index + 1 < hist->size)
+			hist->index++;
+	}
 
-	if (hist->curr) {
-		entry = hist->curr;
-		if (direction < 0) {
-			if (hist->curr && hist->curr->prev)
-				entry = hist->curr->prev;
-		} else {
-			if (hist->curr && hist->curr->next)
-				entry = hist->curr->next;
-		}
-	} else {
-		entry = hist->tail;
-	}
-	if (entry) {
-		hist->curr = entry;
-		return entry->text;
-	} else {
-		return str;
-	}
+	if (hist->index == hist->size)
+		return NULL;
+
+	return hist->entries[hist->index];
 }
 
 /* get list of possible completions */
@@ -2123,8 +2101,7 @@ insert:
 
 	if (ISMOTION(operation)) {          /* moving cursor while selecting */
 		prompt->select = prompt->cursor;
-		delmatchlist(prompt);
-		return DrawPrompt;
+		return DrawInput;
 	}
 	if (ISSELECTION(operation)) {       /* moving cursor while selecting */
 		XSetSelectionOwner(dpy, XA_PRIMARY, prompt->win, CurrentTime);
@@ -2312,10 +2289,8 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 static void
 savehist(struct Prompt *prompt, struct History *hist)
 {
-	struct Entry *entry;
-	int diff = 0;   /* whether the last history entry differs from prompt->text */
+	int diff;   /* whether the last history entry differs from prompt->text */
 	int fd;
-	size_t i;
 
 	if (hflag == 0)
 		return;
@@ -2323,45 +2298,20 @@ savehist(struct Prompt *prompt, struct History *hist)
 	fd = fileno(hist->fp);
 	ftruncate(fd, 0);
 
-	if (hist->size == 0) {
-		diff = 1;
+	if (!hist->size) {
 		fprintf(hist->fp, "%s\n", prompt->text);
-	} else {
-		for (i = 0; prompt->text[i] != '\0'; i++) {
-			if (!isspace(prompt->text[i])) {
-				diff = 1;
-				break;
-			}
-		}
-		if (diff)
-			diff = strcmp(hist->tail->text, prompt->text);
-		for (entry = hist->head; entry; entry = entry->next)
-			fprintf(hist->fp, "%s\n", entry->text);
-		if (diff)
-			fprintf(hist->fp, "%s\n", prompt->text);
+		return;
 	}
-	if (diff) {
-		hist->size++;
-		if (hist->size >= config.histsize && hist->head) {
-			entry = hist->head;
-			hist->head = hist->head->next;
-			if (hist->head)
-				hist->head->prev = NULL;
-			free(entry->text);
-			free(entry);
-			hist->size--;
-		}
-		entry = emalloc(sizeof *entry);
-		entry->next = NULL;
-		entry->prev = hist->tail;
-		entry->text = estrdup(prompt->text);
-		if (hist->head == NULL)
-			hist->head = entry;
-		if (hist->tail)
-			hist->tail->next = entry;
-		hist->tail = entry;
-	}
-	fflush(hist->fp);
+
+	diff = strcmp(hist->entries[hist->size-1], prompt->text);
+
+	hist->index = (diff && hist->size == config.histsize) ? 1 : 0;
+
+	while (hist->index < hist->size)
+		fprintf(hist->fp, "%s\n", hist->entries[hist->index++]);
+
+	if (diff)
+		fprintf(hist->fp, "%s\n", prompt->text);
 }
 
 /* run event loop, return 1 when user clicks Enter, 0 when user clicks Esc */
@@ -2380,7 +2330,6 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 	}
 
 	do {
-		resethist(hist);
 		resetprompt(prompt);
 		querymonitor(prompt);
 		setpromptgeom(prompt);
@@ -2471,15 +2420,13 @@ end:
 static void
 cleanhist(struct History *hist)
 {
-	struct Entry *entry, *tmp;
+	size_t i;
 
-	entry = hist->tail;
-	while (entry) {
-		tmp = entry;
-		entry = entry->prev;
-		free(tmp->text);
-		free(tmp);
-	}
+	for (i = 0; i < hist->size; i++)
+		free(hist->entries[i]);
+
+	if (hist->entries)
+		free(hist->entries);
 }
 
 /* free undo list */
@@ -2537,7 +2484,7 @@ cleancursor(void)
 int
 main(int argc, char *argv[])
 {
-	struct History hist = {.head = NULL, .tail = NULL, .curr = NULL, .size = 0, .fp = NULL};
+	struct History hist = {.entries = NULL, .index = 0, .size = 0, .fp = NULL};
 	struct Prompt prompt;
 	struct Item *rootitem;
 	Window parentwin;

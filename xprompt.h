@@ -180,16 +180,10 @@ struct Prompt {
 	int mapped;                 /* whether the prompt window is currently mapped */
 };
 
-/* history entry */
-struct Entry {
-	struct Entry *prev, *next;
-	char *text;
-};
-
 /* history */
 struct History {
-	struct Entry *head, *tail;
-	struct Entry *curr;
+	char **entries;     /* array of history entries */
+	size_t index;       /* index to the selected entry in the array */
 	size_t size;        /* how many entries there are in the array */
 	FILE *fp;
 };
