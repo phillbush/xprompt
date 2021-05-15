@@ -4,14 +4,8 @@ xprompt \- read line utility for X
 .SH SYNOPSIS
 .B xprompt
 .RB [ \-adfips ]
-.RB [ \-G
-.IR gravity ]
-.RB [ \-g
-.IR geometry ]
 .RB [ \-h
 .IR histfile ]
-.RB [ \-m
-.IR monitor ]
 .RB [ \-w
 .IR windowid ]
 .RI [ promptstr ]
@@ -52,52 +46,11 @@ option is used, when no item from the standard input matches the current text,
 .B xprompt
 tries to complete a file name.
 .TP
-.BI "\-G " gravity
-Specify the gravity,
-that is, where in the screen or parent window to display xprompt.
-.I gravity
-can be "N" for NorthGravity (display on the top center of the screen);
-"SE" for SouthEastGravity (display on the bottom right corner of the screen);
-"C" for CenterGravity (display on the center of the screen);
-etc.
-.TP
-.BI "\-g " geometry
-Specifies the geometry in the form
-.B <WIDTH>x<HEIGHT>[{-+}<XOFFSET>{-+}<YOFFSET>].
-Replace
-.B <WIDTH>
-by the desired width,
-.B <HEIGHT>
-by the desired height, and so on.
-A value of 0 sets a field to the default value.
-So, for example,
-.B -g 0x20+0+0
-set the height to 20 pixels while maintaining other values to the default.
-.B <XOFFSET>
-and
-.B <YOFFSET>
-are optional and can be preceded by either a minus or a plus
-(meaning negative or positive values).
-So, for example,
-.B -g 0x20
-is the same as
-.BR -g 0x20+0+0 .
-.TP
 .BI "\-h " file
 Specifies the file to be used for reading and storing the history of typed texts.
 .TP
 .B \-i
 Makes xprompt match items case insensitively.
-.TP
-.BI "\-m " monitor
-Makes xprompt be displayed on the monitor specified.
-Monitor numbers start from 0.
-Without this option,
-when xprompt is not embedded (i.e., without the
-.B \-w
-option),
-xprompt is displayed on the same monitor of the focused window,
-or (if there is no focused window) on the monitor where the mouse is on.
 .TP
 .B \-p
 Enable password mode.
@@ -111,7 +64,9 @@ a Enter or Esc keypress or a mouse click first exits the completion,
 and a second keypress exits xprompt.
 .TP
 .BI "\-w " windowid
-Renders xprompt embedded into the window
+Make
+.B xprompt
+a transient window for
 .IR windowid .
 .PP
 Each item read from stdin has the following format:
@@ -123,27 +78,44 @@ ITEM := [TABS] WORD [TABS DESCRIPTION] NEWLINE
 That means that each item is composed by
 zero or more tabs, followed by a text, followed by more tabs, followed
 by a description, followed by newline.  Brackets group optional elements.
-.IP
+.IP \(bu 2
 The initial tabs indicate the item hierarchy.
 An item without initial tabs is listed for completion at the beginning of the input field.
 An item with one tab is listed for completion for the second word in the input field.
 And so on.
-.IP
+.IP \(bu 2
 The word is a string listed for completion in the dropdown list that
 appears when pressing Tab.
-.IP
+.IP \(bu 2
 The second group of tabs separate the word from its description.
-.IP
+.IP \(bu 2
 The description is a string describing what the word means.
-.IP
+.IP \(bu 2
 The newline terminates the item specification.
 .PP
-.B xmenu
+.B xprompt
 saves the input text from previous runs in a history file specified by the
 .B -h
 option or by the
 .B XPROMPTHISTFILE
 environment variable.
+.PP
+.B xprompt
+sets its window type (the
+.B _NET_WM_WINDOW_TYPE
+property) as
+.B _NET_WM_WINDOW_TYPE_PROMPT
+and expects that the window manager maps
+.B xprompt
+at the right monitor at the right place,
+draw its borders,
+and give it the input focus for the whole period of time while
+.B xprompt
+is mapped.
+.B _NET_WM_WINDOW_TYPE_PROMPT
+is an unnoficial extension to the EWMH specification.
+The only known window manager that supports this extension is
+.IR shod (1).
 .SH USAGE
 .B xprompt
 is controlled by the keyboard.
@@ -331,14 +303,8 @@ The background color of the selected items in the dropdown completion list.
 .B xprompt.seldescription
 The foreground color of the description of selected items in the dropdown completion list.
 .TP
-.B xprompt.border
-The color of the border around xprompt.
-.TP
 .B xprompt.separator
 The color of the separator between the input field and the dropdown list.
-.TP
-.B xprompt.borderWidth
-The size in pixels of the border around xprompt.
 .TP
 .B xprompt.separatorWidth
 The size in pixels of the item separator.
@@ -347,19 +313,12 @@ The size in pixels of the item separator.
 The number of items to be listed in the dropdown completion list.
 .TP
 .B xprompt.geometry
-The geometry in the form <WIDTH>x<HEIGHT>+<XOFFSET>+<YOFFSET>.
-Replace <WIDTH> by the desired width, <HEIGHT> by the desired height, and so on.
+The geometry in the form <WIDTH>x<HEIGHT>.
+Replace <WIDTH> by the desired width, <HEIGHT> by the desired height of a single line.
 A value of 0 sets a field to the default value.
 So, for example,
-.B 0x20+0+0
-set the height to 20 pixels while maintaining other values to the default.
-.TP
-.B xprompt.gravity
-Where in the screen or parent window to display xprompt.
-It can be "N" for NorthGravity (display on the top center of the screen);
-"SE" for SouthEastGravity (display on the bottom right corner of the screen);
-"C" for CenterGravity (display on the center of the screen);
-etc.
+.B 0x20
+set the height to 20 pixels while maintaining the width to the default.
 .SH EXAMPLES
 Suppose a file
 containing the following content,
@@ -383,7 +342,7 @@ By passing this file as stdin to
 .BR xprompt ,
 .B xprompt
 will have the following behavior when pressing Tab.
-.IP
+.IP \(bu 2
 If the input field is empty,
 .B xprompt
 will display a dropdown list with the following three entries after pressing Tab:
@@ -391,7 +350,7 @@ will display a dropdown list with the following three entries after pressing Tab
 .IR man ", and"
 .IR open .
 It will also display descriptions after each completion.
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I git
 at the beginning of the line,
@@ -401,7 +360,7 @@ will display a dropdown list with the following four entries after pressing Tab:
 .IR rm ,
 .IR mv ", and"
 .IR commit .
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I man
 at the beginning of the line,
@@ -411,7 +370,7 @@ will display a dropdown list with the following four entries after pressing Tab:
 .IR cut ,
 .IR ed ", and"
 .IR vi .
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I open
 at the beginning of the line, and
@@ -424,4 +383,5 @@ will display a dropdown list with possible filenames after pressing Tab,
 since no completion was specified at stdin.
 .SH SEE ALSO
 .IR dmenu (1),
+.IR shod (1),
 .IR xmenu (1)

@@ -17,33 +17,29 @@
 #include <X11/XKBlib.h>
 #include <X11/Xft/Xft.h>
 #include <X11/cursorfont.h>
-#include <X11/extensions/Xinerama.h>
 #include "xprompt.h"
 
 /* X stuff */
 static Display *dpy;
 static int screen;
 static Visual *visual;
-static Window rootwin;
+static Window transfor;
+static Window root;
 static Colormap colormap;
 static XrmDatabase xdb;
 static Cursor cursor;
 static char *xrm;
 static struct IC ic;
 static struct DC dc;
-static struct Monitor mon;
-static Atom utf8;
-static Atom clip;
+static Atom atoms[AtomLast];
 
 /* flags */
 static int aflag = 0;   /* whether to keep looking for arguments to complete */
 static int dflag = 0;   /* whether to show only item descriptions */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
-static int mflag = 0;   /* whether the user specified a monitor */
 static int pflag = 0;   /* whether to enable password mode */
 static int sflag = 0;   /* whether a single enter or esc closes xprompt*/
-static int wflag = 0;   /* whether to enable embeded prompt */
 
 /* ctrl operations */
 static enum Ctrl ctrl[CaseLast][NLETTERS];
@@ -61,8 +57,7 @@ static int filecomp = 0;
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-adfips] [-G gravity] [-g geometry] [-h file]\n"
-	                      "               [-m monitor] [-w windowid] [prompt]\n");
+	(void)fprintf(stderr, "usage: xprompt [-adfips] [-h file] [-w windowid] [prompt]\n");
 	exit(1);
 }
 
@@ -111,8 +106,6 @@ getresources(void)
 
 	if (XrmGetResource(xdb, "xprompt.items", "*", &type, &xval) == True)
 		config.number_items = strtoul(xval.addr, NULL, 10);
-	if (XrmGetResource(xdb, "xprompt.borderWidth", "*", &type, &xval) == True)
-		config.border_pixels = strtoul(xval.addr, NULL, 10);
 	if (XrmGetResource(xdb, "xprompt.separatorWidth", "*", &type, &xval) == True)
 		config.separator_pixels = strtoul(xval.addr, NULL, 10);
 	if (XrmGetResource(xdb, "xprompt.background", "*", &type, &xval) == True)
@@ -135,14 +128,10 @@ getresources(void)
 		config.seldescription_color = xval.addr;
 	if (XrmGetResource(xdb, "xprompt.separator", "*", &type, &xval) == True)
 		config.separator_color = xval.addr;
-	if (XrmGetResource(xdb, "xprompt.border", "*", &type, &xval) == True)
-		config.border_color = xval.addr;
 	if (XrmGetResource(xdb, "xprompt.font", "*", &type, &xval) == True)
 		config.font = xval.addr;
 	if (XrmGetResource(xdb, "xprompt.geometry", "*", &type, &xval) == True)
 		config.geometryspec = xval.addr;
-	if (XrmGetResource(xdb, "xprompt.gravity", "*", &type, &xval) == True)
-		config.gravityspec = xval.addr;
 }
 
 /* get configuration from environment variables */
@@ -163,16 +152,13 @@ getenvironment(void)
 
 /* get configuration from command-line options, return non-option argument */
 static char *
-getoptions(int argc, char *argv[], Window *win_ret)
+getoptions(int argc, char *argv[])
 {
 	int ch;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "G:adfg:h:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "adfh:ipsw:")) != -1) {
 		switch (ch) {
-		case 'G':
-			config.gravityspec = optarg;
-			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -182,18 +168,11 @@ getoptions(int argc, char *argv[], Window *win_ret)
 		case 'f':
 			fflag = 1;
 			break;
-		case 'g':
-			config.geometryspec = optarg;
-			break;
 		case 'h':
 			config.histfile = optarg;
 			break;
 		case 'i':
 			fstrncmp = strncasecmp;
-			break;
-		case 'm':
-			mflag = 1;
-			mon.num = strtoul(optarg, NULL, 10);
 			break;
 		case 'p':
 			pflag = 1;
@@ -202,8 +181,9 @@ getoptions(int argc, char *argv[], Window *win_ret)
 			sflag = 1;
 			break;
 		case 'w':
-			wflag = 1;
-			*win_ret = strtoul(optarg, NULL, 0);
+			transfor = strtoul(optarg, NULL, 0);
+			if (transfor == 0)
+				transfor = root;
 			break;
 		default:
 			usage();
@@ -225,37 +205,6 @@ ealloccolor(const char *s, XftColor *color)
 {
 	if(!XftColorAllocName(dpy, visual, colormap, s, color))
 		errx(1, "could not allocate color: %s", s);
-}
-
-/* get position of focused windows or of the cursor */
-static void
-getreferencepos(int *x_ret, int *y_ret)
-{
-	Window win, focuswin = None, parentwin = None;
-	Window dw, *dws;    /* dummy variable */
-	int di;             /* dummy variable */
-	unsigned du;        /* dummy variable */
-	XWindowAttributes wa;
-
-	XGetInputFocus(dpy, &win, &di);
-	if (win != rootwin && win != None) {
-		while (parentwin != rootwin) {
-			if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws)
-				XFree(dws);
-			focuswin = win;
-			win = parentwin;
-		}
-		if (focuswin != None && XGetWindowAttributes(dpy, focuswin, &wa)) {
-			*x_ret = wa.x + wa.width / 2;
-			*y_ret = wa.y + wa.height / 2;
-			return;
-		}
-	}
-	if (XQueryPointer(dpy, rootwin, &dw, &dw, x_ret, y_ret, &di, &di, &du))
-		return;
-
-	x_ret = 0;
-	y_ret = 0;
 }
 
 /* parse color string */
@@ -293,45 +242,21 @@ parsefonts(const char *s)
 	}
 }
 
-/* query monitor information and cursor position */
+/* initialize atom array */
 static void
-initmonitor(void)
+initatoms(void)
 {
-	XineramaScreenInfo *info = NULL;
-	int nmons;
-	int i;
+	char *atomnames[AtomLast] = {
+		[Utf8String] = "UTF8_STRING",
+		[Clipboard] = "CLIPBOARD",
+		[Targets] = "TARGETS",
+		[WMDelete] = "WM_DELETE_WINDOW",
+		[NetWMName] = "_NET_WM_NAME",
+		[NetWMWindowType] = "_NET_WM_WINDOW_TYPE",
+		[NetWMWindowTypePrompt] = "_NET_WM_WINDOW_TYPE_PROMPT",
+	};
 
-	if ((info = XineramaQueryScreens(dpy, &nmons)) != NULL) {
-		int selmon = 0;
-
-		/* the user didn't specified a monitor, so let's use the monitor
-		 * of the focused window or the monitor with the cursor */
-		if (!mflag || mon.num < 0 || mon.num >= nmons) {
-			int x, y;
-
-			getreferencepos(&x, &y);
-			for (i = 0; i < nmons; i++) {
-				if (BETWEEN(x, info[i].x_org, info[i].x_org + info[i].width) &&
-				    BETWEEN(y, info[i].y_org, info[i].y_org + info[i].height)) {
-					selmon = i;
-					break;
-				}
-			}
-		} else {
-			selmon = mon.num;
-		}
-
-		mon.x = info[selmon].x_org;
-		mon.y = info[selmon].y_org;
-		mon.w = info[selmon].width;
-		mon.h = info[selmon].height;
-
-		XFree(info);
-	} else {
-		mon.x = mon.y = 0;
-		mon.w = DisplayWidth(dpy, screen);
-		mon.h = DisplayHeight(dpy, screen);
-	}
+	XInternAtoms(dpy, atomnames, AtomLast, False, atoms);
 }
 
 /* init draw context */
@@ -349,13 +274,12 @@ initdc(void)
 	ealloccolor(config.selforeground_color,     &dc.selected[ColorFG]);
 	ealloccolor(config.seldescription_color,    &dc.selected[ColorCM]);
 	ealloccolor(config.separator_color,         &dc.separator);
-	ealloccolor(config.border_color,            &dc.border);
 
 	/* try to get font */
 	parsefonts(config.font);
 
 	/* create common GC */
-	dc.gc = XCreateGC(dpy, rootwin, 0, NULL);
+	dc.gc = XCreateGC(dpy, root, 0, NULL);
 
 	/* compute left text padding */
 	dc.pad = dc.fonts[0]->height;
@@ -650,35 +574,20 @@ static size_t
 resizeprompt(struct Prompt *prompt, size_t nitems_old)
 {
 	size_t nitems_new;
-	unsigned h;
-	int y;
+	int h;
 
 	if (prompt->nitems && nitems_old != prompt->nitems) {
 		h = prompt->h * (prompt->nitems + 1) + prompt->separator;
-		y = prompt->y - h + prompt->h;
-
 		nitems_new = prompt->nitems;
 	} else if (nitems_old && !prompt->nitems) {
 		h = prompt->h;
-		y = prompt->y;
-
 		nitems_new = 0;
 	} else {
 		nitems_new = nitems_old;
 	}
-
-	/*
-	 * if the old and new number of items are the same,
-	 * there's no need to resize the window
-	 */
 	if (nitems_old != nitems_new) {
-		/* if gravity is south, resize and move, otherwise just resize */
-		if (ISSOUTH(prompt->gravity))
-			XMoveResizeWindow(dpy, prompt->win, prompt->x, y, prompt->w, h);
-		else
-			XResizeWindow(dpy, prompt->win, prompt->w, h);
+		XResizeWindow(dpy, prompt->win, prompt->w, h);
 	}
-
 	return nitems_new;
 }
 
@@ -805,7 +714,7 @@ drawprompt(struct Prompt *prompt)
 
 	/* background of items */
 	y = prompt->h + prompt->separator;
-	h = prompt->h * prompt->nitems;
+	h = prompt->h * prompt->maxitems;
 	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
 	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
 
@@ -815,7 +724,7 @@ drawprompt(struct Prompt *prompt)
 
 done:
 	/* commit drawing */
-	h = prompt->h * (prompt->nitems + 1) + prompt->separator;
+	h = prompt->h * (prompt->maxitems + 1) + prompt->separator;
 	XCopyArea(dpy, prompt->pixmap, prompt->win, dc.gc, 0, 0, prompt->w, h, 0, 0);
 }
 
@@ -1017,63 +926,24 @@ getnum(const char **s, int *n)
 
 /* parse geometry specification and return geometry values */
 static void
-parsegeometryspec(int *x, int *y, int *w, int *h)
+parsegeometryspec(int *w, int *h)
 {
-	int sign;
 	int n;
 	const char *s;
 
-	*x = *y = *w = *h = 0;
+	*w = *h = 0;
 	s = config.geometryspec;
-
-	if (*s != '+' && *s != '-') {
-		/* get *w */
-		if (getnum(&s, &n))
-			goto error;
-		if (*s == '%') {
-			if (n > 100)
-				goto error;
-			*w = (n * (mon.w - config.border_pixels * 2))/100;
-			s++;
-		} else {
-			*w = n;
-		}
-		if (*s++ != 'x')
-			goto error;
-
-		/* get *h */
-		if (getnum(&s, &n))
-			goto error;
-		if (*s == '%') {
-			if (n > 100)
-				goto error;
-			*h = (n * (mon.h - config.border_pixels * 2))/100;
-			s++;
-		} else {
-			*h = n;
-		}
-	}
-
-	if (*s == '+' || *s == '-') {
-		/* get *x */
-		sign = (*s++ == '-') ? -1 : 1;
-		if (getnum(&s, &n))
-			goto error;
-		*x = n * sign;
-		if (*s != '+' && *s != '-')
-			goto error;
-
-		/* get *y */
-		sign = (*s++ == '-') ? -1 : 1;
-		if (getnum(&s, &n))
-			goto error;
-		*y = n * sign;
-	}
+	if (getnum(&s, &n))     /* get *w */
+		goto error;
+	*w = n;
+	if (*s++ != 'x')        /* get *h */
+		goto error;
+	if (getnum(&s, &n))
+		goto error;
+	*h = n;
 	if (*s != '\0')
 		goto error;
-
 	return;
-
 error:
 	errx(1, "improper geometry specification %s", config.geometryspec);
 }
@@ -1120,97 +990,15 @@ setpromptarray(struct Prompt *prompt)
 
 /* calculate prompt geometry */
 static void
-setpromptgeom(struct Prompt *prompt, Window parentwin)
+setpromptgeom(struct Prompt *prompt)
 {
-	int x, y, w, h;     /* geometry of monitor or parent window */
-
-	/* try to get attributes of parent window */
-	if (wflag) {
-		XWindowAttributes wa;   /* window attributes of the parent window */
-		if (!XGetWindowAttributes(dpy, parentwin, &wa))
-			errx(1, "could not get window attributes of 0x%lx", parentwin);
-		x = y = 0;
-		w = wa.width;
-		h = wa.height;
-	} else {
-		x = mon.x;
-		y = mon.y;
-		w = mon.w;
-		h = mon.h;
-	}
-	
-	/* get width of border and separator */
-	prompt->border = config.border_pixels;
+	/* calculate basic width */
 	prompt->separator = config.separator_pixels;
-
-	/* get prompt gravity */
-	if (config.gravityspec == NULL || strcmp(config.gravityspec, "N") == 0)
-		prompt->gravity = NorthGravity;
-	else if (strcmp(config.gravityspec, "NW") == 0)
-		prompt->gravity = NorthWestGravity;
-	else if (strcmp(config.gravityspec, "NE") == 0)
-		prompt->gravity = NorthEastGravity;
-	else if (strcmp(config.gravityspec, "W") == 0)
-		prompt->gravity = WestGravity;
-	else if (strcmp(config.gravityspec, "C") == 0)
-		prompt->gravity = CenterGravity;
-	else if (strcmp(config.gravityspec, "E") == 0)
-		prompt->gravity = EastGravity;
-	else if (strcmp(config.gravityspec, "SW") == 0)
-		prompt->gravity = SouthWestGravity;
-	else if (strcmp(config.gravityspec, "S") == 0)
-		prompt->gravity = SouthGravity;
-	else if (strcmp(config.gravityspec, "SE") == 0)
-		prompt->gravity = SouthEastGravity;
-	else
-		errx(1, "Unknown gravity %s", config.gravityspec);
-
-	/* get prompt geometry */
-	parsegeometryspec(&prompt->x, &prompt->y, &prompt->w, &prompt->h);
-
-	/* update prompt size, based on parent window's size */
+	parsegeometryspec(&prompt->w, &prompt->h);
 	if (prompt->w == 0)
-		prompt->w = w - prompt->border * 2;
+		prompt->w = DEFWIDTH;
 	if (prompt->h == 0)
 		prompt->h = DEFHEIGHT;
-	prompt->w = MIN(prompt->w, w);
-	prompt->h = MIN(prompt->h, h);
-
-	/* update prompt position, based on prompt's gravity */
-	prompt->x += x;
-	prompt->y += y;
-	switch (prompt->gravity) {
-	case NorthWestGravity:
-		break;
-	case NorthGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		break;
-	case NorthEastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		break;
-	case WestGravity:
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case CenterGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case EastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		prompt->y += (h - prompt->h)/2 - prompt->border;
-		break;
-	case SouthWestGravity:
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	case SouthGravity:
-		prompt->x += (w - prompt->w)/2 - prompt->border;
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	case SouthEastGravity:
-		prompt->x += w - prompt->w - prompt->border * 2;
-		prompt->y += h - prompt->h - prompt->border * 2;
-		break;
-	}
 
 	/* calculate prompt string width */
 	if (prompt->promptstr && *prompt->promptstr)
@@ -1225,52 +1013,29 @@ setpromptgeom(struct Prompt *prompt, Window parentwin)
 
 /* set up prompt window */
 static void
-setpromptwin(struct Prompt *prompt, Window parentwin)
+setpromptwin(struct Prompt *prompt, int argc, char *argv[])
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
-	XClassHint classh = {PROGNAME, PROGNAME};
+	XClassHint classh = {CLASSNAME, PROGNAME};
 
 	/* create prompt window */
-	swa.override_redirect = True;
 	swa.background_pixel = dc.normal[ColorBG].pixel;
-	swa.border_pixel = dc.border.pixel;
-	prompt->win = XCreateWindow(dpy, parentwin,
-	                            prompt->x, prompt->y, prompt->w, prompt->h, prompt->border,
-	                            CopyFromParent, CopyFromParent, CopyFromParent,
-	                            CWOverrideRedirect | CWBackPixel | CWBorderPixel,
-	                            &swa);
-	XSetClassHint(dpy, prompt->win, &classh);
+	prompt->win = XCreateWindow(dpy, root, 0, 0, prompt->w, prompt->h, 0, CopyFromParent, CopyFromParent, CopyFromParent, CWBackPixel, &swa);
 
-	/* set window normal hints */
+	/* set window hints, protocols and properties */
 	sizeh.flags = PMaxSize | PMinSize;
 	sizeh.min_width = sizeh.max_width = prompt->w;
 	sizeh.min_height = sizeh.max_height = prompt->h;
-	XSetWMNormalHints(dpy, prompt->win, &sizeh);
-}
-
-/* setup pixmap */
-static void
-setpromptpix(struct Prompt *prompt)
-{
-	int h, y;
-
-	h = prompt->separator + prompt->h * (prompt->maxitems + 1);
-	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h,
-	                               DefaultDepth(dpy, screen));
-	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
-
-	/* draw the prompt string and update x to the end of it */
-	if (prompt->promptstr) {
-		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
-		drawtext(prompt->draw, &dc.normal[ColorFG], dc.pad, 0, prompt->h, prompt->promptstr, 0);
+	XmbSetWMProperties(dpy, prompt->win, PROGNAME, PROGNAME, argv, argc, &sizeh, NULL, &classh);
+	XSetWMProtocols(dpy, prompt->win, &atoms[WMDelete], 1);
+	XChangeProperty(dpy, prompt->win, atoms[NetWMName], atoms[Utf8String], 8,
+	                PropModeReplace, (unsigned char *)PROGNAME, strlen(PROGNAME));
+	XChangeProperty(dpy, prompt->win, atoms[NetWMWindowType], XA_ATOM, 32,
+	                PropModeReplace, (unsigned char *)&atoms[NetWMWindowTypePrompt], 1);
+	if (transfor != None) {
+		XSetTransientForHint(dpy, prompt->win, transfor);
 	}
-
-	/* draw separator line */
-	y = prompt->h + prompt->separator/2;
-	XSetForeground(dpy, dc.gc, dc.separator.pixel);
-	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 }
 
 /* setup prompt input context */
@@ -1349,61 +1114,42 @@ setpromptic(struct Prompt *prompt)
 
 /* select prompt window events */
 static void
-setpromptevents(struct Prompt *prompt, Window parentwin)
+setpromptevents(struct Prompt *prompt)
 {
-	Window r, p;    /* unused variables */
-	Window *children;
-	unsigned i, nchildren;
-
-	XSelectInput(dpy, prompt->win,
+	XSelectInput(dpy, prompt->win, StructureNotifyMask |
 	             ExposureMask | KeyPressMask | VisibilityChangeMask |
 	             ButtonPressMask | PointerMotionMask | ic.eventmask);
-
-	/* selecect focus event mask for the parent window */
-	if (wflag) {
-		XSelectInput(dpy, parentwin, FocusChangeMask);
-		if (XQueryTree(dpy, parentwin, &r, &p, &children, &nchildren)) {
-			for (i = 0; i < nchildren && children[i] != prompt->win; i++)
-				XSelectInput(dpy, children[i], FocusChangeMask);
-			XFree(children);
-		}
-	}
 }
 
-/* try to grab keyboard, we may have to wait for another process to ungrab */
+/* create pixmap */
 static void
-grabkeyboard(void)
+createpix(struct Prompt *prompt)
 {
-	struct timespec ts = { .tv_sec = 0, .tv_nsec = 1000000  };
-	int i;
+	int h, y;
 
-	for (i = 0; i < 1000; i++) {
-		if (XGrabKeyboard(dpy, rootwin, True, GrabModeAsync,
-		                  GrabModeAsync, CurrentTime) == GrabSuccess)
-			return;
-		nanosleep(&ts, NULL);
+	h = prompt->separator + prompt->h * (prompt->maxitems + 1);
+	prompt->pixmap = XCreatePixmap(dpy, prompt->win, prompt->w, h, DefaultDepth(dpy, screen));
+	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->w, h);
+
+	/* draw the prompt string and update x to the end of it */
+	if (prompt->promptstr) {
+		drawtext(prompt->draw, &dc.normal[ColorFG], dc.pad, 0, prompt->h, prompt->promptstr, 0);
 	}
-	errx(1, "cannot grab keyboard");
+
+	/* draw separator line */
+	y = prompt->h + prompt->separator/2;
+	XSetForeground(dpy, dc.gc, dc.separator.pixel);
+	XDrawLine(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, y);
 }
 
-/* try to grab focus, we may have to wait for another process to ungrab */
+/* destroy pixmap */
 static void
-grabfocus(Window win)
+destroypix(struct Prompt *prompt)
 {
-	struct timespec ts = { .tv_sec = 0, .tv_nsec = 10000000  };
-	Window focuswin;
-	int i, revertwin;
-
-	for (i = 0; i < 100; ++i) {
-		XGetInputFocus(dpy, &focuswin, &revertwin);
-		if (focuswin == win) {
-			XSetICFocus(ic.xic);
-			return;
-		}
-		XSetInputFocus(dpy, win, RevertToParent, CurrentTime);
-		nanosleep(&ts, NULL);
-	}
-	errx(1, "cannot grab focus");
+	XFreePixmap(dpy, prompt->pixmap);
+	XftDrawDestroy(prompt->draw);
 }
 
 /* delete selected text */
@@ -1510,9 +1256,9 @@ paste(struct Prompt *prompt)
 	unsigned long dl;   /* dummy variable */
 	Atom da;            /* dummy variable */
 
-	if (XGetWindowProperty(dpy, prompt->win, utf8,
+	if (XGetWindowProperty(dpy, prompt->win, atoms[Utf8String],
 	                       0, prompt->textsize / 4 + 1, False,
-	                       utf8, &da, &di, &dl, &dl, (unsigned char **)&p)
+	                       atoms[Utf8String], &da, &di, &dl, &dl, (unsigned char **)&p)
 	    == Success && p) {
 		addundo(prompt, 1);
 		insert(prompt, p, (q = strchr(p, '\n')) ? q - p : (ssize_t)strlen(p));
@@ -1525,7 +1271,6 @@ static void
 copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
 {
 	XSelectionEvent xselev;
-	Atom xa_targets;
 
 	xselev.type = SelectionNotify;
 	xselev.requestor = ev->requestor;
@@ -1537,12 +1282,10 @@ copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
 	if (ev->property == None)
 		ev->property = ev->target;
 
-	xa_targets = XInternAtom(dpy, "TARGETS", 0);
-
-	if (ev->target == xa_targets) {     /* respond with the supported type */
+	if (ev->target == atoms[Targets]) {     /* respond with the supported type */
 		XChangeProperty(dpy, ev->requestor, ev->property, XA_ATOM, 32,
-		                PropModeReplace, (unsigned char *)&utf8, 1);
-	} else if (ev->target == utf8 || ev->target == XA_STRING) {
+		                PropModeReplace, (unsigned char *)&atoms[Utf8String], 1);
+	} else if (ev->target == atoms[Utf8String] || ev->target == XA_STRING) {
 		unsigned minpos, maxpos;
 		char *seltext;
 
@@ -1945,10 +1688,10 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	prevoperation = operation;
 	switch (operation) {
 	case CTRLPASTE:
-		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
+		XConvertSelection(dpy, atoms[Clipboard], atoms[Utf8String], atoms[Utf8String], prompt->win, CurrentTime);
 		return Nop;
 	case CTRLCOPY:
-		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
+		XSetSelectionOwner(dpy, atoms[Clipboard], prompt->win, CurrentTime);
 		return Nop;
 	case CTRLCANCEL:
 		if (sflag || !prompt->matchlist || prompt->text[0] == '\0')
@@ -2149,7 +1892,8 @@ getitem(struct Prompt *prompt, int y)
 	y -= prompt->h + prompt->separator;
 	y = MAX(y, 0);
 	n = y / prompt->h;
-
+	if (n > prompt->nitems)
+		return NULL;
 	for (i = 0, item = prompt->matchlist;
 	     i < n && item->nextmatch;
 	     i++, item = item->nextmatch)
@@ -2171,7 +1915,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	switch (ev->button) {
 	case Button2:                               /* middle click paste */
 		delselection(prompt);
-		XConvertSelection(dpy, XA_PRIMARY, utf8, utf8, prompt->win, CurrentTime);
+		XConvertSelection(dpy, XA_PRIMARY, atoms[Utf8String], atoms[Utf8String], prompt->win, CurrentTime);
 		return Nop;
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
@@ -2194,7 +1938,9 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 			lasttime = ev->time;
 			return DrawInput;
 		} else if (ev->y > prompt->h + prompt->separator) {
-			prompt->selitem = getitem(prompt, ev->y);
+			if ((prompt->selitem = getitem(prompt, ev->y)) == NULL) {
+				return Nop;
+			}
 			insertselitem(prompt);
 			if (sflag) {
 				puts(prompt->text);
@@ -2266,6 +2012,16 @@ pointermotion(struct Prompt *prompt, XMotionEvent *ev)
 	return (prevhover != prompt->hoveritem) ? DrawPrompt : Nop;
 }
 
+/* resize prompt */
+static enum Press_ret
+resize(struct Prompt *prompt, XConfigureEvent *ev)
+{
+	prompt->w = ev->width;
+	destroypix(prompt);
+	createpix(prompt);
+	return DrawPrompt;
+}
+
 /* save history in history file */
 static void
 savehist(struct Prompt *prompt, struct History *hist)
@@ -2303,7 +2059,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 	enum Press_ret retval = Nop;
 
 	XMapRaised(dpy, prompt->win);
-	grabfocus(prompt->win);
+	createpix(prompt);
 	while (!XNextEvent(dpy, &ev)) {
 		if (XFilterEvent(&ev, None))
 			continue;
@@ -2312,11 +2068,6 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 		case Expose:
 			if (ev.xexpose.count == 0)
 				retval = DrawPrompt;
-			break;
-		case FocusIn:
-			/* regrab focus from parent window */
-			if (ev.xfocus.window != prompt->win)
-				grabfocus(prompt->win);
 			break;
 		case KeyPress:
 			retval = keypress(prompt, rootitem, hist, &ev.xkey);
@@ -2336,7 +2087,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				XRaiseWindow(dpy, prompt->win);
 			break;
 		case SelectionNotify:
-			if (ev.xselection.property != utf8)
+			if (ev.xselection.property != atoms[Utf8String])
 				break;
 			delselection(prompt);
 			paste(prompt);
@@ -2344,6 +2095,13 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 			break;
 		case SelectionRequest:
 			copy(prompt, &ev.xselectionrequest);
+			break;
+		case ConfigureNotify:
+			retval = resize(prompt, &ev.xconfigure);
+			break;
+		case ClientMessage:
+			if ((Atom)ev.xclient.data.l[0] == atoms[WMDelete])
+				retval = Esc;
 			break;
 		}
 		switch (retval) {
@@ -2399,8 +2157,7 @@ cleanprompt(struct Prompt *prompt)
 	free(prompt->text);
 	free(prompt->itemarray);
 
-	XFreePixmap(dpy, prompt->pixmap);
-	XftDrawDestroy(prompt->draw);
+	destroypix(prompt);
 	XDestroyWindow(dpy, prompt->win);
 }
 
@@ -2408,12 +2165,16 @@ cleanprompt(struct Prompt *prompt)
 static void
 cleandc(void)
 {
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorBG]);
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.normal[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.selected[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.selected[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.selected[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.separator);
-	XftColorFree(dpy, visual, colormap, &dc.border);
 	XFreeGC(dpy, dc.gc);
 }
 
@@ -2439,7 +2200,6 @@ main(int argc, char *argv[])
 	struct History hist = {.entries = NULL, .index = 0, .size = 0};
 	struct Prompt prompt;
 	struct Item *rootitem;
-	Window parentwin;
 
 	/* set locale and modifiers */
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
@@ -2452,12 +2212,9 @@ main(int argc, char *argv[])
 		errx(1, "cannot open display");
 	screen = DefaultScreen(dpy);
 	visual = DefaultVisual(dpy, screen);
-	rootwin = RootWindow(dpy, screen);
+	root = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
-
-	/* intern atoms */
-	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
-	clip = XInternAtom(dpy, "CLIPBOARD", False);
+	transfor = None;
 
 	/* initialize resource manager database */
 	XrmInitialize();
@@ -2465,13 +2222,12 @@ main(int argc, char *argv[])
 		xdb = XrmGetStringDatabase(xrm);
 
 	/* get configuration */
-	parentwin = rootwin;
 	getresources();
 	getenvironment();
-	prompt.promptstr = getoptions(argc, argv, &parentwin);
+	prompt.promptstr = getoptions(argc, argv);
 
 	/* init */
-	initmonitor();
+	initatoms();
 	initctrl();
 	initdc();
 	initcursor();
@@ -2480,11 +2236,10 @@ main(int argc, char *argv[])
 	setpromptinput(&prompt);
 	setpromptundo(&prompt);
 	setpromptarray(&prompt);
-	setpromptgeom(&prompt, parentwin);
-	setpromptwin(&prompt, parentwin);
-	setpromptpix(&prompt);
+	setpromptgeom(&prompt);
+	setpromptwin(&prompt, argc, argv);
 	setpromptic(&prompt);
-	setpromptevents(&prompt, parentwin);
+	setpromptevents(&prompt);
 
 	/* initiate item list */
 	rootitem = parsestdin(stdin);
@@ -2499,10 +2254,6 @@ main(int argc, char *argv[])
 				fclose(hist.fp);
 		}
 	}
-
-	/* grab input */
-	if (!wflag)
-		grabkeyboard();
 
 	/* run event loop; and, if run return nonzero, save the history */
 	run(&prompt, rootitem, &hist);

@@ -19,13 +19,10 @@ static struct Config config = {
 	.selforeground_color = "#FFFFFF",
 	.seldescription_color = "#C5C8C6",
 	.separator_color = "#555753",
-	.border_color = "#555753",
 
 	/* Default geometry */
-	.geometryspec = "0x0+0+0",
-	.gravityspec = "N",
+	.geometryspec = "0x0",
 	.number_items = 8,      /* number of items listed for completion */
-	.border_pixels = 2,     /* prompt border */
 	.separator_pixels = 3,  /* space around separator */
 
 	/* history */

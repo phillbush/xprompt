@@ -1,5 +1,7 @@
+#define CLASSNAME    "XPrompt"
 #define PROGNAME     "xprompt"
 #define INPUTSIZ     1024
+#define DEFWIDTH     600    /* default width */
 #define DEFHEIGHT    20     /* default height for each text line */
 #define DOUBLECLICK  250    /* time in miliseconds of a double click */
 #define TEXTPART     7      /* completion word can be 1/7 of xprompt width */
@@ -23,6 +25,18 @@
 enum {ColorFG, ColorBG, ColorCM, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
 enum Press_ret {DrawPrompt, DrawInput, Esc, Enter, Nop};
+
+/* atoms */
+enum {
+	Utf8String,
+	Clipboard,
+	Targets,
+	WMDelete,
+	NetWMName,
+	NetWMWindowType,
+	NetWMWindowTypePrompt,
+	AtomLast
+};
 
 /* Input operations */
 enum Ctrl {
@@ -75,14 +89,10 @@ struct Config {
 	const char *selforeground_color;
 	const char *seldescription_color;
 	const char *separator_color;
-	const char *border_color;
-
 	const char *geometryspec;
-	const char *gravityspec;
 
 	unsigned number_items;
 
-	int border_pixels;
 	int separator_pixels;
 
 	const char *histfile;
@@ -96,7 +106,6 @@ struct DC {
 	XftColor hover[ColorLast];      /* bg and fg of hovered item */
 	XftColor normal[ColorLast];     /* bg and fg of normal text */
 	XftColor selected[ColorLast];   /* bg and fg of the selected item */
-	XftColor border;                /* color of the border */
 	XftColor separator;             /* color of the separator */
 
 	GC gc;                          /* graphics context */
@@ -128,12 +137,6 @@ struct Item {
 	char *description;                  /* description of the completion item */
 };
 
-/* monitor geometry structure */
-struct Monitor {
-	int num;                /* monitor number */
-	int x, y, w, h;         /* monitor geometry */
-};
-
 /* undo list entry */
 struct Undo {
 	struct Undo *prev, *next;
@@ -162,8 +165,6 @@ struct Prompt {
 	size_t nitems;              /* number of items in itemarray */
 	size_t maxitems;            /* maximum number of items in itemarray */
 
-	int gravity;                /* where in the screen to map xprompt */
-	int x, y;                   /* position of xprompt */
 	int w, h;                   /* width and height of xprompt */
 	int descx;                  /* x position of the description field */
 	int border;                 /* border width */

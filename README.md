@@ -40,6 +40,11 @@ in dmenu:
 * Undo/redo (by default bound to Ctrl-Z and Ctrl-Shift-Z).
 * Copy/paste both via mouse and keybindings.
 
+In this branch (managed), Xprompt does not set the override-redirect flag.
+This means that Xprompt is a regular window managed by the window manager;
+consequently, Xprompt does not manage itself, and it has no knowledge of
+monitors, gravity or window border (all of that should be set by the
+window manager).
 
 ## Files
 
@@ -58,7 +63,7 @@ The files are:
 
 First, edit ./config.mk to match your local setup.
 
-In order to build XPrompt you need the Xlib, Xft and Xinerama header files.
+In order to build XPrompt you need the Xlib and Xft header files.
 The default configuration for XPrompt is specified in the file `config.h`,
 you can edit it, but most configuration can be changed at runtime via
 X resources, environment variables and/or command-line arguments.
