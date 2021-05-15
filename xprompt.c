@@ -24,7 +24,7 @@
 static Display *dpy;
 static int screen;
 static Visual *visual;
-static Window rootwin;
+static Window root;
 static Colormap colormap;
 static XrmDatabase xdb;
 static Cursor cursor;
@@ -32,8 +32,7 @@ static char *xrm;
 static struct IC ic;
 static struct DC dc;
 static struct Monitor mon;
-static Atom utf8;
-static Atom clip;
+static Atom atoms[AtomLast];
 
 /* flags */
 static int aflag = 0;   /* whether to keep looking for arguments to complete */
@@ -238,8 +237,8 @@ getreferencepos(int *x_ret, int *y_ret)
 	XWindowAttributes wa;
 
 	XGetInputFocus(dpy, &win, &di);
-	if (win != rootwin && win != None) {
-		while (parentwin != rootwin) {
+	if (win != root && win != None) {
+		while (parentwin != root) {
 			if (XQueryTree(dpy, win, &dw, &parentwin, &dws, &du) && dws)
 				XFree(dws);
 			focuswin = win;
@@ -251,7 +250,7 @@ getreferencepos(int *x_ret, int *y_ret)
 			return;
 		}
 	}
-	if (XQueryPointer(dpy, rootwin, &dw, &dw, x_ret, y_ret, &di, &di, &du))
+	if (XQueryPointer(dpy, root, &dw, &dw, x_ret, y_ret, &di, &di, &du))
 		return;
 
 	x_ret = 0;
@@ -291,6 +290,19 @@ parsefonts(const char *s)
 		if ((dc.fonts[nfont++] = XftFontOpenName(dpy, screen, buf)) == NULL)
 			errx(1, "cannot load font");
 	}
+}
+
+/* initialize atoms array */
+static void
+initatoms(void)
+{
+	char *atomnames[AtomLast] = {
+		[Utf8String] = "UTF8_STRING",
+		[Clipboard] = "CLIPBOARD",
+		[Targets] = "TARGETS"
+	};
+
+	XInternAtoms(dpy, atomnames, AtomLast, False, atoms);
 }
 
 /* query monitor information and cursor position */
@@ -355,7 +367,7 @@ initdc(void)
 	parsefonts(config.font);
 
 	/* create common GC */
-	dc.gc = XCreateGC(dpy, rootwin, 0, NULL);
+	dc.gc = XCreateGC(dpy, root, 0, NULL);
 
 	/* compute left text padding */
 	dc.pad = dc.fonts[0]->height;
@@ -1229,7 +1241,7 @@ setpromptwin(struct Prompt *prompt, Window parentwin)
 {
 	XSetWindowAttributes swa;
 	XSizeHints sizeh;
-	XClassHint classh = {PROGNAME, PROGNAME};
+	XClassHint classh = {CLASSNAME, PROGNAME};
 
 	/* create prompt window */
 	swa.override_redirect = True;
@@ -1378,7 +1390,7 @@ grabkeyboard(void)
 	int i;
 
 	for (i = 0; i < 1000; i++) {
-		if (XGrabKeyboard(dpy, rootwin, True, GrabModeAsync,
+		if (XGrabKeyboard(dpy, root, True, GrabModeAsync,
 		                  GrabModeAsync, CurrentTime) == GrabSuccess)
 			return;
 		nanosleep(&ts, NULL);
@@ -1510,9 +1522,9 @@ paste(struct Prompt *prompt)
 	unsigned long dl;   /* dummy variable */
 	Atom da;            /* dummy variable */
 
-	if (XGetWindowProperty(dpy, prompt->win, utf8,
+	if (XGetWindowProperty(dpy, prompt->win, atoms[Utf8String],
 	                       0, prompt->textsize / 4 + 1, False,
-	                       utf8, &da, &di, &dl, &dl, (unsigned char **)&p)
+	                       atoms[Utf8String], &da, &di, &dl, &dl, (unsigned char **)&p)
 	    == Success && p) {
 		addundo(prompt, 1);
 		insert(prompt, p, (q = strchr(p, '\n')) ? q - p : (ssize_t)strlen(p));
@@ -1525,7 +1537,6 @@ static void
 copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
 {
 	XSelectionEvent xselev;
-	Atom xa_targets;
 
 	xselev.type = SelectionNotify;
 	xselev.requestor = ev->requestor;
@@ -1537,12 +1548,10 @@ copy(struct Prompt *prompt, XSelectionRequestEvent *ev)
 	if (ev->property == None)
 		ev->property = ev->target;
 
-	xa_targets = XInternAtom(dpy, "TARGETS", 0);
-
-	if (ev->target == xa_targets) {     /* respond with the supported type */
+	if (ev->target == atoms[Targets]) {     /* respond with the supported type */
 		XChangeProperty(dpy, ev->requestor, ev->property, XA_ATOM, 32,
-		                PropModeReplace, (unsigned char *)&utf8, 1);
-	} else if (ev->target == utf8 || ev->target == XA_STRING) {
+		                PropModeReplace, (unsigned char *)&atoms[Utf8String], 1);
+	} else if (ev->target == atoms[Utf8String] || ev->target == XA_STRING) {
 		unsigned minpos, maxpos;
 		char *seltext;
 
@@ -1945,10 +1954,10 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	prevoperation = operation;
 	switch (operation) {
 	case CTRLPASTE:
-		XConvertSelection(dpy, clip, utf8, utf8, prompt->win, CurrentTime);
+		XConvertSelection(dpy, atoms[Clipboard], atoms[Utf8String], atoms[Utf8String], prompt->win, CurrentTime);
 		return Nop;
 	case CTRLCOPY:
-		XSetSelectionOwner(dpy, clip, prompt->win, CurrentTime);
+		XSetSelectionOwner(dpy, atoms[Clipboard], prompt->win, CurrentTime);
 		return Nop;
 	case CTRLCANCEL:
 		if (sflag || !prompt->matchlist || prompt->text[0] == '\0')
@@ -2171,7 +2180,7 @@ buttonpress(struct Prompt *prompt, XButtonEvent *ev)
 	switch (ev->button) {
 	case Button2:                               /* middle click paste */
 		delselection(prompt);
-		XConvertSelection(dpy, XA_PRIMARY, utf8, utf8, prompt->win, CurrentTime);
+		XConvertSelection(dpy, XA_PRIMARY, atoms[Utf8String], atoms[Utf8String], prompt->win, CurrentTime);
 		return Nop;
 	case Button1:
 		if (ev->y < 0 || ev->x < 0)
@@ -2336,7 +2345,7 @@ run(struct Prompt *prompt, struct Item *rootitem, struct History *hist)
 				XRaiseWindow(dpy, prompt->win);
 			break;
 		case SelectionNotify:
-			if (ev.xselection.property != utf8)
+			if (ev.xselection.property != atoms[Utf8String])
 				break;
 			delselection(prompt);
 			paste(prompt);
@@ -2408,10 +2417,15 @@ cleanprompt(struct Prompt *prompt)
 static void
 cleandc(void)
 {
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorBG]);
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.hover[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.normal[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.normal[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.selected[ColorBG]);
 	XftColorFree(dpy, visual, colormap, &dc.selected[ColorFG]);
+	XftColorFree(dpy, visual, colormap, &dc.selected[ColorCM]);
 	XftColorFree(dpy, visual, colormap, &dc.separator);
 	XftColorFree(dpy, visual, colormap, &dc.border);
 	XFreeGC(dpy, dc.gc);
@@ -2452,12 +2466,8 @@ main(int argc, char *argv[])
 		errx(1, "cannot open display");
 	screen = DefaultScreen(dpy);
 	visual = DefaultVisual(dpy, screen);
-	rootwin = RootWindow(dpy, screen);
+	root = RootWindow(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
-
-	/* intern atoms */
-	utf8 = XInternAtom(dpy, "UTF8_STRING", False);
-	clip = XInternAtom(dpy, "CLIPBOARD", False);
 
 	/* initialize resource manager database */
 	XrmInitialize();
@@ -2465,12 +2475,13 @@ main(int argc, char *argv[])
 		xdb = XrmGetStringDatabase(xrm);
 
 	/* get configuration */
-	parentwin = rootwin;
+	parentwin = root;
 	getresources();
 	getenvironment();
 	prompt.promptstr = getoptions(argc, argv, &parentwin);
 
 	/* init */
+	initatoms();
 	initmonitor();
 	initctrl();
 	initdc();

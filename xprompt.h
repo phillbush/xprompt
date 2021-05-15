@@ -1,3 +1,4 @@
+#define CLASSNAME    "XPrompt"
 #define PROGNAME     "xprompt"
 #define INPUTSIZ     1024
 #define DEFHEIGHT    20     /* default height for each text line */
@@ -23,6 +24,14 @@
 enum {ColorFG, ColorBG, ColorCM, ColorLast};
 enum {LowerCase, UpperCase, CaseLast};
 enum Press_ret {DrawPrompt, DrawInput, Esc, Enter, Nop};
+
+/* atoms */
+enum {
+	Utf8String,
+	Clipboard,
+	Targets,
+	AtomLast
+};
 
 /* Input operations */
 enum Ctrl {

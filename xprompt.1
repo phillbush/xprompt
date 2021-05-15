@@ -115,7 +115,7 @@ Renders xprompt embedded into the window
 .IR windowid .
 .PP
 Each item read from stdin has the following format:
-.IP
+.IP \(bu 2
 .EX
 ITEM := [TABS] WORD [TABS DESCRIPTION] NEWLINE
 .EE
@@ -123,22 +123,22 @@ ITEM := [TABS] WORD [TABS DESCRIPTION] NEWLINE
 That means that each item is composed by
 zero or more tabs, followed by a text, followed by more tabs, followed
 by a description, followed by newline.  Brackets group optional elements.
-.IP
+.IP \(bu 2
 The initial tabs indicate the item hierarchy.
 An item without initial tabs is listed for completion at the beginning of the input field.
 An item with one tab is listed for completion for the second word in the input field.
 And so on.
-.IP
+.IP \(bu 2
 The word is a string listed for completion in the dropdown list that
 appears when pressing Tab.
-.IP
+.IP \(bu 2
 The second group of tabs separate the word from its description.
-.IP
+.IP \(bu 2
 The description is a string describing what the word means.
-.IP
+.IP \(bu 2
 The newline terminates the item specification.
 .PP
-.B xmenu
+.B xprompt
 saves the input text from previous runs in a history file specified by the
 .B -h
 option or by the
@@ -364,7 +364,7 @@ etc.
 Suppose a file
 containing the following content,
 where \(lq\et\(rq means a tab character.
-.IP
+.IP \(bu 2
 .EX
 git
 \et	add\et    Add file contents to the index.
@@ -383,7 +383,7 @@ By passing this file as stdin to
 .BR xprompt ,
 .B xprompt
 will have the following behavior when pressing Tab.
-.IP
+.IP \(bu 2
 If the input field is empty,
 .B xprompt
 will display a dropdown list with the following three entries after pressing Tab:
@@ -391,7 +391,7 @@ will display a dropdown list with the following three entries after pressing Tab
 .IR man ", and"
 .IR open .
 It will also display descriptions after each completion.
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I git
 at the beginning of the line,
@@ -401,7 +401,7 @@ will display a dropdown list with the following four entries after pressing Tab:
 .IR rm ,
 .IR mv ", and"
 .IR commit .
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I man
 at the beginning of the line,
@@ -411,7 +411,7 @@ will display a dropdown list with the following four entries after pressing Tab:
 .IR cut ,
 .IR ed ", and"
 .IR vi .
-.IP
+.IP \(bu 2
 If the input field contains the word
 .I open
 at the beginning of the line, and
@@ -425,3 +425,21 @@ since no completion was specified at stdin.
 .SH SEE ALSO
 .IR dmenu (1),
 .IR xmenu (1)
+.SH BUGS
+.B xprompt
+steals the input focus from the currently focused window (and does not give it back).
+This is necessary because
+.B xprompt
+needs the input focus for the X Input Method.  Since
+.B xprompt
+is an override-redirect window, it does not get the focus by regular means from the window manager
+(because
+.B xprompt
+is not controlled by the window manager,
+instead
+.B xprompt
+controls itself and has to get the focus by its own means).
+.B xprompt
+cannot be managed by the window manager because most window managers do not know how
+.B xprompt
+works or how it needs the entire focus for itself.
