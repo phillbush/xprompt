@@ -242,7 +242,7 @@ parsefonts(const char *s)
 	}
 }
 
-/* initialize atom array */
+/* initialize atoms array */
 static void
 initatoms(void)
 {
