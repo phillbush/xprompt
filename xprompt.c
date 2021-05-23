@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <glob.h>
 #include <X11/Xlib.h>
@@ -182,8 +183,6 @@ getoptions(int argc, char *argv[])
 			break;
 		case 'w':
 			transfor = strtoul(optarg, NULL, 0);
-			if (transfor == 0)
-				transfor = root;
 			break;
 		default:
 			usage();
@@ -1119,6 +1118,22 @@ setpromptevents(struct Prompt *prompt)
 	XSelectInput(dpy, prompt->win, StructureNotifyMask |
 	             ExposureMask | KeyPressMask | VisibilityChangeMask |
 	             ButtonPressMask | PointerMotionMask | ic.eventmask);
+}
+
+/* try to grab keyboard, we may have to wait for another process to ungrab */
+static void
+grabkeyboard(void)
+{
+	struct timespec ts = { .tv_sec = 0, .tv_nsec = 1000000  };
+	int i;
+
+	for (i = 0; i < 1000; i++) {
+		if (XGrabKeyboard(dpy, root, True, GrabModeAsync,
+		                  GrabModeAsync, CurrentTime) == GrabSuccess)
+			return;
+		nanosleep(&ts, NULL);
+	}
+	errx(1, "cannot grab keyboard");
 }
 
 /* create pixmap */
@@ -2254,6 +2269,10 @@ main(int argc, char *argv[])
 				fclose(hist.fp);
 		}
 	}
+
+	/* grab keyboard */
+	if (transfor == None)
+		grabkeyboard();
 
 	/* run event loop; and, if run return nonzero, save the history */
 	run(&prompt, rootitem, &hist);
