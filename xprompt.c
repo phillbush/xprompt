@@ -1277,11 +1277,10 @@ setpromptpix(struct Prompt *prompt)
 	prompt->draw = XftDrawCreate(dpy, prompt->pixmap, visual, colormap);
 
 	/* draw the prompt string and update x to the end of it */
-	if (prompt->promptstr) {
-		XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-		XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->promptw, prompt->h);
+	if (prompt->promptstr)
 		drawtext(prompt->draw, &dc.normal[ColorFG], dc.pad, 0, prompt->h, prompt->promptstr, 0);
-	}
 
 	/* draw separator line */
 	y = prompt->h + prompt->separator/2;
