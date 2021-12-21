@@ -36,6 +36,7 @@ static Atom atoms[AtomLast];
 
 /* flags */
 static int aflag = 0;   /* whether to keep looking for arguments to complete */
+static int cflag = 0;   /* whether to always show autocomplete */
 static int dflag = 0;   /* whether to show only item descriptions */
 static int fflag = 0;   /* whether to enable filename completion */
 static int hflag = 0;   /* whether to enable history */
@@ -167,19 +168,22 @@ getoptions(int argc, char *argv[], Window *win_ret)
 	int ch;
 
 	/* get options */
-	while ((ch = getopt(argc, argv, "G:adfg:h:im:psw:")) != -1) {
+	while ((ch = getopt(argc, argv, "acdfG:g:h:im:psw:")) != -1) {
 		switch (ch) {
-		case 'G':
-			config.gravityspec = optarg;
-			break;
 		case 'a':
 			aflag = 1;
+			break;
+		case 'c':
+			cflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
 			break;
 		case 'f':
 			fflag = 1;
+			break;
+		case 'G':
+			config.gravityspec = optarg;
 			break;
 		case 'g':
 			config.geometryspec = optarg;
@@ -1978,6 +1982,7 @@ keypress(struct Prompt *prompt, struct Item *rootitem, struct History *hist, XKe
 	case CTRLPREV:
 		/* FALLTHROUGH */
 	case CTRLNEXT:
+tab:
 		if (!prompt->matchlist) {
 			complist = getcomplist(prompt, rootitem);
 			filecomp = 0;
@@ -2086,6 +2091,8 @@ insert:
 			return Nop;
 		delselection(prompt);
 		insert(prompt, buf, len);
+		if (cflag)
+			goto tab;
 		break;
 	}
 
