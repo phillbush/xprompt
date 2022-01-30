@@ -1,5 +1,10 @@
                                CHANGELOG
 
+2.5.0 (2022-01-29).
+• Add -a option for argument mode.
+• Add -c option to always show auto complete (#6).
+• Fixed visual corruption if no prompt string is provided (#7).
+
 2.4.0 (2021-01-22).
 • Added CHANGELOG.
 • Added support for input methods with on-the-spot pre-editing.

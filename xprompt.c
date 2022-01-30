@@ -61,7 +61,7 @@ static int filecomp = 0;
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: xprompt [-adfips] [-G gravity] [-g geometry] [-h file]\n"
+	(void)fprintf(stderr, "usage: xprompt [-acdfips] [-G gravity] [-g geometry] [-h file]\n"
 	                      "               [-m monitor] [-w windowid] [prompt]\n");
 	exit(1);
 }
@@ -705,7 +705,7 @@ drawinput(struct Prompt *prompt, int copy)
 	unsigned minpos, maxpos;
 	unsigned curpos;            /* where to draw the cursor */
 	int x, y, xtext;
-	int widthpre, widthsel, widthpos;
+	int widthpre, widthsel;
 
 	if (pflag)
 		return;
@@ -745,8 +745,8 @@ drawinput(struct Prompt *prompt, int copy)
 
 	/* draw text after selection */
 	xtext += widthsel;
-	widthpos = drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
-	                    prompt->text+maxpos, 0);
+	drawtext(prompt->draw, &dc.normal[ColorFG], xtext, 0, prompt->h,
+	         prompt->text+maxpos, 0);
 
 	/* draw cursor rectangle */
 	curpos = x + widthpre + ((ic.composing && ic.caret) ? drawtext(NULL, NULL, 0, 0, 0, ic.text, ic.caret) : 0);
@@ -804,10 +804,8 @@ drawprompt(struct Prompt *prompt)
 {
 	static size_t nitems = 0;       /* number of items in the dropdown list */
 	unsigned h;
-	int x, y;
+	int y;
 	size_t i;
-
-	x = prompt->promptw;
 
 	/* draw input field text and set position of the cursor */
 	drawinput(prompt, 0);
