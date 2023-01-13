@@ -804,8 +804,12 @@ drawprompt(struct Prompt *prompt)
 {
 	static size_t nitems = 0;       /* number of items in the dropdown list */
 	unsigned h;
-	int y;
 	size_t i;
+
+	/* background of items */
+	h = prompt->h + prompt->separator + prompt->h * prompt->nitems;
+	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
+	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, 0, prompt->w, h);
 
 	/* draw input field text and set position of the cursor */
 	drawinput(prompt, 0);
@@ -816,12 +820,6 @@ drawprompt(struct Prompt *prompt)
 	/* if there are no items to drawn, we are done */
 	if (!nitems)
 		goto done;
-
-	/* background of items */
-	y = prompt->h + prompt->separator;
-	h = prompt->h * prompt->nitems;
-	XSetForeground(dpy, dc.gc, dc.normal[ColorBG].pixel);
-	XFillRectangle(dpy, prompt->pixmap, dc.gc, 0, y, prompt->w, h);
 
 	/* draw items */
 	for (i = 0; i < prompt->nitems; i++)
